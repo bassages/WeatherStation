@@ -1,14 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <string name="app_name">Weather Station</string>
     <string name="action_settings">Settings</string>
 	<string name="app_closing">Exiting Weather station app</string>
-    <color name="lightblue">#3CB0CF</color>
 
-    <string name="initial_temperature_value">0.0</string>
-    <string name="initial_air_pressure_value">0</string>
-    <string name="initial_humidity_value">0</string>
+    <string name="initial_temperature_value">-</string>
+    <string name="initial_air_pressure_value">-</string>
+    <string name="initial_humidity_value">-</string>
     <string name="temperature_label">Temperature</string>
     <string name="air_pressure_label">Air pressure</string>
     <string name="humidity_label">Humidity</string>

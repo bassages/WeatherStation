@@ -32,7 +32,7 @@
   contact Texas Instruments Incorporated at www.TI.com
 
  **************************************************************************************************/
-package nl.wiegman.weatherstation;
+package nl.wiegman.weatherstation.sensor;
 
 import static java.lang.Math.pow;
 import static nl.wiegman.weatherstation.SensorTag.UUID_HUM_CONF;
@@ -45,6 +45,7 @@ import static nl.wiegman.weatherstation.SensorTag.UUID_IRT_SERV;
 import java.util.List;
 import java.util.UUID;
 
+import nl.wiegman.weatherstation.SensorTag;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.util.Log;
 
@@ -55,7 +56,7 @@ import android.util.Log;
 public enum Sensor {
   TEMPERATURE(UUID_IRT_SERV, UUID_IRT_DATA, UUID_IRT_CONF) {
     @Override
-    public Point3D convert(final byte [] value) {
+    public SensorData convert(final byte [] value) {
 
       /*
        * The IR Temperature sensor produces two measurements; Object ( AKA target or IR) Temperature, and Ambient ( AKA die ) temperature.
@@ -67,7 +68,7 @@ public enum Sensor {
 
       double ambient = extractAmbientTemperature(value);
       double target = extractTargetTemperature(value, ambient);
-      return new Point3D(ambient, target, 0);
+      return new SensorData(ambient, target, 0);
     }
 
     private double extractAmbientTemperature(byte [] v) {
@@ -102,25 +103,27 @@ public enum Sensor {
 
   HUMIDITY(UUID_HUM_SERV, UUID_HUM_DATA, UUID_HUM_CONF) {
     @Override
-    public Point3D convert(final byte[] value) {
+    public SensorData convert(final byte[] value) {
       int a = shortUnsignedAtOffset(value, 2);
       // bits [1..0] are status bits and need to be cleared according
       // to the user guide, but the iOS code doesn't bother. It should
       // have minimal impact.
       a = a - (a % 4);
 
-      return new Point3D((-6f) + 125f * (a / 65535f), 0, 0);
+      return new SensorData((-6f) + 125f * (a / 65535f), 0, 0);
     }
   },
   
   BAROMETER(SensorTag.UUID_BAR_SERV, SensorTag.UUID_BAR_DATA, SensorTag.UUID_BAR_CONF) {
+   public static final double PA_PER_METER = 12.0;
+      
     @Override
-    public Point3D convert(final byte [] value) {
+    public SensorData convert(final byte [] value) {
 
       List<Integer> barometerCalibrationCoefficients = BarometerCalibrationCoefficients.INSTANCE.barometerCalibrationCoefficients;
       if (barometerCalibrationCoefficients == null) {
         Log.w("Custom", "Data notification arrived for barometer before it was calibrated.");
-        return new Point3D(0,0,0);
+        return new SensorData(0,0,0);
       }
 
       final int[] c; // Calibration coefficients
@@ -142,7 +145,7 @@ public enum Sensor {
       O = c[5] * pow(2, 14) + c[6] * t_r / pow(2, 3) + ((c[7] * t_r / pow(2, 15)) * t_r) / pow(2, 4);
       p_a = (S * p_r + O) / pow(2, 14);
 
-      return new Point3D(p_a,0,0);
+      return new SensorData(p_a,0,0);
     }
   };
 
@@ -168,7 +171,7 @@ public enum Sensor {
     throw new UnsupportedOperationException("Programmer error, the individual enum classes are supposed to override this method.");
   }
 
-  public Point3D convert(byte[] value) {
+  public SensorData convert(byte[] value) {
     throw new UnsupportedOperationException("Programmer error, the individual enum classes are supposed to override this method.");
   }
 

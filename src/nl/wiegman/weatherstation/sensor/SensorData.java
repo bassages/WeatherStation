@@ -1,5 +1,5 @@
 /**************************************************************************************************
-  Filename:       BarometerCalibrationCoefficients.java
+  Filename:       Point3D.java
   Revised:        $Date: 2013-08-30 11:44:31 +0200 (fr, 30 aug 2013) $
   Revision:       $Revision: 27454 $
 
@@ -32,15 +32,49 @@
   contact Texas Instruments Incorporated at www.TI.com
 
  **************************************************************************************************/
-package nl.wiegman.weatherstation;
-
-import java.util.List;
+package nl.wiegman.weatherstation.sensor;
 
 /**
- * As a last-second hack i'm storing the barometer coefficients in a global.
- */
-public enum BarometerCalibrationCoefficients {
-  INSTANCE;
-  volatile public List<Integer> barometerCalibrationCoefficients;
-  volatile public double heightCalibration;
+ * Auto generated wrapper class for the data with 3 dimensions.
+ * */
+public class SensorData {
+  public double x, y, z;
+
+  public SensorData(double x, double y, double z) {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+  }
+
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    long temp;
+    temp = Double.doubleToLongBits(x);
+    result = prime * result + (int) (temp ^ (temp >>> 32));
+    temp = Double.doubleToLongBits(y);
+    result = prime * result + (int) (temp ^ (temp >>> 32));
+    temp = Double.doubleToLongBits(z);
+    result = prime * result + (int) (temp ^ (temp >>> 32));
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    SensorData other = (SensorData) obj;
+    if (Double.doubleToLongBits(x) != Double.doubleToLongBits(other.x))
+      return false;
+    if (Double.doubleToLongBits(y) != Double.doubleToLongBits(other.y))
+      return false;
+    if (Double.doubleToLongBits(z) != Double.doubleToLongBits(other.z))
+      return false;
+    return true;
+  }
 }

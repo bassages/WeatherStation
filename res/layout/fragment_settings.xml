@@ -16,7 +16,7 @@
         android:layout_alignParentTop="true"
         android:text="Temperature"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:textColor="@color/lightblue" />
+        android:textColor="@android:color/black" />
 
     <RadioGroup
         android:id="@+id/radioGroup1"

@@ -4,7 +4,7 @@
     android:layout_height="wrap_content" >
 
     <RelativeLayout
-        android:id="@+id/humidityLabel"
+        android:id="@+id/weather_station"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingBottom="@dimen/activity_vertical_margin"
@@ -19,18 +19,8 @@
             android:layout_height="wrap_content"
             android:layout_alignParentLeft="true"
             android:layout_alignParentTop="true"
-            android:src="@drawable/temperature" />
-
-        <TextView
-            android:id="@+id/temperatureLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignLeft="@+id/temperatureImage"
-            android:layout_alignRight="@+id/temperatureImage"
-            android:layout_below="@+id/temperatureImage"
-            android:gravity="center"
-            android:text="@string/temperature_label"
-            android:textColor="@color/lightblue" />
+            android:contentDescription="Thermometer"
+            android:src="@drawable/temperature_black" />
 
         <TextView
             android:id="@+id/airPressureLabel"
@@ -40,8 +30,9 @@
             android:layout_alignRight="@+id/airPressureImage"
             android:layout_below="@+id/airPressureImage"
             android:gravity="center"
+            android:layout_marginTop="0dp"
             android:text="@string/air_pressure_label"
-            android:textColor="@color/lightblue" />
+            android:textColor="@android:color/black" />
 
         <ImageView
             android:id="@+id/airPressureImage"
@@ -50,7 +41,7 @@
             android:layout_alignLeft="@+id/view1"
             android:layout_below="@+id/view1"
             android:layout_marginTop="16dp"
-            android:src="@drawable/airpressure" />
+            android:src="@drawable/airpressure_black" />
 
         <View
             android:id="@+id/view1"
@@ -60,17 +51,6 @@
             android:layout_below="@+id/temperatureLabel"
             android:layout_marginTop="20dp"
             android:background="@android:color/darker_gray" />
-
-        <TextView
-            android:id="@+id/TextView02"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignLeft="@+id/humidityImage"
-            android:layout_alignRight="@+id/humidityImage"
-            android:layout_below="@+id/humidityImage"
-            android:gravity="center"
-            android:text="@string/humidity_label"
-            android:textColor="@color/lightblue" />
 
         <View
             android:id="@+id/View01"
@@ -88,7 +68,7 @@
             android:layout_alignLeft="@+id/View01"
             android:layout_below="@+id/View01"
             android:layout_marginTop="20dp"
-            android:src="@drawable/humidity" />
+            android:src="@drawable/humidity_black" />
 
         <TextView
             android:id="@+id/airPressureValue"
@@ -153,8 +133,33 @@
             android:layout_height="2dp"
             android:layout_alignRight="@+id/humidityUnit"
             android:layout_below="@+id/humidityUnit"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="10dp"
             android:background="@android:color/darker_gray" />
+
+        <TextView
+            android:id="@+id/temperatureLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@+id/temperatureImage"
+            android:layout_alignRight="@+id/temperatureImage"
+            android:layout_below="@+id/temperatureImage"
+            android:layout_marginTop="10dp"
+            android:gravity="center"
+            android:text="@string/temperature_label"
+            android:textColor="@android:color/black" />
+
+        <TextView
+            android:id="@+id/humidityLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@+id/humidityImage"
+            android:layout_alignRight="@+id/humidityImage"
+            android:layout_below="@+id/humidityImage"
+            android:gravity="center"
+            android:text="@string/humidity_label"
+            android:layout_marginTop="10dp"
+            android:textColor="@android:color/black" />
+
     </RelativeLayout>
 
 </ScrollView>

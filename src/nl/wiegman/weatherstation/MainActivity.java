@@ -9,6 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import nl.wiegman.weatherstation.sensor.BarometerCalibrationCoefficients;
+import nl.wiegman.weatherstation.sensor.Sensor;
+import nl.wiegman.weatherstation.sensor.SensorData;
 import android.app.Activity;
 import android.app.Fragment;
 import android.bluetooth.BluetoothAdapter;
@@ -44,27 +47,26 @@ public class MainActivity extends Activity {
     // Requests to other activities
     private static final int REQUEST_TO_ENABLE_BLUETOOTHE_LE = 0;
 
-    private volatile BleDeviceInfo deviceInfo;
+    private volatile BleDeviceInfo connectedDeviceInfo;
 
     private static final int GATT_TIMEOUT = 300; // milliseconds
     private static final double PA_PER_METER = 12.0;
-    
-    // BLE management
+
+    private Context thisContext = this;
+
     private Intent bindIntent;
-    private int mNumDevs = 0;
-    private static BluetoothManager bluetoothManager;
+    private BluetoothManager bluetoothManager;
     private BluetoothAdapter bluetoothAdapter;
-    private BluetoothDevice mBluetoothDevice;
     private BluetoothLeService bluetoothLeService;
-    private IntentFilter mFilter;
+    
     private BroadcastReceiver sensortagUpdateReceiver;
+    private BroadcastReceiver bluetoothEventReceiver;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
-
         if (savedInstanceState == null) {
             getFragmentManager().beginTransaction().add(R.id.container, new PlaceholderFragment()).commit();
         }
@@ -87,7 +89,7 @@ public class MainActivity extends Activity {
             finish();
         }
 
-        // GATT database
+        // GATT database for the TI sensortag
         Resources res = getResources();
         XmlResourceParser xpp = res.getXml(R.xml.gatt_uuid);
         new GattInfo(xpp);
@@ -96,9 +98,9 @@ public class MainActivity extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
-
+        
         if (bluetoothAdapter.isEnabled()) {
-            startScanningForBluetoothLeDevices();
+            startScanningForSensortag();
         } else {
             // Request for the BlueTooth adapter to be turned on
             Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
@@ -116,7 +118,7 @@ public class MainActivity extends Activity {
         case REQUEST_TO_ENABLE_BLUETOOTHE_LE:
             if (resultCode == Activity.RESULT_OK) {
                 Toast.makeText(this, R.string.bt_on, Toast.LENGTH_SHORT).show();
-                startScanningForBluetoothLeDevices();
+                startScanningForSensortag();
             } else {
                 // User did not enable BlueTooth or an error occurred
                 Toast.makeText(this, R.string.bt_not_on, Toast.LENGTH_SHORT).show();
@@ -168,43 +170,27 @@ public class MainActivity extends Activity {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (bluetoothLeService != null) {
-            stopScanningForBluetoothLeDevices();
-            bluetoothLeService.close();
-            unbindService(serviceConnection);
-            bluetoothLeService = null;
-        }
-
-        if (receiver != null) {
-            unregisterReceiver(receiver);
-            receiver = null;
-        }
-        if (bindIntent != null) {
-            stopService(bindIntent);
-            bindIntent = null;
-        }
-        if (sensortagUpdateReceiver != null) {
-            unregisterReceiver(sensortagUpdateReceiver);
-            sensortagUpdateReceiver = null;
-        }
+        
+        releaseResources();
     }
 
-    private void startScanningForBluetoothLeDevices() {
+    private void startScanningForSensortag() {
         boolean scanningForBlueToothLeDevices = bluetoothAdapter.startLeScan(bluetoothLeScanCallback);
         if (!scanningForBlueToothLeDevices) {
-            popup("Failed to scan for bluetooth LE devices");
+            Toast.makeText(this, "Failed to search for sensortag", Toast.LENGTH_LONG).show();
+            finish();
         } else {
-            Log.i(TAG, "Scanning for BlueTooth LE devices...");
+            Toast.makeText(this, "Searching for sensortag...", Toast.LENGTH_SHORT).show();
         }
     }
-
+    
     private void stopScanningForBluetoothLeDevices() {
         bluetoothAdapter.stopLeScan(bluetoothLeScanCallback);
     }
 
     // Listens for broadcasted events from BlueTooth adapter and
     // BluetoothLeService
-    private BroadcastReceiver receiver = new BroadcastReceiver() {
+    private class BlueToothEventReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
@@ -224,30 +210,72 @@ public class MainActivity extends Activity {
                     break;
                 }
             } else if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
-                // GATT connect
                 int status = intent.getIntExtra(BluetoothLeService.EXTRA_STATUS, BluetoothGatt.GATT_FAILURE);
                 if (status == BluetoothGatt.GATT_SUCCESS) {
                     sensortagUpdateReceiver = new SensortagUpdateReceiver();
                     registerReceiver(sensortagUpdateReceiver, createSensorTagUpdateIntentFilter());
                     discoverServices();
+                    
+                    Toast.makeText(thisContext, "Sucessfully connected to sensortag", Toast.LENGTH_LONG).show();
                 } else {
-                    popup("Connect failed. Status: " + status);
+                    Toast.makeText(thisContext, "Connecting to the sensortag failed. Status: " + status, Toast.LENGTH_LONG).show();
                     finish();
                 }
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
-                // GATT disconnect
+                connectedDeviceInfo = null;
+                clearSensorValues();
+                
                 int status = intent.getIntExtra(BluetoothLeService.EXTRA_STATUS, BluetoothGatt.GATT_FAILURE);
                 if (status == BluetoothGatt.GATT_SUCCESS) {
-                    Log.i(TAG, "Disconnected");
+                    Log.i(TAG, "Disconnected, trying to reconnect...");
+                    reconnect();
                 } else {
-                    popup("Disconnect failed. Status: " + status);
+                    Toast.makeText(thisContext, "Disconnect failed. Status: " + status + status, Toast.LENGTH_LONG).show();
                 }
-                finish();
             } else {
                 Log.w(TAG, "Unknown action: " + action);
             }
         }
     };
+
+    private void clearSensorValues() {
+        TextView temperatureTextView = (TextView) findViewById(R.id.temperatureValue);
+        temperatureTextView.setText(R.string.initial_temperature_value);
+ 
+        TextView humidityValueTextView = (TextView) findViewById(R.id.humidityValue);
+        humidityValueTextView.setText(R.string.initial_humidity_value);
+        
+        TextView airPressureValueTextView = (TextView) findViewById(R.id.airPressureValue);
+        airPressureValueTextView.setText(R.string.initial_air_pressure_value);
+    }
+    
+    private void reconnect() {
+        releaseResources();
+        startScanningForSensortag();
+    }
+    
+    private void releaseResources() {
+        stopScanningForBluetoothLeDevices();
+        
+        if (bluetoothLeService != null) {
+            bluetoothLeService.close();
+            unbindService(serviceConnection);
+            bluetoothLeService = null;
+        }
+
+        if (bluetoothEventReceiver != null) {
+            unregisterReceiver(bluetoothEventReceiver);
+            bluetoothEventReceiver = null;
+        }
+        if (bindIntent != null) {
+            stopService(bindIntent);
+            bindIntent = null;
+        }
+        if (sensortagUpdateReceiver != null) {
+            unregisterReceiver(sensortagUpdateReceiver);
+            sensortagUpdateReceiver = null;
+        }  
+    }
 
     // Code to manage Service life cycle.
     private final ServiceConnection serviceConnection = new ServiceConnection() {
@@ -260,8 +288,8 @@ public class MainActivity extends Activity {
                 return;
             } else {
                 Log.i(TAG, "BluetoothLeService connected");
-                if (deviceInfo != null) {
-                    bluetoothLeService.connect(deviceInfo.getBluetoothDevice() .getAddress());
+                if (connectedDeviceInfo != null) {
+                    bluetoothLeService.connect(connectedDeviceInfo.getBluetoothDevice() .getAddress());
                 }
             }
         }
@@ -271,10 +299,6 @@ public class MainActivity extends Activity {
             Log.i(TAG, "BluetoothLeService disconnected");
         }
     };
-
-    private void popup(String message) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
-    }
 
     private void enableSensor(Sensor sensor, boolean enable) {
         UUID servUuid = sensor.getService();
@@ -337,7 +361,7 @@ public class MainActivity extends Activity {
 
     private void discoverServices() {
         if (BluetoothLeService.getBtGatt().discoverServices()) {
-            Log.i(TAG, "START SERVICE DISCOVERY");
+            Log.i(TAG, "Start service discovery");
         } else {
             Log.e(TAG, "Service discovery start failed");
         }
@@ -424,7 +448,7 @@ public class MainActivity extends Activity {
      * Handle changes in sensor values
      * */
     public void onCharacteristicChanged(String uuidStr, byte[] rawValue) {
-        Point3D v;
+        SensorData v;
         String msg;
         
         TextView temperatureTextview = (TextView) findViewById(R.id.temperatureValue);
@@ -456,10 +480,10 @@ public class MainActivity extends Activity {
         public void onLeScan(final BluetoothDevice device, final int rssi, byte[] scanRecord) {
             runOnUiThread(new Runnable() {
                 public void run() {
-                    if (deviceInfo == null) {
-                        deviceInfo = createDeviceInfo(device, rssi);
+                    if (connectedDeviceInfo == null) {
+                        connectedDeviceInfo = createDeviceInfo(device, rssi);
                         stopScanningForBluetoothLeDevices();
-                        connectToDevice(deviceInfo);
+                        connectToDevice(connectedDeviceInfo);
                     }
                 }
             });
@@ -469,10 +493,12 @@ public class MainActivity extends Activity {
     private void connectToDevice(BleDeviceInfo device) {
         // Register the BroadcastReceiver to handle events from BluetoothAdapter
         // and BluetoothLeService
-        mFilter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
-        mFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
-        mFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
-        registerReceiver(receiver, mFilter);
+        IntentFilter bluetoothEventFilter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
+        bluetoothEventFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
+        bluetoothEventFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
+        
+        bluetoothEventReceiver = new BlueToothEventReceiver();
+        registerReceiver(bluetoothEventReceiver, bluetoothEventFilter);
 
         startBluetoothLeService();
     }
@@ -484,33 +510,12 @@ public class MainActivity extends Activity {
         if (serviceSucessfullyBound)
             Log.d(TAG, "BluetoothLeService was sucessfully bound");
         else {
-            CustomToast.middleBottom(this, "Bind to BluetoothLeService failed");
+            Toast.makeText(this, "Bind to BluetoothLeService failed", Toast.LENGTH_LONG).show();
             finish();
         }
     }
 
     private BleDeviceInfo createDeviceInfo(BluetoothDevice device, int rssi) {
         return new BleDeviceInfo(device, rssi);
-    }
-
-    protected void onConnect() {
-        if (mNumDevs > 0) {
-            int connState = bluetoothManager.getConnectionState(mBluetoothDevice, BluetoothGatt.GATT);
-
-            switch (connState) {
-            case BluetoothGatt.STATE_CONNECTED:
-                bluetoothLeService.disconnect(null);
-                break;
-            case BluetoothGatt.STATE_DISCONNECTED:
-                boolean ok = bluetoothLeService.connect(mBluetoothDevice.getAddress());
-                if (!ok) {
-                    popup("Connect failed");
-                }
-                break;
-            default:
-                popup("Device busy (connecting/disconnecting)");
-                break;
-            }
-        }
     }
 }
