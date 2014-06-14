@@ -1,17 +1,16 @@
 package nl.wiegman.weatherstation;
 
-import static nl.wiegman.weatherstation.SensorTag.UUID_BAR_DATA;
-import static nl.wiegman.weatherstation.SensorTag.UUID_HUM_DATA;
-import static nl.wiegman.weatherstation.SensorTag.UUID_IRT_DATA;
-
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import nl.wiegman.weatherstation.sensor.BarometerCalibrationCoefficients;
-import nl.wiegman.weatherstation.sensor.Sensor;
+import nl.wiegman.weatherstation.sensor.BarometerGatt;
+import nl.wiegman.weatherstation.sensor.GattSensor;
+import nl.wiegman.weatherstation.sensor.HygrometerGatt;
 import nl.wiegman.weatherstation.sensor.SensorData;
+import nl.wiegman.weatherstation.sensor.ThermometerGatt;
 import android.app.Activity;
 import android.app.Fragment;
 import android.bluetooth.BluetoothAdapter;
@@ -41,16 +40,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
-    // Log
-    private static final String TAG = "MainActivity";
+    // Tag for logging
+    private static final String TAG = MainActivity.class.getSimpleName();
 
     // Requests to other activities
     private static final int REQUEST_TO_ENABLE_BLUETOOTHE_LE = 0;
 
-    private volatile BleDeviceInfo connectedDeviceInfo;
-
-    private static final int GATT_TIMEOUT = 300; // milliseconds
-    private static final double PA_PER_METER = 12.0;
+    private static final int GATT_TIMEOUT = 500; // milliseconds
 
     private Context thisContext = this;
 
@@ -61,6 +57,19 @@ public class MainActivity extends Activity {
     
     private BroadcastReceiver sensortagUpdateReceiver;
     private BroadcastReceiver bluetoothEventReceiver;
+
+    private volatile BleDeviceInfo connectedDeviceInfo;
+    
+    private static final ThermometerGatt thermometerGatt = new ThermometerGatt();
+    private static final HygrometerGatt hygrometerGatt = new HygrometerGatt();
+    private static final BarometerGatt barometerGatt = new BarometerGatt();
+    
+    private static final List<GattSensor> gattSensors = new ArrayList<GattSensor>();
+    static {
+        gattSensors.add(barometerGatt);
+        gattSensors.add(hygrometerGatt);
+        gattSensors.add(thermometerGatt);
+    }
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -262,7 +271,6 @@ public class MainActivity extends Activity {
             unbindService(serviceConnection);
             bluetoothLeService = null;
         }
-
         if (bluetoothEventReceiver != null) {
             unregisterReceiver(bluetoothEventReceiver);
             bluetoothEventReceiver = null;
@@ -285,7 +293,6 @@ public class MainActivity extends Activity {
             if (!bluetoothLeService.initialize()) {
                 Log.e(TAG, "Unable to initialize BluetoothLeService");
                 finish();
-                return;
             } else {
                 Log.i(TAG, "BluetoothLeService connected");
                 if (connectedDeviceInfo != null) {
@@ -300,25 +307,24 @@ public class MainActivity extends Activity {
         }
     };
 
-    private void enableSensor(Sensor sensor, boolean enable) {
+    private void enableSensor(GattSensor sensor, boolean enable) {
         UUID servUuid = sensor.getService();
         UUID confUuid = sensor.getConfig();
 
-        // Barometer calibration
-        if (confUuid.equals(SensorTag.UUID_BAR_CONF) && enable) {
-            calibrateBarometer();
-        }
-
         BluetoothGattService serv = BluetoothLeService.getBtGatt().getService(servUuid);
-        BluetoothGattCharacteristic charac = serv.getCharacteristic(confUuid);
-        byte value = enable ? sensor.getEnableSensorCode() : Sensor.DISABLE_SENSOR_CODE;
+        BluetoothGattCharacteristic characteristic = serv.getCharacteristic(confUuid);
+        byte value = enable ? sensor.getEnableSensorCode() : sensor.getDisableSensorCode();
         
+        writeCharacteristic(characteristic, value);
+    }
+
+    private void writeCharacteristic(BluetoothGattCharacteristic characteristic, byte value) {
         boolean characteristicWritten = false;
         if (!characteristicWritten) {
             while (!characteristicWritten) {
-                characteristicWritten = BluetoothLeService.getInstance().writeCharacteristic(charac, value);
+                characteristicWritten = BluetoothLeService.getInstance().writeCharacteristic(characteristic, value);
                 try {
-                    Thread.sleep(10);
+                    Thread.sleep(100);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -327,38 +333,20 @@ public class MainActivity extends Activity {
         BluetoothLeService.getInstance().waitIdle(GATT_TIMEOUT);
     }
     
-    /* Calibrating the barometer includes
-     * 
-     * 1. Write calibration code to configuration characteristic. 
-     * 2. Read calibration values from sensor, either with notifications or a normal read. 
-     * 3. Use calibration values in formulas when interpreting sensor values.
-     */
-    private void calibrateBarometer() {
-        Log.i(TAG, "calibrateBarometer");
+    private void enableNotifications(GattSensor sensor, boolean enable) {
+        UUID servUuid = sensor.getService();
+        UUID dataUuid = sensor.getData();
         
-        UUID servUuid = Sensor.BAROMETER.getService();
-        UUID configUuid = Sensor.BAROMETER.getConfig();
-        BluetoothGattService serv = BluetoothLeService.getBtGatt().getService(servUuid);
-        BluetoothGattCharacteristic config = serv.getCharacteristic(configUuid);
+        BluetoothGattService service = BluetoothLeService.getBtGatt().getService(servUuid);
+        BluetoothGattCharacteristic characteristic = service.getCharacteristic(dataUuid);
 
-        // Write the calibration code to the configuration registers
-        BluetoothLeService.getInstance().writeCharacteristic(config,Sensor.CALIBRATE_SENSOR_CODE);
-        BluetoothLeService.getInstance().waitIdle(GATT_TIMEOUT);
-        BluetoothGattCharacteristic calibrationCharacteristic = serv.getCharacteristic(SensorTag.UUID_BAR_CALI);
-        BluetoothLeService.getInstance().readCharacteristic(calibrationCharacteristic);
+        boolean setNotificationCharacteristicSuccesfull = BluetoothLeService.getInstance().setNotificationCharacteristic(characteristic, enable);
+        if (!setNotificationCharacteristicSuccesfull) {
+            Log.e(TAG, "Failed to setNotificationCharacteristic");
+        }
         BluetoothLeService.getInstance().waitIdle(GATT_TIMEOUT);
     }
     
-    private void enableNotifications(Sensor sensor, boolean enable) {
-        UUID servUuid = sensor.getService();
-        UUID dataUuid = sensor.getData();
-        BluetoothGattService serv = BluetoothLeService.getBtGatt().getService(servUuid);
-        BluetoothGattCharacteristic charac = serv.getCharacteristic(dataUuid);
-
-        BluetoothLeService.getInstance().setCharacteristicNotification(charac, enable);
-        BluetoothLeService.getInstance().waitIdle(GATT_TIMEOUT);
-    }
-
     private void discoverServices() {
         if (BluetoothLeService.getBtGatt().discoverServices()) {
             Log.i(TAG, "Start service discovery");
@@ -376,29 +364,21 @@ public class MainActivity extends Activity {
             if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 if (status == BluetoothGatt.GATT_SUCCESS) {
                     Log.i(TAG, "Services discovered");
-                    enableSensor(Sensor.HUMIDITY, true);
-                    enableNotifications(Sensor.HUMIDITY, true);
 
-                    enableSensor(Sensor.BAROMETER, true);
-                    enableNotifications(Sensor.BAROMETER, true);
-
-                    enableSensor(Sensor.TEMPERATURE, true);
-                    enableNotifications(Sensor.TEMPERATURE, true);
+                    startSensorDataUpdates();
+                    
                 } else {
                     Toast.makeText(getApplication(), "Service discovery failed", Toast.LENGTH_LONG).show();
                     return;
                 }
             } else if (BluetoothLeService.ACTION_DATA_NOTIFY.equals(action)) {
-                // Notification
                 byte[] value = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
                 String uuidStr = intent.getStringExtra(BluetoothLeService.EXTRA_UUID);
                 onCharacteristicChanged(uuidStr, value);
             } else if (BluetoothLeService.ACTION_DATA_WRITE.equals(action)) {
-                // Data written
                 String uuidStr = intent.getStringExtra(BluetoothLeService.EXTRA_UUID);
-                onCharacteristicWrite(uuidStr, status);
+                Log.d(TAG, "onCharacteristicWrite: " + uuidStr);
             } else if (BluetoothLeService.ACTION_DATA_READ.equals(action)) {
-                // Data read
                 String uuidStr = intent.getStringExtra(BluetoothLeService.EXTRA_UUID);
                 byte[] value = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
                 onCharacteristicsRead(uuidStr, value, status);
@@ -408,14 +388,20 @@ public class MainActivity extends Activity {
                 Log.e(TAG, "GATT error code: " + status);
             }
         }
+
+        private void startSensorDataUpdates() {
+            for (GattSensor gattSensor: gattSensors) {
+                gattSensor.calibrate();
+                enableSensor(gattSensor, true);
+            }
+            for (GattSensor gattSensor: gattSensors) {
+                enableNotifications(gattSensor, true);
+            }
+        }
     };
 
-    private void onCharacteristicWrite(String uuidStr, int status) {
-        Log.d(TAG, "onCharacteristicWrite: " + uuidStr);
-    }
-
     private void onCharacteristicsRead(String uuidStr, byte[] value, int status) {
-        if (uuidStr.equals(SensorTag.UUID_BAR_CALI.toString())) {
+        if (uuidStr.equals(BarometerGatt.UUID_CALIBRATION.toString())) {
             Log.i(TAG, "The barometer was sucessfully calibrated");
             // Barometer calibration values are read.
             List<Integer> cal = new ArrayList<Integer>();
@@ -424,13 +410,11 @@ public class MainActivity extends Activity {
                 Integer upperByte = (int) value[offset + 1] & 0xFF;
                 cal.add((upperByte << 8) + lowerByte);
             }
-
             for (int offset = 8; offset < 16; offset += 2) {
                 Integer lowerByte = (int) value[offset] & 0xFF;
                 Integer upperByte = (int) value[offset + 1];
                 cal.add((upperByte << 8) + lowerByte);
             }
-
             BarometerCalibrationCoefficients.INSTANCE.barometerCalibrationCoefficients = cal;
         }
     }
@@ -452,24 +436,25 @@ public class MainActivity extends Activity {
         String msg;
         
         TextView temperatureTextview = (TextView) findViewById(R.id.temperatureValue);
-        if (uuidStr.equals(UUID_IRT_DATA.toString())) {
-            v = Sensor.TEMPERATURE.convert(rawValue);
+        if (uuidStr.equals(thermometerGatt.getData().toString())) {
+            v = thermometerGatt.convert(rawValue);
             msg = new DecimalFormat("0.0").format(v.x);
             temperatureTextview.setText(msg);
         }
         TextView mHumValue = (TextView) findViewById(R.id.humidityValue);
-        if (uuidStr.equals(UUID_HUM_DATA.toString())) {
-            v = Sensor.HUMIDITY.convert(rawValue);
+        if (uuidStr.equals(hygrometerGatt.getData().toString())) {
+            v = hygrometerGatt.convert(rawValue);
             msg = new DecimalFormat("0.0").format(v.x);
             mHumValue.setText(msg);
         }
         TextView mBarValue = (TextView) findViewById(R.id.airPressureValue);
-        if (uuidStr.equals(UUID_BAR_DATA.toString())) {
-            v = Sensor.BAROMETER.convert(rawValue);
-            double h = (v.x - BarometerCalibrationCoefficients.INSTANCE.heightCalibration) / PA_PER_METER;
-            h = (double)Math.round(-h * 10.0) / 10.0;
-            msg = new DecimalFormat("0").format(v.x/100);
+        if (uuidStr.equals(barometerGatt.getData().toString())) {
+            v = barometerGatt.convert(rawValue);
+            msg = new DecimalFormat("0").format(v.x);
             mBarValue.setText(msg);
+            
+            msg = new DecimalFormat("0.0").format(v.y);
+            temperatureTextview.setText(msg);
         }
     }
 
@@ -481,7 +466,7 @@ public class MainActivity extends Activity {
             runOnUiThread(new Runnable() {
                 public void run() {
                     if (connectedDeviceInfo == null) {
-                        connectedDeviceInfo = createDeviceInfo(device, rssi);
+                        connectedDeviceInfo = new BleDeviceInfo(device, rssi);
                         stopScanningForBluetoothLeDevices();
                         connectToDevice(connectedDeviceInfo);
                     }
@@ -513,9 +498,5 @@ public class MainActivity extends Activity {
             Toast.makeText(this, "Bind to BluetoothLeService failed", Toast.LENGTH_LONG).show();
             finish();
         }
-    }
-
-    private BleDeviceInfo createDeviceInfo(BluetoothDevice device, int rssi) {
-        return new BleDeviceInfo(device, rssi);
     }
 }

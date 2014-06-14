@@ -34,7 +34,8 @@
  **************************************************************************************************/
 package nl.wiegman.weatherstation;
 
-import java.util.List;
+import java.util.concurrent.CountDownLatch;
+
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -42,7 +43,6 @@ import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
-import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.content.Context;
@@ -74,9 +74,10 @@ public class BluetoothLeService extends Service {
     private BluetoothAdapter mBtAdapter = null;
     private BluetoothGatt mBluetoothGatt = null;
     private static BluetoothLeService mThis = null;
-    private volatile boolean mBusy = false; // Write/read pending response
     private String mBluetoothDeviceAddress;
 
+    private CountDownLatch waitForResponseLatch = null;
+    
     /**
      * GATT client callbacks
      */
@@ -93,20 +94,16 @@ public class BluetoothLeService extends Service {
             String address = device.getAddress();
             Log.d(TAG, "onConnectionStateChange (" + address + ") " + newState + " status: " + status);
 
-            try {
-                switch (newState) {
-                case BluetoothProfile.STATE_CONNECTED:
-                    broadcastUpdate(ACTION_GATT_CONNECTED, address, status);
-                    break;
-                case BluetoothProfile.STATE_DISCONNECTED:
-                    broadcastUpdate(ACTION_GATT_DISCONNECTED, address, status);
-                    break;
-                default:
-                    Log.e(TAG, "New state not processed: " + newState);
-                    break;
-                }
-            } catch (NullPointerException e) {
-                e.printStackTrace();
+            switch (newState) {
+            case BluetoothProfile.STATE_CONNECTED:
+                broadcastUpdate(ACTION_GATT_CONNECTED, address, status);
+                break;
+            case BluetoothProfile.STATE_DISCONNECTED:
+                broadcastUpdate(ACTION_GATT_DISCONNECTED, address, status);
+                break;
+            default:
+                Log.e(TAG, "New state not processed: " + newState);
+                break;
             }
         }
 
@@ -123,23 +120,24 @@ public class BluetoothLeService extends Service {
 
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            waitForResponseLatch.countDown();
             broadcastUpdate(ACTION_DATA_READ, characteristic, status);
         }
 
         @Override
         public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            waitForResponseLatch.countDown();
             broadcastUpdate(ACTION_DATA_WRITE, characteristic, status);
         }
 
         @Override
         public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
-            mBusy = false;
             Log.i(TAG, "onDescriptorRead");
         }
 
         @Override
         public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
-            mBusy = false;
+            waitForResponseLatch.countDown();
             Log.i(TAG, "onDescriptorWrite");
         }
     };
@@ -149,7 +147,6 @@ public class BluetoothLeService extends Service {
         intent.putExtra(EXTRA_ADDRESS, address);
         intent.putExtra(EXTRA_STATUS, status);
         sendBroadcast(intent);
-        mBusy = false;
     }
 
     private void broadcastUpdate(final String action, final BluetoothGattCharacteristic characteristic, final int status) {
@@ -158,7 +155,6 @@ public class BluetoothLeService extends Service {
         intent.putExtra(EXTRA_DATA, characteristic.getValue());
         intent.putExtra(EXTRA_STATUS, status);
         sendBroadcast(intent);
-        mBusy = false;
     }
 
     private boolean checkGatt() {
@@ -170,13 +166,7 @@ public class BluetoothLeService extends Service {
             Log.w(TAG, "BluetoothGatt not initialized");
             return false;
         }
-
-        if (mBusy) {
-            Log.w(TAG, "LeService busy");
-            return false;
-        }
         return true;
-
     }
 
     /**
@@ -268,79 +258,50 @@ public class BluetoothLeService extends Service {
     public void readCharacteristic(BluetoothGattCharacteristic characteristic) {
         if (!checkGatt())
             return;
-        mBusy = true;
+        
+        waitForResponseLatch = new CountDownLatch(1);
+        
         mBluetoothGatt.readCharacteristic(characteristic);
+        
+        // TODO: timeout
+        try {
+            waitForResponseLatch.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public boolean writeCharacteristic(BluetoothGattCharacteristic characteristic, byte b) {
         if (!checkGatt())
             return false;
 
-        byte[] val = new byte[1];
-        val[0] = b;
-        characteristic.setValue(val);
+        byte[] value = new byte[1];
+        value[0] = b;
+        characteristic.setValue(value);
 
-        mBusy = true;
-        return mBluetoothGatt.writeCharacteristic(characteristic);
+        waitForResponseLatch = new CountDownLatch(1);
+        
+        mBluetoothGatt.writeCharacteristic(characteristic);
+
+        // TODO: Timeout
+        try {
+            waitForResponseLatch.await(); // Block until the write is confirmed
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        
+        return true;
     }
-
-    public boolean writeCharacteristic(BluetoothGattCharacteristic characteristic, boolean b) {
-        if (!checkGatt())
-            return false;
-
-        byte[] val = new byte[1];
-
-        val[0] = (byte) (b ? 1 : 0);
-        characteristic.setValue(val);
-        mBusy = true;
-        return mBluetoothGatt.writeCharacteristic(characteristic);
-    }
-
-    public boolean writeCharacteristic(BluetoothGattCharacteristic characteristic) {
-        if (!checkGatt())
-            return false;
-
-        mBusy = true;
-        return mBluetoothGatt.writeCharacteristic(characteristic);
-    }
-
+    
     /**
-     * Retrieves the number of GATT services on the connected device. This
-     * should be invoked only after {@code BluetoothGatt#discoverServices()}
-     * completes successfully.
-     * 
-     * @return A {@code integer} number of supported services.
-     */
-    public int getNumServices() {
-        if (mBluetoothGatt == null)
-            return 0;
-
-        return mBluetoothGatt.getServices().size();
-    }
-
-    /**
-     * Retrieves a list of supported GATT services on the connected device. This
-     * should be invoked only after {@code BluetoothGatt#discoverServices()}
-     * completes successfully.
-     * 
-     * @return A {@code List} of supported services.
-     */
-    public List<BluetoothGattService> getSupportedGattServices() {
-        if (mBluetoothGatt == null)
-            return null;
-
-        return mBluetoothGatt.getServices();
-    }
-
-    /**
-     * Enables or disables notification on a give characteristic.
+     * Enables or disables notification on a given characteristic.
      * 
      * @param characteristic
      *            Characteristic to act on.
      * @param enabled
      *            If true, enable notification. False otherwise.
      */
-    public boolean setCharacteristicNotification(BluetoothGattCharacteristic characteristic, boolean enable) {
+    public boolean setNotificationCharacteristic(BluetoothGattCharacteristic characteristic, boolean enable) {
         if (!checkGatt())
             return false;
 
@@ -360,20 +321,19 @@ public class BluetoothLeService extends Service {
             Log.i(TAG, "disable notification");
             clientConfig.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
         }
-
-        mBusy = true;
-        return mBluetoothGatt.writeDescriptor(clientConfig);
-    }
-
-    public boolean isNotificationEnabled(BluetoothGattCharacteristic characteristic) {
-        if (!checkGatt())
-            return false;
-
-        BluetoothGattDescriptor clientConfig = characteristic.getDescriptor(GattInfo.CLIENT_CHARACTERISTIC_CONFIG);
-        if (clientConfig == null)
-            return false;
-
-        return clientConfig.getValue() == BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE;
+        waitForResponseLatch = new CountDownLatch(1);
+        
+        mBluetoothGatt.writeDescriptor(clientConfig);
+        
+        // TODO: timeout
+        try {
+            waitForResponseLatch.await();
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        return true;
     }
 
     /**
@@ -460,17 +420,6 @@ public class BluetoothLeService extends Service {
         }
     }
 
-    public int numConnectedDevices() {
-        int n = 0;
-
-        if (mBluetoothGatt != null) {
-            List<BluetoothDevice> devList;
-            devList = mBluetoothManager.getConnectedDevices(BluetoothProfile.GATT);
-            n = devList.size();
-        }
-        return n;
-    }
-
     //
     // Utility functions
     //
@@ -487,19 +436,6 @@ public class BluetoothLeService extends Service {
     }
 
     public boolean waitIdle(int i) {
-        i /= 10;
-        while (--i > 0) {
-            if (mBusy)
-                try {
-                    Thread.sleep(10);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            else
-                break;
-        }
-
-        return i > 0;
+        return true;
     }
-
 }
