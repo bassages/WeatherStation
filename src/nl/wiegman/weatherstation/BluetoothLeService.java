@@ -282,10 +282,8 @@ public class BluetoothLeService extends Service {
             } else {
                 // Enable remotely ...
                 if (enable) {
-                    Log.i(TAG, "enable notification");
                     clientConfig.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
                 } else {
-                    Log.i(TAG, "disable notification");
                     clientConfig.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
                 }
 

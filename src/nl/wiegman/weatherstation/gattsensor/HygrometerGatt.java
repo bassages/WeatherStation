@@ -39,7 +39,7 @@ public class HygrometerGatt extends AbstractGattSensor {
         float humidity = getHumidity(value);
         float temperature = getAmbientTemperature(value);
         
-        Log.i(this.getClass().getSimpleName(), "Ambient temperature from hygrometer sensor: " + temperature);
+//        Log.i(this.getClass().getSimpleName(), "Ambient temperature from hygrometer sensor: " + temperature);
         
         return new SensorData(humidity, temperature, 0);
     }

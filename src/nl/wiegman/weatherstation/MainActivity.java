@@ -148,6 +148,12 @@ public class MainActivity extends Activity {
             break;
         }
     }
+    
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.i(TAG, "onPause()");
+    }
 
     @Override
     protected void onStop() {
