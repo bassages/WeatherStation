@@ -34,6 +34,7 @@
  **************************************************************************************************/
 package nl.wiegman.weatherstation;
 
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -60,6 +61,8 @@ public class BluetoothLeService extends Service {
     private static final String TAG = BluetoothLeService.class.getSimpleName();
     private static BluetoothLeService mThis = null;
 
+    private static final UUID CLIENT_CHARACTERISTIC_CONFIG = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
+    
     public final static String ACTION_GATT_CONNECTED = "ti.android.ble.common.ACTION_GATT_CONNECTED";
     public final static String ACTION_GATT_DISCONNECTED = "ti.android.ble.common.ACTION_GATT_DISCONNECTED";
     public final static String ACTION_GATT_SERVICES_DISCOVERED = "ti.android.ble.common.ACTION_GATT_SERVICES_DISCOVERED";
@@ -276,7 +279,7 @@ public class BluetoothLeService extends Service {
             Log.w(TAG, "setCharacteristicNotification failed");
             return false;
         } else {            
-            BluetoothGattDescriptor clientConfig = characteristic.getDescriptor(GattInfo.CLIENT_CHARACTERISTIC_CONFIG);
+            BluetoothGattDescriptor clientConfig = characteristic.getDescriptor(CLIENT_CHARACTERISTIC_CONFIG);
             if (clientConfig == null) {
                 return false;
             } else {
