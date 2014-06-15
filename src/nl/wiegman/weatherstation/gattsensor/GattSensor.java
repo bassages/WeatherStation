@@ -1,4 +1,4 @@
-package nl.wiegman.weatherstation.sensor;
+package nl.wiegman.weatherstation.gattsensor;
 
 import java.util.UUID;
 
@@ -12,13 +12,17 @@ public interface GattSensor {
      * */
     byte getEnableSensorCode();
 
+    /**
+     * @return the code which, when written to the configuration characteristic,
+     *         turns off the sensor.
+     * */
+    byte getDisableSensorCode();
+
     UUID getService();
 
     abstract UUID getData();
 
     abstract UUID getConfig();
-
-    byte getDisableSensorCode();
 
     void calibrate();
 }

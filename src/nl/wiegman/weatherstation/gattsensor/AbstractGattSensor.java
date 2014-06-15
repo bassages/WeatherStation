@@ -1,13 +1,13 @@
-package nl.wiegman.weatherstation.sensor;
+package nl.wiegman.weatherstation.gattsensor;
 
 import java.util.UUID;
 
 public abstract class AbstractGattSensor implements GattSensor {
 
     private final UUID service, data, config;
+    
     public static final byte DISABLE_SENSOR_CODE = 0;
     public static final byte ENABLE_SENSOR_CODE = 1;
-    public static final byte CALIBRATE_SENSOR_CODE = 2;
 
     @Override
     public abstract SensorData convert(byte[] value);

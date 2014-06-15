@@ -37,25 +37,23 @@ package nl.wiegman.weatherstation;
 import android.bluetooth.BluetoothDevice;
 
 public class BleDeviceInfo {
-  // Data
-  private BluetoothDevice mBtDevice;
-  private int mRssi;
+    private BluetoothDevice bluetoothDevice;
+    private int rssi;
 
-  public BleDeviceInfo(BluetoothDevice device, int rssi) {
-    mBtDevice = device;
-    mRssi = rssi;
-  }
+    public BleDeviceInfo(BluetoothDevice bluetoothDevice, int rssi) {
+        this.bluetoothDevice = bluetoothDevice;
+        this.rssi = rssi;
+    }
 
-  public BluetoothDevice getBluetoothDevice() {
-    return mBtDevice;
-  }
+    public BluetoothDevice getBluetoothDevice() {
+        return bluetoothDevice;
+    }
 
-  public int getRssi() {
-    return mRssi;
-  }
+    public int getRssi() {
+        return rssi;
+    }
 
-  public void updateRssi(int rssiValue) {
-    mRssi = rssiValue;
-  }
-
+    public void updateRssi(int rssiValue) {
+        rssi = rssiValue;
+    }
 }
