@@ -20,9 +20,9 @@ public interface GattSensor {
 
     UUID getService();
 
-    abstract UUID getData();
+    UUID getData();
 
-    abstract UUID getConfig();
+    UUID getConfig();
 
     void calibrate();
 }
