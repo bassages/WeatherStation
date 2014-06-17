@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" 
+    android:orderingFromXml="true"
+    android:persistent="true">
+    
+    <ListPreference
+        android:key="@string/preference_temperature_unit_key"
+        android:title="@string/preference_temperature_unit_title"
+        android:dialogTitle="@string/preference_temperature_unit_title"
+        android:entries="@array/preference_temperature_unit_entries"
+        android:entryValues="@array/preference_temperature_unit_entries"
+        android:defaultValue="@string/preference_temperature_unit_default_value" 
+        android:summary="@string/preference_temperature_unit_summary"/>
+
+</PreferenceScreen>

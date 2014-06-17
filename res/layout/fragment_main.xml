@@ -11,7 +11,7 @@
         android:paddingLeft="@dimen/activity_horizontal_margin"
         android:paddingRight="@dimen/activity_horizontal_margin"
         android:paddingTop="@dimen/activity_vertical_margin"
-        tools:context="nl.wiegman.weatherstation.MainActivity$PlaceholderFragment" >
+        tools:context="nl.wiegman.weatherstation.SensorDataFragment" >
 
         <ImageView
             android:id="@+id/temperatureImage"
@@ -96,7 +96,7 @@
             android:layout_height="wrap_content"
             android:layout_alignRight="@+id/temperatureValue"
             android:layout_alignTop="@+id/temperatureLabel"
-            android:text="@string/temperature_unit_label_degree_celcius"
+            android:text="@string/temperature_unit_degree_celcius"
             android:textAppearance="?android:attr/textAppearanceMedium" />
 
         <TextView

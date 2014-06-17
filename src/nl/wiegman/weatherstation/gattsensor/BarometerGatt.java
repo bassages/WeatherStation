@@ -56,36 +56,39 @@ public class BarometerGatt extends AbstractGattSensor {
     
     @Override
     public SensorData convert(final byte[] value) {
-
+        SensorData sensorData = null;
+        
         if (calibrationCoefficients == null) {
             Log.w("Custom", "Data notification arrived for barometer before it was calibrated.");
-            return new SensorData(0, 0, 0);
-        }
-
-        final int[] c; // Calibration coefficients
-        final Integer t_r; // Temperature raw value from sensor
-        final Double t_a;   // Temperature actual value in unit centi degrees celsius
-        final Integer p_r; // Pressure raw value from sensor
-        final Double S; // Interim value in calculation
-        final Double O; // Interim value in calculation
-        final Double p_a; // Pressure actual value in unit Pascal.
-
-        c = new int[calibrationCoefficients.size()];
-        for (int i = 0; i < calibrationCoefficients.size(); i++) {
-            c[i] = calibrationCoefficients.get(i);
-        }
-
-        t_r = shortSignedAtOffset(value, 0);
-        p_r = shortUnsignedAtOffset(value, 2);
-
-        t_a = ((100 * (c[0] * t_r / pow(2,8) + c[1] * pow(2,6))) / pow(2,16)) / 100;
-        S = c[2] + c[3] * t_r / pow(2,17) + ((c[4] * t_r / pow(2,15)) * t_r) / pow(2,19);
-        O = c[5] * pow(2,14) + c[6] * t_r / pow(2,3) + ((c[7] * t_r / pow(2,15)) * t_r) / pow(2,4);
-        p_a = ((S * p_r + O) / pow(2,14)) / 100;
-
+            sensorData = new SensorData(0, 0, 0);
+        } else {
+            final int[] c; // Calibration coefficients
+            final Integer t_r; // Temperature raw value from sensor
+            final Double t_a;   // Temperature actual value in unit centi degrees celsius
+            final Integer p_r; // Pressure raw value from sensor
+            final Double S; // Interim value in calculation
+            final Double O; // Interim value in calculation
+            final Double p_a; // Pressure actual value in unit Pascal.
+            
+            c = new int[calibrationCoefficients.size()];
+            for (int i = 0; i < calibrationCoefficients.size(); i++) {
+                c[i] = calibrationCoefficients.get(i);
+            }
+            
+            t_r = shortSignedAtOffset(value, 0);
+            p_r = shortUnsignedAtOffset(value, 2);
+            
+            t_a = ((100 * (c[0] * t_r / pow(2,8) + c[1] * pow(2,6))) / pow(2,16)) / 100;
+            S = c[2] + c[3] * t_r / pow(2,17) + ((c[4] * t_r / pow(2,15)) * t_r) / pow(2,19);
+            O = c[5] * pow(2,14) + c[6] * t_r / pow(2,3) + ((c[7] * t_r / pow(2,15)) * t_r) / pow(2,4);
+            p_a = (S * p_r + O) / pow(2,14);
+            
+            double pressureInHpa = p_a / 100;
 //        Log.i(this.getClass().getSimpleName(), "Ambient temperature from barometer sensor: " + t_a);
-        
-        return new SensorData(p_a, t_a, 0);
+            
+            sensorData = new SensorData(pressureInHpa, t_a, 0);
+        }
+        return sensorData;
     }
     
     /* Calibrating the barometer includes

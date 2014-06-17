@@ -1,9 +1,7 @@
 package nl.wiegman.weatherstation;
 
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import nl.wiegman.weatherstation.gattsensor.BarometerGatt;
 import nl.wiegman.weatherstation.gattsensor.GattSensor;
@@ -11,12 +9,9 @@ import nl.wiegman.weatherstation.gattsensor.HygrometerGatt;
 import nl.wiegman.weatherstation.gattsensor.SensorData;
 import nl.wiegman.weatherstation.gattsensor.ThermometerGatt;
 import android.app.Activity;
-import android.app.Fragment;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
-import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -28,17 +23,13 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
     // Tag for logging
-    private static final String TAG = MainActivity.class.getSimpleName();
+    private static final String LOG_TAG = MainActivity.class.getSimpleName();
 
     // Requests to other activities
     private static final int REQUEST_TO_ENABLE_BLUETOOTHE_LE = 0;
@@ -55,19 +46,14 @@ public class MainActivity extends Activity {
 
     private volatile BleDeviceInfo connectedDeviceInfo;
     
-    private static final ThermometerGatt thermometerGatt = new ThermometerGatt();
-    private static final DecimalFormat temperatureValueTexviewFormat = new DecimalFormat("0.0;-0.0");
-    private TextView temperatureValueTextview = null;
+    private SensorDataFragment sensorDataFragment;
     
+    private static final ThermometerGatt thermometerGatt = new ThermometerGatt();
     private static final HygrometerGatt hygrometerGatt = new HygrometerGatt();
-    private static final DecimalFormat humidityValueTexviewFormat = new DecimalFormat("0.0;0.0");
-    private TextView humidityValueTextview = null;
-
     private static final BarometerGatt barometerGatt = new BarometerGatt();
-    private static final DecimalFormat airPressureValueTextViewFormat = new DecimalFormat("0;0");
-    private TextView airPressureValueTextview = null;
     
     private static final List<GattSensor> gattSensors = new ArrayList<GattSensor>();
+
     static {
         gattSensors.add(barometerGatt);
         gattSensors.add(hygrometerGatt);
@@ -78,16 +64,21 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        Log.i(LOG_TAG, "onCreate(...)");
+        
         setContentView(R.layout.activity_main);
+        
+        String sensorDataFragmentTag = SensorDataFragment.class.getSimpleName();
         if (savedInstanceState == null) {
-            getFragmentManager().beginTransaction().add(R.id.container, new PlaceholderFragment()).commit();
-        }
+            // Use this check to determine whether BLE is supported on the device.
+            // Then you can selectively disable BLE-related features.
+            if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
+                Toast.makeText(this, R.string.ble_not_supported, Toast.LENGTH_LONG).show();
+                finish();
+            }
 
-        // Use this check to determine whether BLE is supported on the device.
-        // Then you can selectively disable BLE-related features.
-        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
-            Toast.makeText(this, R.string.ble_not_supported, Toast.LENGTH_LONG).show();
-            finish();
+            sensorDataFragment = new SensorDataFragment();
+            getFragmentManager().beginTransaction().replace(R.id.container, sensorDataFragment, sensorDataFragmentTag).commit();
         }
 
         // Initializes a Bluetooth adapter. For API level 18 and above, get a
@@ -105,10 +96,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
-         
-        temperatureValueTextview = (TextView) findViewById(R.id.temperatureValue);
-        humidityValueTextview = (TextView) findViewById(R.id.humidityValue);
-        airPressureValueTextview = (TextView) findViewById(R.id.airPressureValue);
+        Log.i(LOG_TAG, "onStart()");
         
         if (bluetoothAdapter.isEnabled()) {
             startScanningForSensortag();
@@ -137,7 +125,7 @@ public class MainActivity extends Activity {
             }
             break;
         default:
-            Log.e(TAG, "Unknown request code");
+            Log.e(LOG_TAG, "Unknown request code");
             break;
         }
     }
@@ -145,25 +133,32 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
-        Log.i(TAG, "onPause()");
+        Log.i(LOG_TAG, "onPause()");
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        Log.i(TAG, "onStop()");
+        Log.i(LOG_TAG, "onStop()");
+        releaseResources();
     }
     
     @Override
     protected void onResume() {
         super.onResume();
-        Log.i(TAG, "onResume()");
+        Log.i(LOG_TAG, "onResume()");
     }
     
     @Override
     protected void onRestart() {
         super.onRestart();
-        Log.i(TAG, "onRestart()");
+        Log.i(LOG_TAG, "onRestart()");
+    }
+    
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Log.i(LOG_TAG, "onDestroy()");
     }
     
     @Override
@@ -185,27 +180,6 @@ public class MainActivity extends Activity {
             return true;
         }
         return super.onOptionsItemSelected(item);
-    }
-
-    /**
-     * A placeholder fragment containing a simple view.
-     */
-    public static class PlaceholderFragment extends Fragment {
-
-        public PlaceholderFragment() {
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-            return rootView;
-        }
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        releaseResources();
     }
 
     private void startScanningForSensortag() {
@@ -240,7 +214,7 @@ public class MainActivity extends Activity {
                     finish();
                     break;
                 default:
-                    Log.w(TAG, "Action STATE CHANGED not processed ");
+                    Log.w(LOG_TAG, "Action STATE CHANGED not processed ");
                     break;
                 }
             } else if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
@@ -257,17 +231,17 @@ public class MainActivity extends Activity {
                 }
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
                 connectedDeviceInfo = null;
-                clearAllSensorValues();
+                sensorDataFragment.clearAllSensorValues();
                 
                 int status = intent.getIntExtra(BluetoothLeService.EXTRA_STATUS, BluetoothGatt.GATT_FAILURE);
                 if (status == BluetoothGatt.GATT_SUCCESS) {
-                    Log.i(TAG, "Disconnected, trying to reconnect...");
+                    Log.i(LOG_TAG, "Disconnected, trying to reconnect...");
                     reconnect();
                 } else {
                     Toast.makeText(thisContext, "Disconnect failed. Status: " + status + status, Toast.LENGTH_LONG).show();
                 }
             } else {
-                Log.w(TAG, "Unknown action: " + action);
+                Log.w(LOG_TAG, "Unknown action: " + action);
             }
         }
     };
@@ -296,7 +270,9 @@ public class MainActivity extends Activity {
         if (sensortagUpdateReceiver != null) {
             unregisterReceiver(sensortagUpdateReceiver);
             sensortagUpdateReceiver = null;
-        }  
+        }
+        
+        connectedDeviceInfo = null;
     }
 
     // Code to manage Service life cycle.
@@ -305,10 +281,10 @@ public class MainActivity extends Activity {
         public void onServiceConnected(ComponentName componentName, IBinder service) {
             bluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
             if (!bluetoothLeService.initialize()) {
-                Log.e(TAG, "Unable to initialize BluetoothLeService");
+                Log.e(LOG_TAG, "Unable to initialize BluetoothLeService");
                 finish();
             } else {
-                Log.i(TAG, "BluetoothLeService connected");
+                Log.i(LOG_TAG, "BluetoothLeService connected");
                 if (connectedDeviceInfo != null) {
                     bluetoothLeService.connect(connectedDeviceInfo.getBluetoothDevice() .getAddress());
                 }
@@ -317,39 +293,15 @@ public class MainActivity extends Activity {
 
         public void onServiceDisconnected(ComponentName componentName) {
             bluetoothLeService = null;
-            Log.i(TAG, "BluetoothLeService disconnected");
+            Log.i(LOG_TAG, "BluetoothLeService disconnected");
         }
     };
-
-    private void enableSensor(GattSensor sensor, boolean enable) {
-        UUID servUuid = sensor.getService();
-        UUID confUuid = sensor.getConfig();
-
-        BluetoothGattService serv = BluetoothLeService.getBluetoothGatt().getService(servUuid);
-        BluetoothGattCharacteristic characteristic = serv.getCharacteristic(confUuid);
-        byte value = enable ? sensor.getEnableSensorCode() : sensor.getDisableSensorCode();
-        
-        BluetoothLeService.getInstance().initiateWriteCharacteristic(characteristic, value);
-    }
-    
-    private void enableNotifications(GattSensor sensor, boolean enable) {
-        UUID servUuid = sensor.getService();
-        UUID dataUuid = sensor.getData();
-        
-        BluetoothGattService service = BluetoothLeService.getBluetoothGatt().getService(servUuid);
-        BluetoothGattCharacteristic characteristic = service.getCharacteristic(dataUuid);
-
-        boolean setNotificationCharacteristicSuccesfull = BluetoothLeService.getInstance().initiateNotificationCharacteristic(characteristic, enable);
-        if (!setNotificationCharacteristicSuccesfull) {
-            Log.e(TAG, "Failed to setNotificationCharacteristic");
-        }
-    }
     
     private void discoverServices() {
         if (BluetoothLeService.getBluetoothGatt().discoverServices()) {
-            Log.i(TAG, "Start service discovery");
+            Log.i(LOG_TAG, "Start service discovery");
         } else {
-            Log.e(TAG, "Service discovery start failed");
+            Log.e(LOG_TAG, "Service discovery start failed");
         }
     }
 
@@ -361,7 +313,7 @@ public class MainActivity extends Activity {
 
             if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 if (status == BluetoothGatt.GATT_SUCCESS) {
-                    Log.i(TAG, "Services discovered");
+                    Log.i(LOG_TAG, "Services discovered");
 
                     startSensorDataUpdates();
                     
@@ -375,7 +327,7 @@ public class MainActivity extends Activity {
                 onCharacteristicChanged(uuidStr, value);
             } else if (BluetoothLeService.ACTION_DATA_WRITE.equals(action)) {
                 String uuidStr = intent.getStringExtra(BluetoothLeService.EXTRA_UUID);
-                Log.d(TAG, "onCharacteristicWrite: " + uuidStr);
+                Log.d(LOG_TAG, "onCharacteristicWrite: " + uuidStr);
             } else if (BluetoothLeService.ACTION_DATA_READ.equals(action)) {
                 String uuidStr = intent.getStringExtra(BluetoothLeService.EXTRA_UUID);
                 byte[] value = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
@@ -383,15 +335,15 @@ public class MainActivity extends Activity {
             }
 
             if (status != BluetoothGatt.GATT_SUCCESS) {
-                Log.e(TAG, "GATT error code: " + status);
+                Log.e(LOG_TAG, "GATT error code: " + status);
             }
         }
 
         private void startSensorDataUpdates() {
             for (GattSensor gattSensor: gattSensors) {
                 gattSensor.calibrate();
-                enableSensor(gattSensor, true);
-                enableNotifications(gattSensor, true);
+                gattSensor.enable();
+                gattSensor.enableNotifications();
             }
         }
     };
@@ -415,36 +367,19 @@ public class MainActivity extends Activity {
      * Handle changes in sensor values
      */
     public void onCharacteristicChanged(String uuidStr, byte[] rawValue) {
-        SensorData sensorData;
-        String textviewValue;
-        
-        if (uuidStr.equals(thermometerGatt.getData().toString())) {
-            sensorData = thermometerGatt.convert(rawValue);
-            textviewValue = temperatureValueTexviewFormat.format(sensorData.x);
-            temperatureValueTextview.setText(textviewValue);
-            
-        } else if (uuidStr.equals(hygrometerGatt.getData().toString())) {
-            sensorData = hygrometerGatt.convert(rawValue);
-            textviewValue = humidityValueTexviewFormat.format(sensorData.x);
-            humidityValueTextview.setText(textviewValue);
-            
-        } else if (uuidStr.equals(barometerGatt.getData().toString())) {
-            sensorData = barometerGatt.convert(rawValue);
-            textviewValue = airPressureValueTextViewFormat.format(sensorData.x);
-            airPressureValueTextview.setText(textviewValue);
-            
-            textviewValue = temperatureValueTexviewFormat.format(sensorData.y);
-            temperatureValueTextview.setText(textviewValue);
-            
+        if (uuidStr.equals(thermometerGatt.getDataUuid().toString())) {
+            SensorData sensorData = thermometerGatt.convert(rawValue);
+            sensorDataFragment.setTemperature(sensorData.getX());
+        } else if (uuidStr.equals(hygrometerGatt.getDataUuid().toString())) {
+            SensorData sensorData = hygrometerGatt.convert(rawValue);
+            sensorDataFragment.setHumidity(sensorData.getX());
+        } else if (uuidStr.equals(barometerGatt.getDataUuid().toString())) {
+            SensorData sensorData = barometerGatt.convert(rawValue);
+            sensorDataFragment.setAirPressure(sensorData.getX());
+            sensorDataFragment.setTemperature(sensorData.getY());
         } else {
-            Log.w(TAG, "Unknown uuid: " + uuidStr);
+            Log.e(LOG_TAG, "Unknown uuid: " + uuidStr);
         }
-    }
-    
-    private void clearAllSensorValues() {
-        temperatureValueTextview.setText(R.string.initial_temperature_value);
-        humidityValueTextview.setText(R.string.initial_humidity_value);
-        airPressureValueTextview.setText(R.string.initial_air_pressure_value);
     }
 
     // Device scan callback.
@@ -481,7 +416,7 @@ public class MainActivity extends Activity {
         startService(bindIntent);
         boolean serviceSucessfullyBound = bindService(bindIntent, serviceConnection, Context.BIND_AUTO_CREATE);
         if (serviceSucessfullyBound)
-            Log.d(TAG, "BluetoothLeService was sucessfully bound");
+            Log.d(LOG_TAG, "BluetoothLeService was sucessfully bound");
         else {
             Toast.makeText(this, "Bind to BluetoothLeService failed", Toast.LENGTH_LONG).show();
             finish();

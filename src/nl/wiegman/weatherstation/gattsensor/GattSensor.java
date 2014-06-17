@@ -18,11 +18,19 @@ public interface GattSensor {
      * */
     byte getDisableSensorCode();
 
-    UUID getService();
+    UUID getServiceUuid();
 
-    UUID getData();
+    UUID getDataUuid();
 
-    UUID getConfig();
+    UUID getConfigUuid();
 
+    void enable();
+    
+    void disable();
+    
     void calibrate();
+
+    void enableNotifications();
+
+    void disableNotifications();
 }
