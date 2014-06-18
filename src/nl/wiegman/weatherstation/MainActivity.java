@@ -90,7 +90,10 @@ public class MainActivity extends Activity {
     protected void onStart() {
         super.onStart();
         Log.i(LOG_TAG, "onStart()");
-        
+        initialize();
+    }
+
+    private void initialize() {
         if (connectedDeviceInfo == null) {
             if (bluetoothAdapter.isEnabled()) {
                 startScanningForSensortag();
@@ -149,6 +152,8 @@ public class MainActivity extends Activity {
             Intent intent = new Intent(this, Settings.class);
             startActivity(intent);
             return true;
+        } else if (id == R.id.exit) {
+            finish();
         }
         return super.onOptionsItemSelected(item);
     }
@@ -181,11 +186,10 @@ public class MainActivity extends Activity {
                     startBluetoothLeService();
                     break;
                 case BluetoothAdapter.STATE_OFF:
-                    Toast.makeText(context, R.string.app_closing, Toast.LENGTH_LONG).show();
                     finish();
                     break;
                 default:
-                    Log.w(LOG_TAG, "Action STATE CHANGED not processed ");
+                    Log.w(LOG_TAG, "Action STATE CHANGED not processed: " + bluetoothAdapter.getState());
                     break;
                 }
             } else if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
@@ -220,7 +224,7 @@ public class MainActivity extends Activity {
     
     private void reconnect() {
         releaseConnectionAndResources();
-        startScanningForSensortag();
+        initialize();
     }
     
     private void releaseConnectionAndResources() {
