@@ -4,8 +4,6 @@ import static java.util.UUID.fromString;
 
 import java.util.UUID;
 
-import android.util.Log;
-
 /**
  * Sensirion SHT21 @ U6 Two types of data are obtained from the Humidity sensor, relative humidity and ambient temperature
  * 

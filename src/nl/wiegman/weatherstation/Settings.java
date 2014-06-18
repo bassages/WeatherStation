@@ -1,10 +1,10 @@
 package nl.wiegman.weatherstation;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.preference.PreferenceFragment;
 import android.support.v4.app.NavUtils;
-import android.view.Menu;
 import android.view.MenuItem;
 
 public class Settings extends Activity {
@@ -15,7 +15,7 @@ public class Settings extends Activity {
 		setContentView(R.layout.activity_settings);
 
 		if (savedInstanceState == null) {
-			getFragmentManager().beginTransaction().add(R.id.container, new PrefsFragment()).commit();
+			getFragmentManager().beginTransaction().add(R.id.activity_settings, new PrefsFragment()).commit();
 		}
 	}
 	
@@ -28,29 +28,15 @@ public class Settings extends Activity {
             addPreferencesFromResource(R.xml.preferences);
         }
     }
-	
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.settings, menu);
-		return true;
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		// Handle action bar item clicks here. The action bar will
-		// automatically handle clicks on the Home/Up button, so long
-		// as you specify a parent activity in AndroidManifest.xml.
-		int id = item.getItemId();
-		
-		switch (item.getItemId()) {
-	    // Respond to the action bar's Up/Home button
-	    case android.R.id.home:
-	        NavUtils.navigateUpFromSameTask(this);
-	        return true;
-	    case R.id.action_settings:
-	        return true;
-	    }
-		return super.onOptionsItemSelected(item);
-	}
+    
+    @Override
+    public boolean onMenuItemSelected(int featureId, MenuItem item) {
+        switch (item.getItemId()) {
+        case android.R.id.home:
+            Intent intent = NavUtils.getParentActivityIntent(this); 
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP); 
+            NavUtils.navigateUpTo(this, intent);
+        }
+        return true;
+    }
 }

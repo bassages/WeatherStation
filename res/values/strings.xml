@@ -7,15 +7,21 @@
     <string name="initial_temperature_value">-</string>
     <string name="initial_air_pressure_value">-</string>
     <string name="initial_humidity_value">-</string>
+
     <string name="temperature_label">Temperature</string>
     <string name="air_pressure_label">Air pressure</string>
     <string name="humidity_label">Humidity</string>
+    
     <string name="temperature_unit_degree_celcius">\u2103</string>
     <string name="temperature_unit_degree_fahrenheit">\u2109</string>
     <string name="air_pressure_unit_label">hPa</string>
     <string name="humidity_unit_label">%</string>
-    <string name="title_activity_settings">Weather station - Settings</string>
     
+    <string name="temperature_icon_description">Temperature icon</string>
+    <string name="air_pressure_icon_description">Air pressure icon</string>
+    <string name="humidity_icon_description">Humidity icon</string>
+    
+    <string name="title_activity_settings">Weather station - Settings</string>
     <string name="preference_temperature_unit_title">Temperature</string>
     <string name="preference_temperature_unit_summary">Select the unit in which temperatures are displayed</string>
     <string name="preference_temperature_unit_key">temperatureUnit</string>

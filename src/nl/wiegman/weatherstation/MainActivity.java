@@ -28,13 +28,10 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
-    // Tag for logging
     private static final String LOG_TAG = MainActivity.class.getSimpleName();
 
     // Requests to other activities
     private static final int REQUEST_TO_ENABLE_BLUETOOTHE_LE = 0;
-
-    private Context thisContext = this;
 
     private Intent bindIntent;
     private BluetoothManager bluetoothManager;
@@ -44,9 +41,7 @@ public class MainActivity extends Activity {
     private BroadcastReceiver sensortagUpdateReceiver;
     private BroadcastReceiver bluetoothEventReceiver;
 
-    private volatile BleDeviceInfo connectedDeviceInfo;
-    
-    private SensorDataFragment sensorDataFragment;
+    private volatile BluetoothDeviceInfo connectedDeviceInfo;
     
     private static final ThermometerGatt thermometerGatt = new ThermometerGatt();
     private static final HygrometerGatt hygrometerGatt = new HygrometerGatt();
@@ -68,7 +63,6 @@ public class MainActivity extends Activity {
         
         setContentView(R.layout.activity_main);
         
-        String sensorDataFragmentTag = SensorDataFragment.class.getSimpleName();
         if (savedInstanceState == null) {
             // Use this check to determine whether BLE is supported on the device.
             // Then you can selectively disable BLE-related features.
@@ -77,10 +71,9 @@ public class MainActivity extends Activity {
                 finish();
             }
 
-            sensorDataFragment = new SensorDataFragment();
-            getFragmentManager().beginTransaction().replace(R.id.container, sensorDataFragment, sensorDataFragmentTag).commit();
+            getFragmentManager().beginTransaction().add(R.id.activity_main, new SensorDataFragment()).commit();
         }
-
+        
         // Initializes a Bluetooth adapter. For API level 18 and above, get a
         // reference to BluetoothAdapter through BluetoothManager.
         bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
@@ -98,15 +91,17 @@ public class MainActivity extends Activity {
         super.onStart();
         Log.i(LOG_TAG, "onStart()");
         
-        if (bluetoothAdapter.isEnabled()) {
-            startScanningForSensortag();
-        } else {
-            // Request for the BlueTooth adapter to be turned on
-            Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+        if (connectedDeviceInfo == null) {
+            if (bluetoothAdapter.isEnabled()) {
+                startScanningForSensortag();
+            } else {
+                // Request for the BlueTooth adapter to be turned on
+                Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
 
-            // The next call will (asynchronously) call onActivityResult(...) to
-            // report weather or not the user enabled BlueTooth LE
-            startActivityForResult(enableIntent, REQUEST_TO_ENABLE_BLUETOOTHE_LE);
+                // The next call will (asynchronously) call onActivityResult(...) to
+                // report weather or not the user enabled BlueTooth LE
+                startActivityForResult(enableIntent, REQUEST_TO_ENABLE_BLUETOOTHE_LE);
+            }            
         }
     }
 
@@ -131,34 +126,10 @@ public class MainActivity extends Activity {
     }
     
     @Override
-    protected void onPause() {
-        super.onPause();
-        Log.i(LOG_TAG, "onPause()");
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        Log.i(LOG_TAG, "onStop()");
-        releaseResources();
-    }
-    
-    @Override
-    protected void onResume() {
-        super.onResume();
-        Log.i(LOG_TAG, "onResume()");
-    }
-    
-    @Override
-    protected void onRestart() {
-        super.onRestart();
-        Log.i(LOG_TAG, "onRestart()");
-    }
-    
-    @Override
     public void onDestroy() {
         super.onDestroy();
         Log.i(LOG_TAG, "onDestroy()");
+        releaseConnectionAndResources();
     }
     
     @Override
@@ -224,13 +195,14 @@ public class MainActivity extends Activity {
                     registerReceiver(sensortagUpdateReceiver, createSensorTagUpdateIntentFilter());
                     discoverServices();
                     
-                    Toast.makeText(thisContext, "Sucessfully connected to sensortag", Toast.LENGTH_LONG).show();
+                    Log.i(LOG_TAG, "Sucessfully connected to sensortag");
                 } else {
-                    Toast.makeText(thisContext, "Connecting to the sensortag failed. Status: " + status, Toast.LENGTH_LONG).show();
+                    Toast.makeText(context, "Connecting to the sensortag failed. Status: " + status, Toast.LENGTH_LONG).show();
                     finish();
                 }
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
                 connectedDeviceInfo = null;
+                SensorDataFragment sensorDataFragment = (SensorDataFragment) getFragmentManager().findFragmentById(R.id.activity_main);
                 sensorDataFragment.clearAllSensorValues();
                 
                 int status = intent.getIntExtra(BluetoothLeService.EXTRA_STATUS, BluetoothGatt.GATT_FAILURE);
@@ -238,7 +210,7 @@ public class MainActivity extends Activity {
                     Log.i(LOG_TAG, "Disconnected, trying to reconnect...");
                     reconnect();
                 } else {
-                    Toast.makeText(thisContext, "Disconnect failed. Status: " + status + status, Toast.LENGTH_LONG).show();
+                    Toast.makeText(context, "Disconnect failed. Status: " + status + status, Toast.LENGTH_LONG).show();
                 }
             } else {
                 Log.w(LOG_TAG, "Unknown action: " + action);
@@ -247,11 +219,11 @@ public class MainActivity extends Activity {
     };
     
     private void reconnect() {
-        releaseResources();
+        releaseConnectionAndResources();
         startScanningForSensortag();
     }
     
-    private void releaseResources() {
+    private void releaseConnectionAndResources() {
         stopScanningForBluetoothLeDevices();
         
         if (bluetoothLeService != null) {
@@ -367,6 +339,7 @@ public class MainActivity extends Activity {
      * Handle changes in sensor values
      */
     public void onCharacteristicChanged(String uuidStr, byte[] rawValue) {
+        SensorDataFragment sensorDataFragment = (SensorDataFragment) getFragmentManager().findFragmentById(R.id.activity_main);
         if (uuidStr.equals(thermometerGatt.getDataUuid().toString())) {
             SensorData sensorData = thermometerGatt.convert(rawValue);
             sensorDataFragment.setTemperature(sensorData.getX());
@@ -385,21 +358,15 @@ public class MainActivity extends Activity {
     // Device scan callback.
     // NB! Nexus 4 and Nexus 7 (2012) only provide one scan result per scan
     private BluetoothAdapter.LeScanCallback bluetoothLeScanCallback = new BluetoothAdapter.LeScanCallback() {
-
         public void onLeScan(final BluetoothDevice device, final int rssi, byte[] scanRecord) {
-            runOnUiThread(new Runnable() {
-                public void run() {
-                    if (connectedDeviceInfo == null) {
-                        connectedDeviceInfo = new BleDeviceInfo(device, rssi);
-                        stopScanningForBluetoothLeDevices();
-                        connectToDevice(connectedDeviceInfo);
-                    }
-                }
-            });
+            stopScanningForBluetoothLeDevices();
+            connectToDevice(new BluetoothDeviceInfo(device, rssi));
         }
     };
 
-    private void connectToDevice(BleDeviceInfo device) {
+    private void connectToDevice(BluetoothDeviceInfo deviceInfo) {
+        connectedDeviceInfo = deviceInfo;
+
         // Register the BroadcastReceiver to handle events from BluetoothAdapter and BluetoothLeService
         IntentFilter bluetoothEventFilter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
         bluetoothEventFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
