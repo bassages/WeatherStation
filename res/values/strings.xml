@@ -27,8 +27,10 @@
     <string name="preference_temperature_unit_key">temperatureUnit</string>
     <string name="preference_temperature_unit_default_value">\u2103</string>
     <array name="preference_temperature_unit_entries"><item>\u2103</item><item>\u2109</item></array>
-    
 
+    <string name="preference_alarm_minimum_temperature_enabled_key">minimumTemperatureAlarmEnabled</string>
+    <string name="preference_alarm_minimum_temperature_value_key">minimumTemperatureAlarmValue</string>
+    
     <!-- Messages -->
     <string name="ble_not_supported">BLE is not supported</string>
     <string name="bt_on">Bluetooth was turned  on</string>

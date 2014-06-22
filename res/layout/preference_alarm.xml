@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="230dp"
+    android:layout_height="match_parent" 
+    android:stretchColumns="*" >
+
+    <TableRow
+	    android:layout_marginTop="17dp">
+	    
+	    <CheckBox
+	        android:id="@+id/preference_alarm_minimum_temerature_checkbox"
+	        android:text="Minimum"
+	        android:textSize="18sp" 
+	        android:layout_marginRight="15dp" />
+	
+	    <EditText 
+	        android:id="@+id/preference_alarm_minimum_temperature_value"
+	        android:layout_width="60dp"
+	        android:layout_marginRight="15dp"
+	        android:inputType="numberDecimal|numberSigned|numberSigned"
+	        android:maxLength="5"/>
+	    
+	    <TextView
+	        android:id="@+id/preference_alarm_minimum_temperature_unit_label"
+	        android:layout_marginRight="15dp"
+	        android:text="@string/temperature_unit_degree_celcius"
+	        android:textSize="18sp" />
+
+    </TableRow>
+
+</TableLayout>
