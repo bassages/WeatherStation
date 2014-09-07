@@ -42,7 +42,9 @@ public class AlarmPreference extends DialogPreference implements OnClickListener
         minumumTemperatureCheckBox.setChecked(minimumTemperatureAlarmEnabledPreferenceValue);
         
         if (minimumTemperatureAlarmEnabledPreferenceValue) {
-            minimumTemperatureValueTextView.setText("30.00");
+            String preferenceKeyMinimumTeperatureAlarmValue = getContext().getString(R.string.preference_alarm_minimum_temperature_value_key);
+            Float miniumumTemperatureAlarmValue = preferences.getFloat(preferenceKeyMinimumTeperatureAlarmValue, 0);
+            minimumTemperatureValueTextView.setText(miniumumTemperatureAlarmValue.toString());
         }
         
         minimumCheckboxChanged(minumumTemperatureCheckBox);
@@ -74,17 +76,25 @@ public class AlarmPreference extends DialogPreference implements OnClickListener
             
             boolean minimumTemperatureAlarmEnabled = minumumTemperatureCheckBox.isChecked();
             editor.putBoolean(preferenceKeyMinimumTeperatureAlarmEnabled, minimumTemperatureAlarmEnabled);
-            if (minimumTemperatureAlarmEnabled) {
-                CharSequence minimumTemperatureValueAsString = minimumTemperatureValueTextView.getText();
-                float minimumTemperatureValueAsFloat = Float.parseFloat(minimumTemperatureValueAsString.toString());
-                editor.putFloat(preferenceKeyMinimumTeperatureAlarmValue, minimumTemperatureValueAsFloat);
+
+            CharSequence minimumTemperatureValueAsString = minimumTemperatureValueTextView.getText();
+            if (minimumTemperatureAlarmEnabled && isNotEmpty(minimumTemperatureValueAsString)) {
+               	float minimumTemperatureValueAsFloat = Float.parseFloat(minimumTemperatureValueAsString.toString());
+               	
+               	// TODO: save in SI
+               	editor.putFloat(preferenceKeyMinimumTeperatureAlarmValue, minimumTemperatureValueAsFloat);
             }
             editor.commit();
         }
     }
 
-    @Override
+    private boolean isNotEmpty(CharSequence minimumTemperatureValueAsString) {
+    	return minimumTemperatureValueAsString != null && !"".equals(minimumTemperatureValueAsString.toString().trim());
+	}
+
+	@Override
     public void onClick(View view) {
         minimumCheckboxChanged(view);
     }
+	
 }

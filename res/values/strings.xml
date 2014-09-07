@@ -21,7 +21,7 @@
     <string name="air_pressure_icon_description">Air pressure icon</string>
     <string name="humidity_icon_description">Humidity icon</string>
     
-    <string name="title_activity_settings">Weather station - Settings</string>
+    <string name="title_activity_settings">Weather Station - Settings</string>
     <string name="preference_temperature_unit_title">Temperature</string>
     <string name="preference_temperature_unit_summary">Select the unit in which temperatures are displayed</string>
     <string name="preference_temperature_unit_key">temperatureUnit</string>

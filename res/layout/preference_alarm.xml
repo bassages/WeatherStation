@@ -18,7 +18,8 @@
 	        android:layout_width="60dp"
 	        android:layout_marginRight="15dp"
 	        android:inputType="numberDecimal|numberSigned|numberSigned"
-	        android:maxLength="5"/>
+	        android:maxLength="5"
+	        android:gravity="right"/>
 	    
 	    <TextView
 	        android:id="@+id/preference_alarm_minimum_temperature_unit_label"
