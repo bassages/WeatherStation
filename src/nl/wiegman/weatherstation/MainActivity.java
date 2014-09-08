@@ -93,6 +93,13 @@ public class MainActivity extends Activity {
         initialize();
     }
 
+    @Override
+    protected void onStop() {
+    	super.onStop();
+        Log.i(LOG_TAG, "onStop()");
+        bluetoothAdapter.stopLeScan(bluetoothLeScanCallback);
+    }
+    
     private void initialize() {
         if (connectedDeviceInfo == null) {
             if (bluetoothAdapter.isEnabled()) {
