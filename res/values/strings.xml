@@ -30,6 +30,9 @@
 
     <string name="preference_alarm_minimum_temperature_enabled_key">minimumTemperatureAlarmEnabled</string>
     <string name="preference_alarm_minimum_temperature_value_key">minimumTemperatureAlarmValue</string>
+
+    <string name="preference_alarm_maximum_temperature_enabled_key">maximumTemperatureAlarmEnabled</string>
+    <string name="preference_alarm_maximum_temperature_value_key">maximumTemperatureAlarmValue</string>
     
     <!-- Messages -->
     <string name="ble_not_supported">BLE is not supported</string>

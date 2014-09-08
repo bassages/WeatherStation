@@ -32,11 +32,11 @@ public class SensorDataFragment extends Fragment {
     private TextView airPressureValueTextview;
     
     private void applyPreferences() {
-        setTemperatureUnitBasedOnPreference();
+        setTemperatureUnitLabelBasedOnPreference();
         setTemperature(temperatureInDegreeCelcius);
     }
 
-    private void setTemperatureUnitBasedOnPreference() {
+    private void setTemperatureUnitLabelBasedOnPreference() {
         String preferredTemperatureUnit = getPreferredTemperatureUnit();
         temperatureUnitTextview.setText(preferredTemperatureUnit);
     }
@@ -81,7 +81,7 @@ public class SensorDataFragment extends Fragment {
             
             String fahrenheit = getResources().getString(R.string.temperature_unit_degree_fahrenheit);
             if (temperatureUnitTextview.getText().equals(fahrenheit)) {
-                double temperatureInDegreeFahrenheit = convertCelciusToFahrenheit(temperatureInDegreeCelcius);
+                double temperatureInDegreeFahrenheit = TemperatureUnitConversions.convertCelciusToFahrenheit(temperatureInDegreeCelcius);
                 textviewValue = temperatureValueTexviewFormat.format(temperatureInDegreeFahrenheit);
             } else {
                 textviewValue = temperatureValueTexviewFormat.format(temperatureInDegreeCelcius);                
@@ -112,9 +112,5 @@ public class SensorDataFragment extends Fragment {
         temperatureValueTextview.setText(R.string.initial_temperature_value);
         humidityValueTextview.setText(R.string.initial_humidity_value);
         airPressureValueTextview.setText(R.string.initial_air_pressure_value);
-    }
-    
-    private double convertCelciusToFahrenheit(double degreeCelcius) {
-        return 32 + (degreeCelcius * 9 / 5);
     }
 }

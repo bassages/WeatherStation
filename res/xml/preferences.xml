@@ -12,7 +12,10 @@
         android:defaultValue="@string/preference_temperature_unit_default_value" 
         android:summary="@string/preference_temperature_unit_summary"/>
 
-    <nl.wiegman.weatherstation.preference.AlarmPreference
-        android:title="Temperature alarm" />
+    <nl.wiegman.weatherstation.preference.MinimumTemperatureAlarmPreference
+        android:title="Minimum temperature alarm" />
+
+    <nl.wiegman.weatherstation.preference.MaximumTemperatureAlarmPreference
+        android:title="Maximum temperature alarm" />
     
 </PreferenceScreen>
