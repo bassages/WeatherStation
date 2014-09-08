@@ -1,7 +1,7 @@
 package nl.wiegman.weatherstation.preference;
 
 import nl.wiegman.weatherstation.R;
-import nl.wiegman.weatherstation.util.TemperatureUnitConversions;
+import nl.wiegman.weatherstation.util.TemperatureUnit;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -33,62 +33,25 @@ public abstract class TemperatureAlarmPreference extends DialogPreference implem
 
 	protected abstract int getAlarmTemperaturePreferenceKey();
     
-    @Override
-    protected void onBindDialogView(View view) {
-        super.onBindDialogView(view);
-
-        temperatureAlarmEnabledCheckBox = (CheckBox) view.findViewById(R.id.preference_alarm_enabled_checkbox);
-        temperatureValueTextView = (TextView) view.findViewById(R.id.preference_alarm_temperature_value_textview);
-        temperatureUnitLabelTextView = (TextView) view.findViewById(R.id.preference_alarm_temperature_unit_label);
-        
-        setTemperatureUnitLabelBasedOnPreference();
-        
-        boolean alarmEnabledPreferenceValue = setAlarmEnabledCheckBoxValueBasedOnPreference();
-        if (alarmEnabledPreferenceValue) {
-            setAlarmValueBasedOnPreference();
-        }
-        
-        checkboxChanged(temperatureAlarmEnabledCheckBox);
-        temperatureAlarmEnabledCheckBox.setOnClickListener(this);
-    }
-
-	private void setTemperatureUnitLabelBasedOnPreference() {
-		String temperatureUnitLabelValue = getPreferredTemperatureUnit();
-        temperatureUnitLabelTextView.setText(temperatureUnitLabelValue);
+	@Override
+	protected void onBindDialogView(View view) {
+		super.onBindDialogView(view);
+		
+		temperatureAlarmEnabledCheckBox = (CheckBox) view.findViewById(R.id.preference_alarm_enabled_checkbox);
+		temperatureValueTextView = (TextView) view.findViewById(R.id.preference_alarm_temperature_value_textview);
+		temperatureUnitLabelTextView = (TextView) view.findViewById(R.id.preference_alarm_temperature_unit_label);
+		
+		setTemperatureUnitLabelBasedOnPreference();
+		
+		boolean alarmEnabledPreferenceValue = setAlarmEnabledCheckBoxValueBasedOnPreference();
+		if (alarmEnabledPreferenceValue) {
+			setAlarmValueBasedOnPreference();
+		}
+		
+		temperatureAlarmEnabledCheckboxChanged();
+		temperatureAlarmEnabledCheckBox.setOnClickListener(this);
 	}
 
-	private boolean setAlarmEnabledCheckBoxValueBasedOnPreference() {
-		SharedPreferences preferences = getSharedPreferences();
-		
-		String alarmEnabledPreferenceKey = getContext().getString(getAlarmEnabledPreferenceKey());
-        boolean temperatureAlarmEnabledPreferenceValue = preferences.getBoolean(alarmEnabledPreferenceKey, false);
-        temperatureAlarmEnabledCheckBox.setChecked(temperatureAlarmEnabledPreferenceValue);
-		return temperatureAlarmEnabledPreferenceValue;
-	}
-
-	private void setAlarmValueBasedOnPreference() {
-		SharedPreferences preferences = getSharedPreferences();
-		
-		String preferenceKeyTeperatureAlarmValue = getContext().getString(getAlarmTemperaturePreferenceKey());
-		Float temperatureAlarmPreferenceValue = preferences.getFloat(preferenceKeyTeperatureAlarmValue, 0);
-		
-		Float temperaturePreferenceValueInPreferenceUnit = convertFromSiUnitToPreferenceUnit(temperatureAlarmPreferenceValue);
-		temperatureValueTextView.setText(temperaturePreferenceValueInPreferenceUnit.toString());
-	}
-
-    public void checkboxChanged(View view) {
-        if (temperatureAlarmEnabledCheckBox.isChecked()) {
-            setValueTexViewVisibility(View.VISIBLE);
-        } else {
-            setValueTexViewVisibility(View.INVISIBLE);
-        }
-    }
-
-    private void setValueTexViewVisibility(int visibility) {
-        temperatureValueTextView.setVisibility(visibility);
-        temperatureUnitLabelTextView.setVisibility(visibility);
-    }
-    
     @Override
     protected void onDialogClosed(boolean positiveResult) {
         Log.i(LOG_TAG, "onDialogClosed(positiveResult=" + positiveResult + ")");
@@ -107,58 +70,60 @@ public abstract class TemperatureAlarmPreference extends DialogPreference implem
             if (temperatureAlarmEnabled && isNotEmpty(temperatureValueAsString)) {
                	float minimumTemperatureValueAsFloat = Float.parseFloat(temperatureValueAsString.toString());
                	
-               	float temperatureValueSi = convertFromPreferenceUnitToSiUnit(minimumTemperatureValueAsFloat);
+               	double temperatureValueSi = TemperatureUnit.convertFromPreferenceUnitToSiUnit(getContext(), minimumTemperatureValueAsFloat);
                	
                	Log.i(LOG_TAG, "Setting preference " + temperatureAlarmValuePreferenceKey + " to " + temperatureValueSi);
-               	editor.putFloat(temperatureAlarmValuePreferenceKey, temperatureValueSi);
+               	editor.putFloat(temperatureAlarmValuePreferenceKey, (float)temperatureValueSi);
             }
             editor.commit();
         }
     }
+	
+	@Override
+    public void onClick(View view) {
+		if (temperatureAlarmEnabledCheckBox.getId() == view.getId()) {
+			temperatureAlarmEnabledCheckboxChanged();
+		}
+    }
 
-    private float convertFromPreferenceUnitToSiUnit(float temperatureValue) {
-    	float result = 0;
-    	
-    	String fahrenheit = getContext().getString(R.string.temperature_unit_degree_fahrenheit);
-    	
-    	String preferredTemperatureUnit = getPreferredTemperatureUnit();
-    	if (fahrenheit.equals(preferredTemperatureUnit)) {
-    		result = (float) TemperatureUnitConversions.convertFahrenheitToCelcius(temperatureValue);
-    	} else {
-    		result = temperatureValue;
-    	}
-		return result;
+    private void temperatureAlarmEnabledCheckboxChanged() {
+        if (temperatureAlarmEnabledCheckBox.isChecked()) {
+            setValueTexViewVisibility(View.VISIBLE);
+        } else {
+            setValueTexViewVisibility(View.INVISIBLE);
+        }
+    }
+	
+	private void setTemperatureUnitLabelBasedOnPreference() {
+		String temperatureUnitLabelTextViewValue = TemperatureUnit.getPreferredTemperatureUnit(getContext());
+        temperatureUnitLabelTextView.setText(temperatureUnitLabelTextViewValue);
 	}
 
-    private float convertFromSiUnitToPreferenceUnit(float siTemperatureValue) {
-    	float result = 0;
-    	
-    	String fahrenheit = getContext().getString(R.string.temperature_unit_degree_fahrenheit);
-    	
-    	String preferredTemperatureUnit = getPreferredTemperatureUnit();
-    	if (fahrenheit.equals(preferredTemperatureUnit)) {
-    		result = (float) TemperatureUnitConversions.convertCelciusToFahrenheit(siTemperatureValue);
-    	} else {
-    		result = siTemperatureValue;
-    	}
-		return result;
+	private boolean setAlarmEnabledCheckBoxValueBasedOnPreference() {
+		SharedPreferences preferences = getSharedPreferences();
+		
+		String alarmEnabledPreferenceKey = getContext().getString(getAlarmEnabledPreferenceKey());
+        boolean temperatureAlarmEnabledPreferenceValue = preferences.getBoolean(alarmEnabledPreferenceKey, false);
+        temperatureAlarmEnabledCheckBox.setChecked(temperatureAlarmEnabledPreferenceValue);
+		return temperatureAlarmEnabledPreferenceValue;
 	}
+
+	private void setAlarmValueBasedOnPreference() {
+		SharedPreferences preferences = getSharedPreferences();
+		
+		String preferenceKeyTeperatureAlarmValue = getContext().getString(getAlarmTemperaturePreferenceKey());
+		Float temperatureAlarmPreferenceValue = preferences.getFloat(preferenceKeyTeperatureAlarmValue, 0);
+		
+		Double temperaturePreferenceValueInPreferenceUnit = TemperatureUnit.convertFromSiUnitToPreferenceUnit(getContext(), temperatureAlarmPreferenceValue);
+		temperatureValueTextView.setText(temperaturePreferenceValueInPreferenceUnit.toString());
+	}
+
+    private void setValueTexViewVisibility(int visibility) {
+        temperatureValueTextView.setVisibility(visibility);
+        temperatureUnitLabelTextView.setVisibility(visibility);
+    }
     
 	private boolean isNotEmpty(CharSequence temperatureValueAsString) {
     	return temperatureValueAsString != null && !"".equals(temperatureValueAsString.toString().trim());
 	}
-
-    private String getPreferredTemperatureUnit() {
-    	SharedPreferences preferences = getSharedPreferences();
-    	
-        String temperatureUnitPreferenceKey = getContext().getString(R.string.preference_temperature_unit_key);
-        String temperatureUnitDefaultValue = getContext().getString(R.string.preference_temperature_unit_default_value);
-        return preferences.getString(temperatureUnitPreferenceKey, temperatureUnitDefaultValue);
-    }
-	
-	@Override
-    public void onClick(View view) {
-        checkboxChanged(view);
-    }
-	
 }

@@ -7,7 +7,7 @@ import android.preference.PreferenceFragment;
 import android.support.v4.app.NavUtils;
 import android.view.MenuItem;
 
-public class Settings extends Activity {
+public class SettingsActivity extends Activity {
     
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {

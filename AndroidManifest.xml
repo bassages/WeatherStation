@@ -23,7 +23,7 @@
         android:theme="@style/AppTheme" >
         
         <service
-            android:name="nl.wiegman.weatherstation.BluetoothLeService"
+            android:name="nl.wiegman.weatherstation.bluetooth.BluetoothLeService"
             android:enabled="true" />
         
         <activity
@@ -36,7 +36,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="nl.wiegman.weatherstation.Settings"
+            android:name="nl.wiegman.weatherstation.SettingsActivity"
             android:label="@string/title_activity_settings"
             android:parentActivityName="nl.wiegman.weatherstation.MainActivity" >
             <meta-data

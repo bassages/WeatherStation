@@ -3,7 +3,7 @@
     android:id="@+id/activity_settings"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="nl.wiegman.weatherstation.Settings"
+    tools:context="nl.wiegman.weatherstation.SettingsActivity"
     tools:ignore="MergeRootFrame" 
     
     

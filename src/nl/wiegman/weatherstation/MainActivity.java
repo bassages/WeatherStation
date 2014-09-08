@@ -74,7 +74,8 @@ public class MainActivity extends Activity {
                 finish();
             }
 
-            getFragmentManager().beginTransaction().add(R.id.activity_main, new SensorDataFragment()).commit();
+            SensorDataFragment sensorDataFragmentImpl = new SensorDataFragment();
+			getFragmentManager().beginTransaction().add(R.id.activity_main, sensorDataFragmentImpl).commit();
         }
         
         // Initializes a Bluetooth adapter. For API level 18 and above, get a
@@ -161,7 +162,7 @@ public class MainActivity extends Activity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         if (id == R.id.action_settings) {
-            Intent intent = new Intent(this, Settings.class);
+            Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
             return true;
         } else if (id == R.id.exit) {
@@ -355,7 +356,7 @@ public class MainActivity extends Activity {
      * Handle changes in sensor values
      */
     public void onCharacteristicChanged(String uuidStr, byte[] rawValue) {
-        SensorDataFragment sensorDataFragment = (SensorDataFragment) getFragmentManager().findFragmentById(R.id.activity_main);
+    	SensorDataFragment sensorDataFragment = (SensorDataFragment) getFragmentManager().findFragmentById(R.id.activity_main);
         if (uuidStr.equals(thermometerGatt.getDataUuid().toString())) {
             SensorData sensorData = thermometerGatt.convert(rawValue);
             sensorDataFragment.setTemperature(sensorData.getX());
