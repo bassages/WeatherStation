@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import nl.wiegman.weatherstation.BluetoothLeService;
+import nl.wiegman.weatherstation.bluetooth.BluetoothLeService;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.util.Log;
@@ -32,7 +32,7 @@ import android.util.Log;
  * 
  * To obtain data OTA either use notifications or read the data directly. The period ranges for 100 ms to 2.55 seconds, resolution 10 ms.
  *
- * For calculation, the 8 16-bit pairs of calibration values are needed which is read from sensor and stored in the <Calibration> by writing “02” to <Configuration>. 
+ * For calculation, the 8 16-bit pairs of calibration values are needed which is read from sensor and stored in the <Calibration> by writing ï¿½02ï¿½ to <Configuration>. 
  * The Calibration values are obtained by either read from <Calibration> or if notification has been enabled automatically sent when available.
  * 
  * </pre> 

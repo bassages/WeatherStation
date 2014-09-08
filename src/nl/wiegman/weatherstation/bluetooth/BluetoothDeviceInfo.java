@@ -1,4 +1,4 @@
-package nl.wiegman.weatherstation;
+package nl.wiegman.weatherstation.bluetooth;
 
 import android.bluetooth.BluetoothDevice;
 

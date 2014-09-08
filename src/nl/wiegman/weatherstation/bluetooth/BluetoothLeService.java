@@ -1,4 +1,4 @@
-package nl.wiegman.weatherstation;
+package nl.wiegman.weatherstation.bluetooth;
 
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -35,6 +35,7 @@ public class BluetoothLeService extends Service {
     public final static String ACTION_DATA_READ = "ti.android.ble.common.ACTION_DATA_READ";
     public final static String ACTION_DATA_NOTIFY = "ti.android.ble.common.ACTION_DATA_NOTIFY";
     public final static String ACTION_DATA_WRITE = "ti.android.ble.common.ACTION_DATA_WRITE";
+    
     public final static String EXTRA_DATA = "ti.android.ble.common.EXTRA_DATA";
     public final static String EXTRA_UUID = "ti.android.ble.common.EXTRA_UUID";
     public final static String EXTRA_STATUS = "ti.android.ble.common.EXTRA_STATUS";

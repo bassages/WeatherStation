@@ -1,7 +1,7 @@
 package nl.wiegman.weatherstation.preference;
 
 import nl.wiegman.weatherstation.R;
-import nl.wiegman.weatherstation.TemperatureUnitConversions;
+import nl.wiegman.weatherstation.util.TemperatureUnitConversions;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;

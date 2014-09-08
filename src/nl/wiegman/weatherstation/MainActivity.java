@@ -3,6 +3,9 @@ package nl.wiegman.weatherstation;
 import java.util.ArrayList;
 import java.util.List;
 
+import nl.wiegman.weatherstation.bluetooth.BluetoothDeviceInfo;
+import nl.wiegman.weatherstation.bluetooth.BluetoothLeService;
+import nl.wiegman.weatherstation.fragment.SensorDataFragment;
 import nl.wiegman.weatherstation.gattsensor.BarometerGatt;
 import nl.wiegman.weatherstation.gattsensor.GattSensor;
 import nl.wiegman.weatherstation.gattsensor.HygrometerGatt;
@@ -93,6 +96,13 @@ public class MainActivity extends Activity {
         initialize();
     }
 
+    @Override
+    protected void onStop() {
+    	super.onStop();
+        Log.i(LOG_TAG, "onStop()");
+        stopScanningForBluetoothLeDevices();
+    }
+    
     private void initialize() {
         if (connectedDeviceInfo == null) {
             if (bluetoothAdapter.isEnabled()) {
@@ -105,6 +115,8 @@ public class MainActivity extends Activity {
                 // report weather or not the user enabled BlueTooth LE
                 startActivityForResult(enableIntent, REQUEST_TO_ENABLE_BLUETOOTHE_LE);
             }            
+        } else {
+        	Log.i(LOG_TAG, "Already connected to device " + connectedDeviceInfo.getBluetoothDevice());
         }
     }
 

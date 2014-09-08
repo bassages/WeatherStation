@@ -2,7 +2,7 @@ package nl.wiegman.weatherstation.gattsensor;
 
 import java.util.UUID;
 
-import nl.wiegman.weatherstation.BluetoothLeService;
+import nl.wiegman.weatherstation.bluetooth.BluetoothLeService;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.util.Log;

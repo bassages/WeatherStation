@@ -1,6 +1,12 @@
-package nl.wiegman.weatherstation;
+package nl.wiegman.weatherstation.fragment;
 
 import java.text.DecimalFormat;
+
+import nl.wiegman.weatherstation.R;
+import nl.wiegman.weatherstation.R.id;
+import nl.wiegman.weatherstation.R.layout;
+import nl.wiegman.weatherstation.R.string;
+import nl.wiegman.weatherstation.util.TemperatureUnitConversions;
 
 import android.app.Fragment;
 import android.content.SharedPreferences;
