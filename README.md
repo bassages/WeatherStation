@@ -9,7 +9,6 @@ Currently under development:
  When the temperature exceeds the set min/max pref, a notification is created.
 
 Backlog:
-- Ring a sound when a temperature alarm is given
 - Maintain history (store only)
 - Implement a simple history viewer
   - https://software.intel.com/en-us/android/articles/a-look-at-data-analysis-with-charts-and-graphs-in-android-apps
