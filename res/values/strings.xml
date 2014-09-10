@@ -33,6 +33,16 @@
 
     <string name="preference_alarm_maximum_temperature_enabled_key">maximumTemperatureAlarmEnabled</string>
     <string name="preference_alarm_maximum_temperature_value_key">maximumTemperatureAlarmValue</string>
+
+    <string name="preference_maximum_temperature_alarm_title">Maximum temperature alarm</string>
+    <string name="preference_maximum_temperature_alarm_summary">Receive a notification when the temperature rises above the defined value</string>
+    <string name="maximum_temperature_alarm_notification_title">Temperature alarm!</string>
+    <string name="maximum_temperature_alarm_notification_text">%1$s %2$s &gt; maximum of %3$s %4$s</string>
+    
+    <string name="preference_minimum_temperature_alarm_title">Minimum temperature alarm</string>
+    <string name="preference_minimum_temperature_alarm_summary">Receive a notification when the temperature drops below the defined value</string>
+    <string name="minimum_temperature_alarm_notification_title">Temperature alarm!</string>
+    <string name="minimum_temperature_alarm_notification_text">%1$s %2$s &lt; minimum of %3$s %4$s</string>
     
     <!-- Messages -->
     <string name="ble_not_supported">BLE is not supported</string>

@@ -21,9 +21,6 @@ public abstract class TemperatureAlarmPreference extends DialogPreference implem
     private TextView alarmValueTextView;
     private TextView alarmValueUnitLabelTextView;
 
-    /**
-     * Constructor
-     */
     public TemperatureAlarmPreference(Context context, AttributeSet attrs) {
         super(context, attrs);
         setDialogLayoutResource(R.layout.preference_alarm);

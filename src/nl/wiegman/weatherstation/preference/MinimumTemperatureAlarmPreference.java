@@ -6,9 +6,6 @@ import android.util.AttributeSet;
 
 public class MinimumTemperatureAlarmPreference extends TemperatureAlarmPreference {
 
-	/**
-	 * Constructor
-	 */
     public MinimumTemperatureAlarmPreference(Context context, AttributeSet attrs) {
         super(context, attrs);
     }

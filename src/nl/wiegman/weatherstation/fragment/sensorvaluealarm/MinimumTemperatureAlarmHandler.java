@@ -5,9 +5,9 @@ import nl.wiegman.weatherstation.sensorvaluelistener.TemperatureValueChangeListe
 import nl.wiegman.weatherstation.util.TemperatureUtil;
 import android.content.Context;
 
-public class MaximumTemperatureAlarmHandler extends ValueAlarmHandler implements TemperatureValueChangeListener {
+public class MinimumTemperatureAlarmHandler extends ValueAlarmHandler implements TemperatureValueChangeListener {
 
-	public MaximumTemperatureAlarmHandler(Context context) {
+	public MinimumTemperatureAlarmHandler(Context context) {
 		super(context);
 	}
 	
@@ -18,22 +18,22 @@ public class MaximumTemperatureAlarmHandler extends ValueAlarmHandler implements
 	
 	@Override
 	protected boolean isAlarmConditionMet(Double updatedValue, Double alarmValue) {
-		return updatedValue != null && updatedValue > alarmValue;
+		return updatedValue != null && updatedValue < alarmValue;
 	}
 	
 	@Override
 	protected String getValueAlarmEnabledPreferenceKey(Context context) {
-		return context.getString(R.string.preference_alarm_maximum_temperature_enabled_key);
+		return context.getString(R.string.preference_alarm_minimum_temperature_enabled_key);
 	}
 	
 	@Override
 	protected String getValueAlarmValuePreferenceKey(Context context) {
-		return context.getString(R.string.preference_alarm_maximum_temperature_value_key);
+		return context.getString(R.string.preference_alarm_minimum_temperature_value_key);
 	}
 	
 	@Override
 	protected String getAlarmNotificationText(Context context, Double updatedValue, Double alarmValue) {
-		return context.getString(R.string.maximum_temperature_alarm_notification_text,
+		return context.getString(R.string.minimum_temperature_alarm_notification_text,
 				TemperatureUtil.format(updatedValue),
 				TemperatureUtil.getPreferredTemperatureUnit(context),
 				TemperatureUtil.format(alarmValue),
@@ -42,6 +42,6 @@ public class MaximumTemperatureAlarmHandler extends ValueAlarmHandler implements
 
 	@Override
 	protected String getValueAlarmNotificationTitle(Context context) {
-		return context.getString(R.string.maximum_temperature_alarm_notification_title);
+		return context.getString(R.string.minimum_temperature_alarm_notification_title);
 	}
 }

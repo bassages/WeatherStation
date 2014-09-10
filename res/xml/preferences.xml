@@ -1,21 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" 
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     android:orderingFromXml="true"
-    android:persistent="true">
-    
+    android:persistent="true" >
+
     <ListPreference
-        android:key="@string/preference_temperature_unit_key"
-        android:title="@string/preference_temperature_unit_title"
+        android:defaultValue="@string/preference_temperature_unit_default_value"
         android:dialogTitle="@string/preference_temperature_unit_title"
         android:entries="@array/preference_temperature_unit_entries"
         android:entryValues="@array/preference_temperature_unit_entries"
-        android:defaultValue="@string/preference_temperature_unit_default_value" 
-        android:summary="@string/preference_temperature_unit_summary"/>
+        android:key="@string/preference_temperature_unit_key"
+        android:summary="@string/preference_temperature_unit_summary"
+        android:title="@string/preference_temperature_unit_title" />
 
-    <nl.wiegman.weatherstation.preference.MinimumTemperatureAlarmPreference
-        android:title="Minimum temperature alarm" />
+    <nl.wiegman.weatherstation.preference.MinimumTemperatureAlarmPreference 
+        android:title="@string/preference_minimum_temperature_alarm_title" 
+        android:summary="@string/preference_minimum_temperature_alarm_summary" />
 
-    <nl.wiegman.weatherstation.preference.MaximumTemperatureAlarmPreference
-        android:title="Maximum temperature alarm" />
-    
+    <nl.wiegman.weatherstation.preference.MaximumTemperatureAlarmPreference 
+        android:title="@string/preference_maximum_temperature_alarm_title" 
+        android:summary="@string/preference_maximum_temperature_alarm_summary"/>
+
 </PreferenceScreen>

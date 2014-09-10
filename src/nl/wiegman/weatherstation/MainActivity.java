@@ -7,6 +7,7 @@ import nl.wiegman.weatherstation.bluetooth.BluetoothDeviceInfo;
 import nl.wiegman.weatherstation.bluetooth.BluetoothLeService;
 import nl.wiegman.weatherstation.fragment.SensorDataFragment;
 import nl.wiegman.weatherstation.fragment.sensorvaluealarm.MaximumTemperatureAlarmHandler;
+import nl.wiegman.weatherstation.fragment.sensorvaluealarm.MinimumTemperatureAlarmHandler;
 import nl.wiegman.weatherstation.gattsensor.BarometerGatt;
 import nl.wiegman.weatherstation.gattsensor.GattSensor;
 import nl.wiegman.weatherstation.gattsensor.HygrometerGatt;
@@ -84,6 +85,10 @@ public class MainActivity extends Activity {
 			
 			MaximumTemperatureAlarmHandler maximumTemperatureAlarm = new MaximumTemperatureAlarmHandler(this);
 			temperatureValueChangeListeners.add(maximumTemperatureAlarm);
+			
+			MinimumTemperatureAlarmHandler minimumTemperatureAlarm = new MinimumTemperatureAlarmHandler(this);
+			temperatureValueChangeListeners.add(minimumTemperatureAlarm);
+
         }
         
         // Initializes a Bluetooth adapter. For API level 18 and above, get a
