@@ -3,8 +3,10 @@ package nl.wiegman.weatherstation.fragment;
 import java.text.DecimalFormat;
 
 import nl.wiegman.weatherstation.R;
-import nl.wiegman.weatherstation.util.TemperatureUnit;
+import nl.wiegman.weatherstation.sensorvaluelistener.TemperatureValueChangeListener;
+import nl.wiegman.weatherstation.util.TemperatureUtil;
 import android.app.Fragment;
+import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -15,10 +17,9 @@ import android.widget.TextView;
 /**
  * Fragment to show the sensor data
  */
-public class SensorDataFragment extends Fragment {
+public class SensorDataFragment extends Fragment implements TemperatureValueChangeListener {
     private static final String LOG_TAG = SensorDataFragment.class.getSimpleName();
     
-    private static final DecimalFormat temperatureValueTexviewFormat = new DecimalFormat("0.0;-0.0");
     private TextView temperatureValueTextView;
     private TextView temperatureUnitTextview;
     private Double temperatureInDegreeCelcius = null;
@@ -53,16 +54,17 @@ public class SensorDataFragment extends Fragment {
     	applyPreferences();
     }
 
-    public void setTemperature(Double temperatureInDegreeCelcius) {
-        this.temperatureInDegreeCelcius = temperatureInDegreeCelcius;
+	@Override
+	public void temperatureChanged(Context context, Double updatedTemperature) {
+        this.temperatureInDegreeCelcius = updatedTemperature;
         if (temperatureInDegreeCelcius == null) {
-            temperatureValueTextView.setText(R.string.initial_temperature_value);
+            temperatureValueTextView.setText(R.string.initial_temperature_value);            
         } else {
-            double temperatureValueInPreferenceUnit = TemperatureUnit.convertFromSiUnitToPreferenceUnit(getActivity(), temperatureInDegreeCelcius);
-            String temperatureTextViewValue = temperatureValueTexviewFormat.format(temperatureValueInPreferenceUnit);
+            double temperatureValueInPreferenceUnit = TemperatureUtil.convertFromSiUnitToPreferenceUnit(getActivity(), temperatureInDegreeCelcius);
+            String temperatureTextViewValue = TemperatureUtil.format(temperatureValueInPreferenceUnit);
             temperatureValueTextView.setText(temperatureTextViewValue);            
         }
-    }
+	}
     
     public void setAirPressure(Double airPressureInHectoPascal) {
         if (airPressureInHectoPascal == null) {
@@ -90,11 +92,11 @@ public class SensorDataFragment extends Fragment {
     
     private void applyPreferences() {
         setTemperatureUnitLabelBasedOnPreference();
-        setTemperature(temperatureInDegreeCelcius);
+        temperatureChanged(getActivity(), temperatureInDegreeCelcius);
     }
 
     private void setTemperatureUnitLabelBasedOnPreference() {
-        String preferredTemperatureUnit = TemperatureUnit.getPreferredTemperatureUnit(getActivity());
+        String preferredTemperatureUnit = TemperatureUtil.getPreferredTemperatureUnit(getActivity());
         temperatureUnitTextview.setText(preferredTemperatureUnit);
     }
 }

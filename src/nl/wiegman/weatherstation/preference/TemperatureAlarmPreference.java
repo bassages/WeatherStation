@@ -1,7 +1,7 @@
 package nl.wiegman.weatherstation.preference;
 
 import nl.wiegman.weatherstation.R;
-import nl.wiegman.weatherstation.util.TemperatureUnit;
+import nl.wiegman.weatherstation.util.TemperatureUtil;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -17,9 +17,9 @@ public abstract class TemperatureAlarmPreference extends DialogPreference implem
 
     private static final String LOG_TAG = TemperatureAlarmPreference.class.getSimpleName();
     
-    private CheckBox temperatureAlarmEnabledCheckBox;
-    private TextView temperatureValueTextView;
-    private TextView temperatureUnitLabelTextView;
+    private CheckBox alarmEnabledCheckBox;
+    private TextView alarmValueTextView;
+    private TextView alarmValueUnitLabelTextView;
 
     /**
      * Constructor
@@ -37,19 +37,19 @@ public abstract class TemperatureAlarmPreference extends DialogPreference implem
 	protected void onBindDialogView(View view) {
 		super.onBindDialogView(view);
 		
-		temperatureAlarmEnabledCheckBox = (CheckBox) view.findViewById(R.id.preference_alarm_enabled_checkbox);
-		temperatureValueTextView = (TextView) view.findViewById(R.id.preference_alarm_temperature_value_textview);
-		temperatureUnitLabelTextView = (TextView) view.findViewById(R.id.preference_alarm_temperature_unit_label);
+		alarmEnabledCheckBox = (CheckBox) view.findViewById(R.id.preference_alarm_enabled_checkbox);
+		alarmValueTextView = (TextView) view.findViewById(R.id.preference_alarm_temperature_value_textview);
+		alarmValueUnitLabelTextView = (TextView) view.findViewById(R.id.preference_alarm_temperature_unit_label);
 		
-		setTemperatureUnitLabelBasedOnPreference();
+		setAlarmValueUnitLabelBasedOnPreference();
 		
 		boolean alarmEnabledPreferenceValue = setAlarmEnabledCheckBoxValueBasedOnPreference();
 		if (alarmEnabledPreferenceValue) {
 			setAlarmValueBasedOnPreference();
 		}
 		
-		temperatureAlarmEnabledCheckboxChanged();
-		temperatureAlarmEnabledCheckBox.setOnClickListener(this);
+		alarmEnabledCheckboxChanged();
+		alarmEnabledCheckBox.setOnClickListener(this);
 	}
 
     @Override
@@ -59,21 +59,21 @@ public abstract class TemperatureAlarmPreference extends DialogPreference implem
         if (positiveResult) {
             Editor editor = getEditor();
             
-            String temperatureAlarmEnabledPreferenceKey = getContext().getString(getAlarmEnabledPreferenceKey());
-            String temperatureAlarmValuePreferenceKey = getContext().getString(getAlarmTemperaturePreferenceKey());
+            String alarmEnabledPreferenceKey = getContext().getString(getAlarmEnabledPreferenceKey());
+            String alarmValuePreferenceKey = getContext().getString(getAlarmTemperaturePreferenceKey());
             
-            boolean temperatureAlarmEnabled = temperatureAlarmEnabledCheckBox.isChecked();
-            Log.i(LOG_TAG, "Setting preference " + temperatureAlarmEnabledPreferenceKey + " to " + temperatureAlarmEnabled);
-            editor.putBoolean(temperatureAlarmEnabledPreferenceKey, temperatureAlarmEnabled);
+            boolean alarmEnabled = alarmEnabledCheckBox.isChecked();
+            Log.i(LOG_TAG, "Setting preference " + alarmEnabledPreferenceKey + " to " + alarmEnabled);
+            editor.putBoolean(alarmEnabledPreferenceKey, alarmEnabled);
 
-            CharSequence temperatureValueAsString = temperatureValueTextView.getText();
-            if (temperatureAlarmEnabled && isNotEmpty(temperatureValueAsString)) {
-               	float minimumTemperatureValueAsFloat = Float.parseFloat(temperatureValueAsString.toString());
+            CharSequence alarmValueAsString = alarmValueTextView.getText();
+            if (alarmEnabled && isNotEmpty(alarmValueAsString)) {
+               	float minimumTemperatureValueAsFloat = Float.parseFloat(alarmValueAsString.toString());
                	
-               	double temperatureValueSi = TemperatureUnit.convertFromPreferenceUnitToSiUnit(getContext(), minimumTemperatureValueAsFloat);
+               	double alarmValueSi = TemperatureUtil.convertFromPreferenceUnitToSiUnit(getContext(), minimumTemperatureValueAsFloat);
                	
-               	Log.i(LOG_TAG, "Setting preference " + temperatureAlarmValuePreferenceKey + " to " + temperatureValueSi);
-               	editor.putFloat(temperatureAlarmValuePreferenceKey, (float)temperatureValueSi);
+               	Log.i(LOG_TAG, "Setting preference " + alarmValuePreferenceKey + " to " + alarmValueSi);
+               	editor.putFloat(alarmValuePreferenceKey, (float)alarmValueSi);
             }
             editor.commit();
         }
@@ -81,22 +81,22 @@ public abstract class TemperatureAlarmPreference extends DialogPreference implem
 	
 	@Override
     public void onClick(View view) {
-		if (temperatureAlarmEnabledCheckBox.getId() == view.getId()) {
-			temperatureAlarmEnabledCheckboxChanged();
+		if (alarmEnabledCheckBox.getId() == view.getId()) {
+			alarmEnabledCheckboxChanged();
 		}
     }
 
-    private void temperatureAlarmEnabledCheckboxChanged() {
-        if (temperatureAlarmEnabledCheckBox.isChecked()) {
+    private void alarmEnabledCheckboxChanged() {
+        if (alarmEnabledCheckBox.isChecked()) {
             setValueTexViewVisibility(View.VISIBLE);
         } else {
             setValueTexViewVisibility(View.INVISIBLE);
         }
     }
 	
-	private void setTemperatureUnitLabelBasedOnPreference() {
-		String temperatureUnitLabelTextViewValue = TemperatureUnit.getPreferredTemperatureUnit(getContext());
-        temperatureUnitLabelTextView.setText(temperatureUnitLabelTextViewValue);
+	private void setAlarmValueUnitLabelBasedOnPreference() {
+		String alarmValueUnitLabelTextViewValue = TemperatureUtil.getPreferredTemperatureUnit(getContext());
+        alarmValueUnitLabelTextView.setText(alarmValueUnitLabelTextViewValue);
 	}
 
 	private boolean setAlarmEnabledCheckBoxValueBasedOnPreference() {
@@ -104,7 +104,7 @@ public abstract class TemperatureAlarmPreference extends DialogPreference implem
 		
 		String alarmEnabledPreferenceKey = getContext().getString(getAlarmEnabledPreferenceKey());
         boolean temperatureAlarmEnabledPreferenceValue = preferences.getBoolean(alarmEnabledPreferenceKey, false);
-        temperatureAlarmEnabledCheckBox.setChecked(temperatureAlarmEnabledPreferenceValue);
+        alarmEnabledCheckBox.setChecked(temperatureAlarmEnabledPreferenceValue);
 		return temperatureAlarmEnabledPreferenceValue;
 	}
 
@@ -114,16 +114,16 @@ public abstract class TemperatureAlarmPreference extends DialogPreference implem
 		String preferenceKeyTeperatureAlarmValue = getContext().getString(getAlarmTemperaturePreferenceKey());
 		Float temperatureAlarmPreferenceValue = preferences.getFloat(preferenceKeyTeperatureAlarmValue, 0);
 		
-		Double temperaturePreferenceValueInPreferenceUnit = TemperatureUnit.convertFromSiUnitToPreferenceUnit(getContext(), temperatureAlarmPreferenceValue);
-		temperatureValueTextView.setText(temperaturePreferenceValueInPreferenceUnit.toString());
+		Double temperaturePreferenceValueInPreferenceUnit = TemperatureUtil.convertFromSiUnitToPreferenceUnit(getContext(), temperatureAlarmPreferenceValue);
+		alarmValueTextView.setText(temperaturePreferenceValueInPreferenceUnit.toString());
 	}
 
     private void setValueTexViewVisibility(int visibility) {
-        temperatureValueTextView.setVisibility(visibility);
-        temperatureUnitLabelTextView.setVisibility(visibility);
+        alarmValueTextView.setVisibility(visibility);
+        alarmValueUnitLabelTextView.setVisibility(visibility);
     }
     
-	private boolean isNotEmpty(CharSequence temperatureValueAsString) {
-    	return temperatureValueAsString != null && !"".equals(temperatureValueAsString.toString().trim());
+	private boolean isNotEmpty(CharSequence value) {
+    	return value != null && !"".equals(value.toString().trim());
 	}
 }

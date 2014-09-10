@@ -6,11 +6,13 @@ import java.util.List;
 import nl.wiegman.weatherstation.bluetooth.BluetoothDeviceInfo;
 import nl.wiegman.weatherstation.bluetooth.BluetoothLeService;
 import nl.wiegman.weatherstation.fragment.SensorDataFragment;
+import nl.wiegman.weatherstation.fragment.sensorvaluealarm.MaximumTemperatureAlarmHandler;
 import nl.wiegman.weatherstation.gattsensor.BarometerGatt;
 import nl.wiegman.weatherstation.gattsensor.GattSensor;
 import nl.wiegman.weatherstation.gattsensor.HygrometerGatt;
 import nl.wiegman.weatherstation.gattsensor.SensorData;
 import nl.wiegman.weatherstation.gattsensor.ThermometerGatt;
+import nl.wiegman.weatherstation.sensorvaluelistener.TemperatureValueChangeListener;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -52,6 +54,8 @@ public class MainActivity extends Activity {
     
     private static final List<GattSensor> gattSensors = new ArrayList<GattSensor>();
 
+    private final List<TemperatureValueChangeListener> temperatureValueChangeListeners = new ArrayList<TemperatureValueChangeListener>();
+    
     static {
         gattSensors.add(barometerGatt);
         gattSensors.add(hygrometerGatt);
@@ -76,6 +80,10 @@ public class MainActivity extends Activity {
 
             SensorDataFragment sensorDataFragmentImpl = new SensorDataFragment();
 			getFragmentManager().beginTransaction().add(R.id.activity_main, sensorDataFragmentImpl).commit();
+			temperatureValueChangeListeners.add(sensorDataFragmentImpl);
+			
+			MaximumTemperatureAlarmHandler maximumTemperatureAlarm = new MaximumTemperatureAlarmHandler(this);
+			temperatureValueChangeListeners.add(maximumTemperatureAlarm);
         }
         
         // Initializes a Bluetooth adapter. For API level 18 and above, get a
@@ -358,15 +366,20 @@ public class MainActivity extends Activity {
     public void onCharacteristicChanged(String uuidStr, byte[] rawValue) {
     	SensorDataFragment sensorDataFragment = (SensorDataFragment) getFragmentManager().findFragmentById(R.id.activity_main);
         if (uuidStr.equals(thermometerGatt.getDataUuid().toString())) {
-            SensorData sensorData = thermometerGatt.convert(rawValue);
-            sensorDataFragment.setTemperature(sensorData.getX());
+            // Currently not used, because temperature is supplied by the barometergatt
+        	SensorData sensorData = thermometerGatt.convert(rawValue);
+            for (TemperatureValueChangeListener listener : temperatureValueChangeListeners) {
+            	listener.temperatureChanged(this, sensorData.getY());            	
+            }
         } else if (uuidStr.equals(hygrometerGatt.getDataUuid().toString())) {
             SensorData sensorData = hygrometerGatt.convert(rawValue);
             sensorDataFragment.setHumidity(sensorData.getX());
         } else if (uuidStr.equals(barometerGatt.getDataUuid().toString())) {
             SensorData sensorData = barometerGatt.convert(rawValue);
             sensorDataFragment.setAirPressure(sensorData.getX());
-            sensorDataFragment.setTemperature(sensorData.getY());
+            for (TemperatureValueChangeListener listener : temperatureValueChangeListeners) {
+            	listener.temperatureChanged(this, sensorData.getY());            	
+            }
         } else {
             Log.e(LOG_TAG, "Unknown uuid: " + uuidStr);
         }

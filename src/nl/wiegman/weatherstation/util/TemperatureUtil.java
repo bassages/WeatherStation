@@ -1,13 +1,17 @@
 package nl.wiegman.weatherstation.util;
 
+import java.text.DecimalFormat;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import nl.wiegman.weatherstation.R;
 
-public final class TemperatureUnit {
+public final class TemperatureUtil {
 
-	private TemperatureUnit() {
+	private static final DecimalFormat VALUE_FORMAT = new DecimalFormat("0.0;-0.0");
+	
+	private TemperatureUtil() {
 		// Utility class does not need a constructor
 	}
     
@@ -46,8 +50,11 @@ public final class TemperatureUnit {
         String temperatureUnitDefaultValue = context.getString(R.string.preference_temperature_unit_default_value);
         return preferences.getString(temperatureUnitPreferenceKey, temperatureUnitDefaultValue);
     }
+
+    public static String format(Double temperature) {
+    	return VALUE_FORMAT.format(temperature);
+    }
     
-	
     private static double convertCelciusToFahrenheit(double degreeCelcius) {
         return 32 + (degreeCelcius * 9 / 5);
     }
