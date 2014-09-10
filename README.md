@@ -6,8 +6,7 @@ Weather Station for android displaying values of TI SensorTag
 Currently under development:
 
  - Setting a temperature alarm.-
- When the temperature exceeds the set min/max pref, a popup is shown.
- The alarm can the be acknowledged by the user.
+ When the temperature exceeds the set min/max pref, a notification is created.
 
 Backlog:
 - Ring a sound when a temperature alarm is given
