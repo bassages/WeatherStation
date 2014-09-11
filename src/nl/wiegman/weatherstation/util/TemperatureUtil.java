@@ -1,11 +1,13 @@
 package nl.wiegman.weatherstation.util;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
 
+import nl.wiegman.weatherstation.R;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import nl.wiegman.weatherstation.R;
 
 public final class TemperatureUtil {
 
@@ -16,31 +18,27 @@ public final class TemperatureUtil {
 	}
     
     public static double convertFromPreferenceUnitToStorageUnit(Context context, double temperatureValueInPreferenceUnit) {
-    	double result = 0;
+    	double result = temperatureValueInPreferenceUnit;
     	
-    	String fahrenheit = context.getString(R.string.temperature_unit_degree_fahrenheit);
-    	
+    	String fahrenheit = context.getString(R.string.temperature_unit_degree_fahrenheit);    	
     	String preferredTemperatureUnit = getPreferredTemperatureUnit(context);
+    	
     	if (fahrenheit.equals(preferredTemperatureUnit)) {
     		result = convertFahrenheitToCelcius(temperatureValueInPreferenceUnit);
-    	} else {
-    		result = temperatureValueInPreferenceUnit;
     	}
-		return result;
+		return round(result);
 	}
 
-    public static double convertFromStorageUnitToPreferenceUnit(Context context, double temperatureValueInStorageUnit) {
-    	double result = 0;
+	public static double convertFromStorageUnitToPreferenceUnit(Context context, double temperatureValueInStorageUnit) {
+    	double result = temperatureValueInStorageUnit;
     	
-    	String fahrenheit = context.getString(R.string.temperature_unit_degree_fahrenheit);
-    	
+    	String fahrenheit = context.getString(R.string.temperature_unit_degree_fahrenheit);    	
     	String preferredTemperatureUnit = getPreferredTemperatureUnit(context);
+    	
     	if (fahrenheit.equals(preferredTemperatureUnit)) {
     		result = convertCelciusToFahrenheit(temperatureValueInStorageUnit);
-    	} else {
-    		result = temperatureValueInStorageUnit;
     	}
-		return result;
+		return round(result);
 	}
     
     public static String getPreferredTemperatureUnit(Context context) {
@@ -51,6 +49,10 @@ public final class TemperatureUtil {
         return preferences.getString(temperatureUnitPreferenceKey, temperatureUnitDefaultValue);
     }
 
+    public static double round(double value) {
+		return new BigDecimal(value).setScale(1, RoundingMode.HALF_UP).doubleValue();
+	}
+    
     public static String format(Double temperature) {
     	return VALUE_FORMAT.format(temperature);
     }

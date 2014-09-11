@@ -2,12 +2,12 @@ package nl.wiegman.weatherstation.fragment.sensorvaluealarm;
 
 import nl.wiegman.weatherstation.R;
 import android.app.Activity;
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.media.RingtoneManager;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
@@ -45,8 +45,6 @@ public abstract class ValueAlarmHandler {
 		// Set initial values
 		preferenceListener.onSharedPreferenceChanged(sharedPreferences, valueAlarmEnabledPreferenceKey);
 		preferenceListener.onSharedPreferenceChanged(sharedPreferences, valueAlarmValuePreferenceKey);
-		
-		logState();
 	}
 
 	protected abstract String getValueAlarmValuePreferenceKey(Context context);
@@ -94,7 +92,7 @@ public abstract class ValueAlarmHandler {
 			.setContentText(message)
 			.setOnlyAlertOnce(true)
 			.setAutoCancel(true)
-			.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
+			.setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE | Notification.DEFAULT_LIGHTS);
 	}
 		
 	/**
@@ -116,6 +114,10 @@ public abstract class ValueAlarmHandler {
 	}
 	
 	private void logState() {
-		Log.i(LOG_TAG, "Alarm enabled: " + alarmEnabled + " alarmValue: " + alarmValue);
+		StringBuffer sb = new StringBuffer("Alarm enabled: ").append(alarmEnabled);
+		if (alarmEnabled) {
+			sb.append(" alarm value: ").append(alarmValue);
+		}
+		Log.i(LOG_TAG, sb.toString());
 	}
 }

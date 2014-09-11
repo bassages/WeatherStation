@@ -2,7 +2,7 @@ package nl.wiegman.weatherstation.fragment.sensorvaluealarm;
 
 import nl.wiegman.weatherstation.R;
 import nl.wiegman.weatherstation.sensorvaluelistener.TemperatureValueChangeListener;
-import nl.wiegman.weatherstation.util.TemperatureUtil;
+import static nl.wiegman.weatherstation.util.TemperatureUtil.*;
 import android.content.Context;
 
 public class MaximumTemperatureAlarmHandler extends ValueAlarmHandler implements TemperatureValueChangeListener {
@@ -18,7 +18,7 @@ public class MaximumTemperatureAlarmHandler extends ValueAlarmHandler implements
 	
 	@Override
 	protected boolean isAlarmConditionMet(Double updatedValue, Double alarmValue) {
-		return updatedValue != null && updatedValue > alarmValue;
+		return updatedValue != null && round(updatedValue) > round(alarmValue);
 	}
 	
 	@Override
@@ -34,10 +34,10 @@ public class MaximumTemperatureAlarmHandler extends ValueAlarmHandler implements
 	@Override
 	protected String getAlarmNotificationText(Context context, Double updatedValue, Double alarmValue) {
 		return context.getString(R.string.maximum_temperature_alarm_notification_text,
-				TemperatureUtil.format(updatedValue),
-				TemperatureUtil.getPreferredTemperatureUnit(context),
-				TemperatureUtil.format(alarmValue),
-				TemperatureUtil.getPreferredTemperatureUnit(context));
+				format(updatedValue),
+				getPreferredTemperatureUnit(context),
+				format(alarmValue),
+				getPreferredTemperatureUnit(context));
 	}
 
 	@Override
