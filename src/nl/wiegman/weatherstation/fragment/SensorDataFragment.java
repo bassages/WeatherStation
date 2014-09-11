@@ -60,7 +60,7 @@ public class SensorDataFragment extends Fragment implements TemperatureValueChan
         if (temperatureInDegreeCelcius == null) {
             temperatureValueTextView.setText(R.string.initial_temperature_value);            
         } else {
-            double temperatureValueInPreferenceUnit = TemperatureUtil.convertFromSiUnitToPreferenceUnit(getActivity(), temperatureInDegreeCelcius);
+            double temperatureValueInPreferenceUnit = TemperatureUtil.convertFromStorageUnitToPreferenceUnit(getActivity(), temperatureInDegreeCelcius);
             String temperatureTextViewValue = TemperatureUtil.format(temperatureValueInPreferenceUnit);
             temperatureValueTextView.setText(temperatureTextViewValue);            
         }

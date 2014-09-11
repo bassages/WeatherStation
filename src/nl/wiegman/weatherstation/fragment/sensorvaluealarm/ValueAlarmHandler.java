@@ -68,7 +68,7 @@ public abstract class ValueAlarmHandler {
 	private void createNotification(Context context, Double updatedValue) {
 		String message = getAlarmNotificationText(context, updatedValue, alarmValue);
 		
-		Log.i(this.getClass().getSimpleName(), "Notification messgage: " + message);
+		Log.i(this.getClass().getSimpleName(), "Notification message: " + message);
 		
 		configureNotificationBuilder(context, message);
 		

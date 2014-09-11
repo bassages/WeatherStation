@@ -31,10 +31,11 @@ import android.os.IBinder;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
-    private static final String LOG_TAG = MainActivity.class.getSimpleName();
+    private final String LOG_TAG = this.getClass().getSimpleName();
 
     // Requests to other activities
     private static final int REQUEST_TO_ENABLE_BLUETOOTHE_LE = 0;
@@ -73,7 +74,6 @@ public class MainActivity extends Activity {
         
         if (savedInstanceState == null) {
             // Use this check to determine whether BLE is supported on the device.
-            // Then you can selectively disable BLE-related features.
             if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
                 Toast.makeText(this, R.string.ble_not_supported, Toast.LENGTH_LONG).show();
                 finish();
@@ -88,7 +88,6 @@ public class MainActivity extends Activity {
 			
 			MinimumTemperatureAlarmHandler minimumTemperatureAlarm = new MinimumTemperatureAlarmHandler(this);
 			temperatureValueChangeListeners.add(minimumTemperatureAlarm);
-
         }
         
         // Initializes a Bluetooth adapter. For API level 18 and above, get a
@@ -96,18 +95,19 @@ public class MainActivity extends Activity {
         bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         bluetoothAdapter = bluetoothManager.getAdapter();
 
-        // Checks if Bluetooth is supported on the device.
         if (bluetoothAdapter == null) {
             Toast.makeText(this, R.string.ble_not_supported, Toast.LENGTH_LONG).show();
             finish();
         }
+        
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
         Log.i(LOG_TAG, "onStart()");
-        initialize();
+        startSensortagConnectionProcedure();
     }
 
     @Override
@@ -117,7 +117,7 @@ public class MainActivity extends Activity {
         stopScanningForBluetoothLeDevices();
     }
     
-    private void initialize() {
+    private void startSensortagConnectionProcedure() {
         if (connectedDeviceInfo == null) {
             if (bluetoothAdapter.isEnabled()) {
                 startScanningForSensortag();
@@ -198,59 +198,69 @@ public class MainActivity extends Activity {
         bluetoothAdapter.stopLeScan(bluetoothLeScanCallback);
     }
 
-    // Listens for broadcasted events from BlueTooth adapter and
-    // BluetoothLeService
+    // Listens for broadcasted events from BlueTooth adapter and BluetoothLeService
     private class BlueToothEventReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
 
             if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)) {
-                // Bluetooth adapter state change
-                switch (bluetoothAdapter.getState()) {
-                case BluetoothAdapter.STATE_ON:
-                    startBluetoothLeService();
-                    break;
-                case BluetoothAdapter.STATE_OFF:
-                    finish();
-                    break;
-                default:
-                    Log.w(LOG_TAG, "Action STATE CHANGED not processed: " + bluetoothAdapter.getState());
-                    break;
-                }
+                bluetoothAdapterActionStateChanged();
             } else if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
-                int status = intent.getIntExtra(BluetoothLeService.EXTRA_STATUS, BluetoothGatt.GATT_FAILURE);
-                if (status == BluetoothGatt.GATT_SUCCESS) {
-                    sensortagUpdateReceiver = new SensortagUpdateReceiver();
-                    registerReceiver(sensortagUpdateReceiver, createSensorTagUpdateIntentFilter());
-                    discoverServices();
-                    
-                    Log.i(LOG_TAG, "Sucessfully connected to sensortag");
-                } else {
-                    Toast.makeText(context, "Connecting to the sensortag failed. Status: " + status, Toast.LENGTH_LONG).show();
-                    finish();
-                }
+                bluetoothLeServiceGattConnected(context, intent);
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
-                connectedDeviceInfo = null;
-                SensorDataFragment sensorDataFragment = (SensorDataFragment) getFragmentManager().findFragmentById(R.id.activity_main);
-                sensorDataFragment.clearAllSensorValues();
-                
-                int status = intent.getIntExtra(BluetoothLeService.EXTRA_STATUS, BluetoothGatt.GATT_FAILURE);
-                if (status == BluetoothGatt.GATT_SUCCESS) {
-                    Log.i(LOG_TAG, "Disconnected, trying to reconnect...");
-                    reconnect();
-                } else {
-                    Toast.makeText(context, "Disconnect failed. Status: " + status + status, Toast.LENGTH_LONG).show();
-                }
+                bluetoothLeServiceGattDisconnected(context, intent);
             } else {
                 Log.w(LOG_TAG, "Unknown action: " + action);
             }
         }
+
+		private void bluetoothLeServiceGattDisconnected(Context context, Intent intent) {
+			connectedDeviceInfo = null;
+			SensorDataFragment sensorDataFragment = (SensorDataFragment) getFragmentManager().findFragmentById(R.id.activity_main);
+			sensorDataFragment.clearAllSensorValues();
+			
+			int status = intent.getIntExtra(BluetoothLeService.EXTRA_STATUS, BluetoothGatt.GATT_FAILURE);
+			if (status == BluetoothGatt.GATT_SUCCESS) {
+			    Log.i(LOG_TAG, "Disconnected, trying to reconnect...");
+			    reconnect();
+			} else {
+			    Toast.makeText(context, "Disconnect failed. Status: " + status + status, Toast.LENGTH_LONG).show();
+			}
+		}
+
+		private void bluetoothLeServiceGattConnected(Context context, Intent intent) {
+			int status = intent.getIntExtra(BluetoothLeService.EXTRA_STATUS, BluetoothGatt.GATT_FAILURE);
+			if (status == BluetoothGatt.GATT_SUCCESS) {
+			    sensortagUpdateReceiver = new SensortagUpdateReceiver();
+			    registerReceiver(sensortagUpdateReceiver, createSensorTagUpdateIntentFilter());
+			    discoverServices();
+			    
+			    Log.i(LOG_TAG, "Sucessfully connected to sensortag");
+			} else {
+			    Toast.makeText(context, "Connecting to the sensortag failed. Status: " + status, Toast.LENGTH_LONG).show();
+			    finish();
+			}
+		}
+
+		private void bluetoothAdapterActionStateChanged() {
+			switch (bluetoothAdapter.getState()) {
+			case BluetoothAdapter.STATE_ON:
+			    startBluetoothLeService();
+			    break;
+			case BluetoothAdapter.STATE_OFF:
+			    finish();
+			    break;
+			default:
+			    Log.w(LOG_TAG, "Action STATE CHANGED not processed: " + bluetoothAdapter.getState());
+			    break;
+			}
+		}
     };
     
     private void reconnect() {
         releaseConnectionAndResources();
-        initialize();
+        startSensortagConnectionProcedure();
     }
     
     private void releaseConnectionAndResources() {
@@ -277,7 +287,6 @@ public class MainActivity extends Activity {
         connectedDeviceInfo = null;
     }
 
-    // Code to manage Service life cycle.
     private final ServiceConnection serviceConnection = new ServiceConnection() {
 
         public void onServiceConnected(ComponentName componentName, IBinder service) {

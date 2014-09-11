@@ -15,7 +15,7 @@ public final class TemperatureUtil {
 		// Utility class does not need a constructor
 	}
     
-    public static double convertFromPreferenceUnitToSiUnit(Context context, double temperatureValueInPreferenceUnit) {
+    public static double convertFromPreferenceUnitToStorageUnit(Context context, double temperatureValueInPreferenceUnit) {
     	double result = 0;
     	
     	String fahrenheit = context.getString(R.string.temperature_unit_degree_fahrenheit);
@@ -29,16 +29,16 @@ public final class TemperatureUtil {
 		return result;
 	}
 
-    public static double convertFromSiUnitToPreferenceUnit(Context context, double siTemperatureValue) {
+    public static double convertFromStorageUnitToPreferenceUnit(Context context, double temperatureValueInStorageUnit) {
     	double result = 0;
     	
     	String fahrenheit = context.getString(R.string.temperature_unit_degree_fahrenheit);
     	
     	String preferredTemperatureUnit = getPreferredTemperatureUnit(context);
     	if (fahrenheit.equals(preferredTemperatureUnit)) {
-    		result = convertCelciusToFahrenheit(siTemperatureValue);
+    		result = convertCelciusToFahrenheit(temperatureValueInStorageUnit);
     	} else {
-    		result = siTemperatureValue;
+    		result = temperatureValueInStorageUnit;
     	}
 		return result;
 	}
