@@ -65,10 +65,14 @@ public abstract class ValueAlarmHandler {
 		}
 	}
 
+	private boolean alarm(Double updatedValue) {
+		return alarmEnabled && isAlarmConditionMet(updatedValue, alarmValue);
+	}
+	
 	private void createNotification(Context context, Double updatedValue) {
 		String message = getAlarmNotificationText(context, updatedValue, alarmValue);
 		
-		Log.i(this.getClass().getSimpleName(), "Notification messgage: " + message);
+		Log.i(this.getClass().getSimpleName(), "Notification message: " + message);
 		
 		configureNotificationBuilder(context, message);
 		
@@ -91,10 +95,6 @@ public abstract class ValueAlarmHandler {
 			.setOnlyAlertOnce(true)
 			.setAutoCancel(true)
 			.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
-	}
-
-	private boolean alarm(Double updatedValue) {
-		return alarmEnabled && isAlarmConditionMet(updatedValue, alarmValue);
 	}
 		
 	/**

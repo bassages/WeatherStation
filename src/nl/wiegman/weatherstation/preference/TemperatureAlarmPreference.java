@@ -15,7 +15,7 @@ import android.widget.TextView;
 
 public abstract class TemperatureAlarmPreference extends DialogPreference implements OnClickListener {
 
-    private static final String LOG_TAG = TemperatureAlarmPreference.class.getSimpleName();
+    private final String LOG_TAG = this.getClass().getSimpleName();
     
     private CheckBox alarmEnabledCheckBox;
     private TextView alarmValueTextView;
@@ -67,10 +67,10 @@ public abstract class TemperatureAlarmPreference extends DialogPreference implem
             if (alarmEnabled && isNotEmpty(alarmValueAsString)) {
                	float minimumTemperatureValueAsFloat = Float.parseFloat(alarmValueAsString.toString());
                	
-               	double alarmValueSi = TemperatureUtil.convertFromPreferenceUnitToSiUnit(getContext(), minimumTemperatureValueAsFloat);
+               	double alarmValueInStorageUnit = TemperatureUtil.convertFromPreferenceUnitToStorageUnit(getContext(), minimumTemperatureValueAsFloat);
                	
-               	Log.i(LOG_TAG, "Setting preference " + alarmValuePreferenceKey + " to " + alarmValueSi);
-               	editor.putFloat(alarmValuePreferenceKey, (float)alarmValueSi);
+               	Log.i(LOG_TAG, "Setting preference " + alarmValuePreferenceKey + " to " + alarmValueInStorageUnit);
+               	editor.putFloat(alarmValuePreferenceKey, (float)alarmValueInStorageUnit);
             }
             editor.commit();
         }
@@ -111,7 +111,7 @@ public abstract class TemperatureAlarmPreference extends DialogPreference implem
 		String preferenceKeyTeperatureAlarmValue = getContext().getString(getAlarmTemperaturePreferenceKey());
 		Float temperatureAlarmPreferenceValue = preferences.getFloat(preferenceKeyTeperatureAlarmValue, 0);
 		
-		Double temperaturePreferenceValueInPreferenceUnit = TemperatureUtil.convertFromSiUnitToPreferenceUnit(getContext(), temperatureAlarmPreferenceValue);
+		Double temperaturePreferenceValueInPreferenceUnit = TemperatureUtil.convertFromStorageUnitToPreferenceUnit(getContext(), temperatureAlarmPreferenceValue);
 		alarmValueTextView.setText(temperaturePreferenceValueInPreferenceUnit.toString());
 	}
 

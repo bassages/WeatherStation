@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.preference.PreferenceFragment;
 import android.support.v4.app.NavUtils;
 import android.view.MenuItem;
+import android.view.WindowManager;
 
 public class SettingsActivity extends Activity {
     
@@ -17,6 +18,7 @@ public class SettingsActivity extends Activity {
 		if (savedInstanceState == null) {
 			getFragmentManager().beginTransaction().add(R.id.activity_settings, new PrefsFragment()).commit();
 		}
+		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 	}
 	
     public static class PrefsFragment extends PreferenceFragment {   
