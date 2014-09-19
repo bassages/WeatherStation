@@ -33,4 +33,6 @@ public interface GattSensor {
     void enableNotifications();
 
     void disableNotifications();
+
+	void read();
 }

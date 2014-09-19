@@ -5,7 +5,6 @@ import java.util.UUID;
 import nl.wiegman.weatherstation.bluetooth.BluetoothLeService;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
-import android.util.Log;
 
 public abstract class AbstractGattSensor implements GattSensor {
 
@@ -68,24 +67,25 @@ public abstract class AbstractGattSensor implements GattSensor {
     
     @Override
     public void enableNotifications() {
-        BluetoothGattService service = BluetoothLeService.getBluetoothGatt().getService(serviceUuid);
-        BluetoothGattCharacteristic characteristic = service.getCharacteristic(dataUuid);
-
-        boolean setNotificationCharacteristicSuccesfull = BluetoothLeService.getInstance().initiateNotificationCharacteristic(characteristic, true);
-        if (!setNotificationCharacteristicSuccesfull) {
-            Log.e(LOG_TAG, "Failed to setNotificationCharacteristic");
-        }
+        setNotificationState(true);
     }
     
     @Override
     public void disableNotifications() {
-        BluetoothGattService service = BluetoothLeService.getBluetoothGatt().getService(serviceUuid);
-        BluetoothGattCharacteristic characteristic = service.getCharacteristic(dataUuid);
+    	setNotificationState(false);
+    }
 
-        boolean setNotificationCharacteristicSuccesfull = BluetoothLeService.getInstance().initiateNotificationCharacteristic(characteristic, false);
-        if (!setNotificationCharacteristicSuccesfull) {
-            Log.e(LOG_TAG, "Failed to setNotificationCharacteristic");
-        }
+	private void setNotificationState(boolean state) {
+		BluetoothGattService service = BluetoothLeService.getBluetoothGatt().getService(serviceUuid);
+        BluetoothGattCharacteristic characteristic = service.getCharacteristic(dataUuid);
+        BluetoothLeService.getInstance().initiateNotificationCharacteristic(characteristic, state);
+	}
+
+    @Override
+    public void read() {
+		BluetoothGattService service = BluetoothLeService.getBluetoothGatt().getService(serviceUuid);
+        BluetoothGattCharacteristic characteristic = service.getCharacteristic(dataUuid);
+        BluetoothLeService.getInstance().initiateReadCharacteristic(characteristic);
     }
     
     @Override

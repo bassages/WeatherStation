@@ -238,17 +238,16 @@ public class BluetoothLeService extends Service {
      * @param enabled
      *            If true, enable notification. False otherwise.
      */
-    public boolean initiateNotificationCharacteristic(BluetoothGattCharacteristic characteristic, boolean enable) {
+    public void initiateNotificationCharacteristic(BluetoothGattCharacteristic characteristic, boolean enable) {
         
         // Enabling notifications is a two-part job, enabling it locally, and enabling it remotely.
         
         if (!bluetoothGatt.setCharacteristicNotification(characteristic, enable)) { //Enable locally...
             Log.w(TAG, "setCharacteristicNotification failed");
-            return false;
         } else {            
             BluetoothGattDescriptor clientConfig = characteristic.getDescriptor(CLIENT_CHARACTERISTIC_CONFIG);
             if (clientConfig == null) {
-                return false;
+            	Log.e(TAG, "clientConfig is null");
             } else {
                 // Enable remotely ...
                 if (enable) {
@@ -265,7 +264,6 @@ public class BluetoothLeService extends Service {
                 }
             }
         }
-        return true;
     }
 
     private void waitForLatch() {
