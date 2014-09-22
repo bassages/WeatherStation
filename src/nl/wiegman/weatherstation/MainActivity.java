@@ -279,6 +279,15 @@ public class MainActivity extends Activity {
 			    break;
 			}
 		}
+		
+	    private IntentFilter createSensorTagUpdateIntentFilter() {
+	        IntentFilter intentFilter = new IntentFilter();
+	        intentFilter.addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
+	        intentFilter.addAction(BluetoothLeService.ACTION_DATA_NOTIFY);
+	        intentFilter.addAction(BluetoothLeService.ACTION_DATA_WRITE);
+	        intentFilter.addAction(BluetoothLeService.ACTION_DATA_READ);
+	        return intentFilter;
+	    }
     };
     
     private void reconnect() {
@@ -358,7 +367,7 @@ public class MainActivity extends Activity {
                 if (status == BluetoothGatt.GATT_SUCCESS) {
                     Log.i(LOG_TAG, "Services discovered");
 
-                    startSensorDataUpdates();
+                    startGattSensorDataUpdates();
                     
                 } else {
                     Toast.makeText(getApplication(), "Service discovery failed", Toast.LENGTH_LONG).show();
@@ -374,7 +383,7 @@ public class MainActivity extends Activity {
             } else if (BluetoothLeService.ACTION_DATA_READ.equals(action)) {
                 String uuidStr = intent.getStringExtra(BluetoothLeService.EXTRA_UUID);
                 byte[] value = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
-                onCharacteristicsRead(uuidStr, value, status);
+                onCharacteristicRead(uuidStr, value, status);
             }
 
             if (status != BluetoothGatt.GATT_SUCCESS) {
@@ -382,66 +391,58 @@ public class MainActivity extends Activity {
             }
         }
 
-        private void startSensorDataUpdates() {
+        private void startGattSensorDataUpdates() {
             for (GattSensor gattSensor: gattSensors) {
                 gattSensor.calibrate();
                 gattSensor.enable();
             }
             periodicGattSensorUpdateRequestsExecutor = new ScheduledThreadPoolExecutor(1);
             int startDelay = 500;
-			periodicGattSensorUpdateRequestsExecutor.scheduleWithFixedDelay(new PeriodicGattSensorUpdateRequester(), startDelay, SENSORS_REFRESH_RATE_IN_MILLISECONDS, TimeUnit.MILLISECONDS);
+			PeriodicGattSensorUpdateRequester periodicGattSensorUpdateRequester = new PeriodicGattSensorUpdateRequester(gattSensors);
+			periodicGattSensorUpdateRequestsExecutor.scheduleWithFixedDelay(periodicGattSensorUpdateRequester, startDelay, SENSORS_REFRESH_RATE_IN_MILLISECONDS, TimeUnit.MILLISECONDS);
         }
     };
-
-    private final class PeriodicGattSensorUpdateRequester implements Runnable {
-		@Override
-		public void run() {
-			for (final GattSensor gattSensor: gattSensors) {
-				gattSensor.read();	
-			}
-		}
-    }
     
-    private void onCharacteristicsRead(String uuidStr, byte[] value, int status) {
-        if (uuidStr.equals(BarometerGatt.UUID_CALIBRATION.toString())) {
-            barometerGatt.processCalibrationResults(value);
-        } else {
-        	onCharacteristicChanged(uuidStr, value);
-        }
+    private void onCharacteristicRead(String uuidStr, byte[] value, int status) {
+    	if (value != null) {
+            if (uuidStr.equals(BarometerGatt.UUID_CALIBRATION.toString())) {
+                barometerGatt.processCalibrationResults(value);
+            } else {
+            	processChangedGattCharacteristic(uuidStr, value);
+            }
+    	} else {
+			Log.w(LOG_TAG, "Sensor value is null");
+    	}
     }
 
-    private static IntentFilter createSensorTagUpdateIntentFilter() {
-        final IntentFilter fi = new IntentFilter();
-        fi.addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
-        fi.addAction(BluetoothLeService.ACTION_DATA_NOTIFY);
-        fi.addAction(BluetoothLeService.ACTION_DATA_WRITE);
-        fi.addAction(BluetoothLeService.ACTION_DATA_READ);
-        return fi;
+    public void onCharacteristicChanged(String uuidStr, byte[] value) {
+    	if (value != null) {
+    		processChangedGattCharacteristic(uuidStr, value);
+    	} else {
+			Log.w(LOG_TAG, "Sensor value is null");
+    	}
     }
 
-    /**
-     * Handle changes in sensor values
-     */
-    public void onCharacteristicChanged(String uuidStr, byte[] rawValue) {
-        if (uuidStr.equals(thermometerGatt.getDataUuid().toString())) {
-        	SensorData sensorData = thermometerGatt.convert(rawValue);
+	private void processChangedGattCharacteristic(String uuidStr, byte[] value) {
+		if (uuidStr.equals(thermometerGatt.getDataUuid().toString())) {
+        	SensorData sensorData = thermometerGatt.convert(value);
             for (TemperatureValueChangeListener listener : temperatureValueChangeListeners) {
             	listener.temperatureChanged(this, sensorData.getX());            	
             }
         } else if (uuidStr.equals(hygrometerGatt.getDataUuid().toString())) {
-            SensorData sensorData = hygrometerGatt.convert(rawValue);
+            SensorData sensorData = hygrometerGatt.convert(value);
             for (HumidityValueChangeListener listener : humidityValueChangeListeners) {
             	listener.humidityChanged(this, sensorData.getX());            	
             }
         } else if (uuidStr.equals(barometerGatt.getDataUuid().toString())) {
-            SensorData sensorData = barometerGatt.convert(rawValue);
+            SensorData sensorData = barometerGatt.convert(value);
             for (BarometricPressureValueChangeListener listener : barometricPressureChangeListeners) {
             	listener.barometricPressureChanged(this, sensorData.getX());            	
             }
         } else {
             Log.e(LOG_TAG, "Unknown uuid: " + uuidStr);
-        }
-    }
+        }			
+}
 
     // Device scan callback.
     // NB! Nexus 4 and Nexus 7 (2012) only provide one scan result per scan
@@ -450,21 +451,21 @@ public class MainActivity extends Activity {
             stopScanningForSensortag();
             connectToDevice(new BluetoothDeviceInfo(device, rssi));
         }
-    };
-
-    private void connectToDevice(BluetoothDeviceInfo deviceInfo) {
-        connectedDeviceInfo = deviceInfo;
-
-        // Register the BroadcastReceiver to handle events from BluetoothAdapter and BluetoothLeService
-        IntentFilter bluetoothEventFilter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
-        bluetoothEventFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
-        bluetoothEventFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
         
-        bluetoothEventReceiver = new BlueToothEventReceiver();
-        registerReceiver(bluetoothEventReceiver, bluetoothEventFilter);
+        private void connectToDevice(BluetoothDeviceInfo deviceInfo) {
+            connectedDeviceInfo = deviceInfo;
 
-        startBluetoothLeService();
-    }
+            // Register the BroadcastReceiver to handle events from BluetoothAdapter and BluetoothLeService
+            IntentFilter bluetoothEventFilter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
+            bluetoothEventFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
+            bluetoothEventFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
+            
+            bluetoothEventReceiver = new BlueToothEventReceiver();
+            registerReceiver(bluetoothEventReceiver, bluetoothEventFilter);
+
+            startBluetoothLeService();
+        }
+    };
 
     private void startBluetoothLeService() {
         bluetoothLeServiceBindingIntent = new Intent(this, BluetoothLeService.class);

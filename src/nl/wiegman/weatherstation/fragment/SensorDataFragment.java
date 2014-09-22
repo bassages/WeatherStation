@@ -50,9 +50,7 @@ public class SensorDataFragment extends Fragment implements TemperatureValueChan
     	barometricPressureValueTextView = (TextView) rootView.findViewById(R.id.airPressureValue);
     	
     	if (savedInstanceState != null) {
-    		temperatureInDegreeCelcius = savedInstanceState.getDouble("temperature");
-    		humidity = savedInstanceState.getDouble("humidity");
-    		barometricPressure = savedInstanceState.getDouble("barometric_pressure");
+    		restoreState(savedInstanceState);
     	}
     	
     	return rootView;
@@ -67,9 +65,16 @@ public class SensorDataFragment extends Fragment implements TemperatureValueChan
     @Override
     public void onSaveInstanceState(Bundle outState) {
     	super.onSaveInstanceState(outState);
-    	outState.putDouble("temperature", temperatureInDegreeCelcius);
-    	outState.putDouble("humidity", humidity);
-    	outState.putDouble("barometric_pressure", barometricPressure);
+    
+    	if (temperatureInDegreeCelcius != null) {
+    		outState.putDouble("temperature", temperatureInDegreeCelcius);
+    	}
+    	if (humidity != null) {
+    		outState.putDouble("humidity", humidity);
+    	}
+    	if (barometricPressure != null) {
+    		outState.putDouble("barometric_pressure", barometricPressure);
+    	}
     }
     
 	@Override
@@ -107,10 +112,26 @@ public class SensorDataFragment extends Fragment implements TemperatureValueChan
 	}
     
     public void clearAllSensorValues() {
-        temperatureValueTextView.setText(R.string.initial_temperature_value);
-        humidityValueTextView.setText(R.string.initial_humidity_value);
-        barometricPressureValueTextView.setText(R.string.initial_air_pressure_value);
+    	temperatureChanged(getActivity(), null);
+    	humidityChanged(getActivity(), null);
+    	barometricPressureChanged(getActivity(), null);
     }
+    
+	private void restoreState(Bundle savedInstanceState) {
+		temperatureInDegreeCelcius = savedInstanceState.getDouble("temperature", Double.MIN_VALUE);
+		if (temperatureInDegreeCelcius == Double.MIN_VALUE) {
+			temperatureInDegreeCelcius = null;
+		}
+		humidity = savedInstanceState.getDouble("humidity", Double.MIN_VALUE);
+		if (humidity == Double.MIN_VALUE) {
+			humidity = null;
+		}
+		barometricPressure = savedInstanceState.getDouble("barometric_pressure", Double.MIN_VALUE);
+		if (barometricPressure == Double.MIN_VALUE) {
+			barometricPressure = null;
+		}		
+		savedInstanceState.clear();
+	}
     
     private void applyPreferences() {
         setTemperatureUnitLabelBasedOnPreference();

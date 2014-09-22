@@ -43,7 +43,7 @@ public abstract class AbstractGattSensor implements GattSensor {
 
     protected Integer shortUnsignedAtOffset(byte[] c, int offset) {
         Integer lowerByte = (int) c[offset] & 0xFF;
-        Integer upperByte = (int) c[offset + 1] & 0xFF; // // Interpret MSB as signed
+        Integer upperByte = (int) c[offset + 1] & 0xFF; // Interpret MSB as signed
         return (upperByte << 8) + lowerByte;
     }
     
