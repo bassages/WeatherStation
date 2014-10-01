@@ -43,7 +43,7 @@ public class ThermometerGatt extends AbstractGattSensor {
     @Override
     public SensorData convert(final byte[] value) {
         /*
-         * The IR Temperature sensor produces two measurements; Object (AKA target or IR) Temperature, and Ambient ( AKA die ) temperature.
+         * The IR Temperature sensor produces two measurements; Object (AKA target or IR) Temperature, and Ambient (AKA die) temperature.
          * 
          * Both need some conversion, and Object temperature is dependent on Ambient temperature.
          * 
@@ -51,15 +51,41 @@ public class ThermometerGatt extends AbstractGattSensor {
          * Which means we need to shift the bytes around to get the correct values.
          */
         double ambient = extractAmbientTemperature(value);
+        double target = extractTargetTemperature(value, ambient);
         
         Log.i(this.getClass().getSimpleName(), "Ambient temperature from thermometer sensor: " + ambient);
+        Log.i(this.getClass().getSimpleName(), "Target temperature from thermometer sensor: " + target);
         
-        return new SensorData(ambient, 0, 0);
+        return new SensorData(ambient, target, 0);
     }
 
-    private double extractAmbientTemperature(byte[] v) {
+    private double extractAmbientTemperature(byte[] value) {
         int offset = 2;
-        return shortUnsignedAtOffset(v, offset) / 128.0;
+        return shortUnsignedAtOffset(value, offset) / 128.0;
+    }
+    
+    private double extractTargetTemperature(byte[] value, double ambient) {
+        Integer twoByteValue = shortSignedAtOffset(value, 0);
+
+        double Vobj2 = twoByteValue.doubleValue();
+        Vobj2 *= 0.00000015625;
+
+        double Tdie = ambient + 273.15;
+
+        double S0 = 5.593E-14;	// Calibration factor
+        double a1 = 1.75E-3;
+        double a2 = -1.678E-5;
+        double b0 = -2.94E-5;
+        double b1 = -5.7E-7;
+        double b2 = 4.63E-9;
+        double c2 = 13.4;
+        double Tref = 298.15;
+        double S = S0*(1+a1*(Tdie - Tref)+a2*Math.pow((Tdie - Tref),2));
+        double Vos = b0 + b1*(Tdie - Tref) + b2*Math.pow((Tdie - Tref),2);
+        double fObj = (Vobj2 - Vos) + c2*Math.pow((Vobj2 - Vos),2);
+        double tObj = Math.pow(Math.pow(Tdie,4) + (fObj/S),.25);
+
+        return tObj - 273.15;
     }
     
     @Override

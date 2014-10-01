@@ -21,7 +21,9 @@
             android:layout_alignParentLeft="true"
             android:layout_alignParentTop="true"
             android:contentDescription="@string/temperature_icon_description"
-            android:src="@drawable/temperature_black" />
+            android:src="@drawable/temperature_black" 
+            android:onClick="showHistory"
+            android:tag="temperature"/>
 
         <TextView
             android:id="@+id/airPressureLabel"
