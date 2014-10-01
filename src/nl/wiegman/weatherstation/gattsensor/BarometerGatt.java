@@ -84,7 +84,6 @@ public class BarometerGatt extends AbstractGattSensor {
             p_a = (S * p_r + O) / pow(2,14);
             
             double pressureInHpa = p_a / 100;
-//        Log.i(this.getClass().getSimpleName(), "Ambient temperature from barometer sensor: " + t_a);
             
             sensorData = new SensorData(pressureInHpa, t_a, 0);
         }

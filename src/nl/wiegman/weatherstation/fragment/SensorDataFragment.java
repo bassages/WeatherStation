@@ -37,7 +37,7 @@ public class SensorDataFragment extends Fragment implements TemperatureValueChan
     @Override
     public void onCreate(Bundle savedInstanceState) {
     	super.onCreate(savedInstanceState);
-    	Log.i(LOG_TAG, "onCreate fragment");    	
+    	Log.i(LOG_TAG, "onCreate sensorDataFragment");  	
     }
     
     @Override

@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import nl.wiegman.weatherstation.bluetooth.BluetoothDeviceInfo;
 import nl.wiegman.weatherstation.bluetooth.BluetoothLeService;
 import nl.wiegman.weatherstation.fragment.SensorDataFragment;
+import nl.wiegman.weatherstation.fragment.TemperatureHistoryFragment;
 import nl.wiegman.weatherstation.fragment.sensorvaluealarm.MaximumTemperatureAlarmHandler;
 import nl.wiegman.weatherstation.fragment.sensorvaluealarm.MinimumTemperatureAlarmHandler;
 import nl.wiegman.weatherstation.gattsensor.BarometerGatt;
@@ -16,10 +17,13 @@ import nl.wiegman.weatherstation.gattsensor.GattSensor;
 import nl.wiegman.weatherstation.gattsensor.HygrometerGatt;
 import nl.wiegman.weatherstation.gattsensor.SensorData;
 import nl.wiegman.weatherstation.gattsensor.ThermometerGatt;
+import nl.wiegman.weatherstation.history.TemperatureHistory;
 import nl.wiegman.weatherstation.sensorvaluelistener.BarometricPressureValueChangeListener;
 import nl.wiegman.weatherstation.sensorvaluelistener.HumidityValueChangeListener;
 import nl.wiegman.weatherstation.sensorvaluelistener.TemperatureValueChangeListener;
 import android.app.Activity;
+import android.app.Fragment;
+import android.app.FragmentTransaction;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -36,13 +40,14 @@ import android.os.IBinder;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
     private final String LOG_TAG = this.getClass().getSimpleName();
 
-    private static final long SENSORS_REFRESH_RATE_IN_MILLISECONDS = TimeUnit.SECONDS.toMillis(30);
+    private static final long SENSORS_REFRESH_RATE_IN_MILLISECONDS = TimeUnit.SECONDS.toMillis(5);
     
     // Requests to other activities
     private static final int REQUEST_TO_ENABLE_BLUETOOTHE_LE = 0;
@@ -55,7 +60,7 @@ public class MainActivity extends Activity {
     private BroadcastReceiver bluetoothEventReceiver;
 
     private volatile BluetoothDeviceInfo connectedDeviceInfo;
-        
+    
     private final List<TemperatureValueChangeListener> temperatureValueChangeListeners = new ArrayList<TemperatureValueChangeListener>();
     private final List<HumidityValueChangeListener> humidityValueChangeListeners = new ArrayList<HumidityValueChangeListener>();
     private final List<BarometricPressureValueChangeListener> barometricPressureChangeListeners = new ArrayList<BarometricPressureValueChangeListener>();
@@ -65,6 +70,8 @@ public class MainActivity extends Activity {
     private static final BarometerGatt barometerGatt = new BarometerGatt();
 
     private ScheduledExecutorService periodicGattSensorUpdateRequestsExecutor;
+    
+    private TemperatureHistoryFragment temperatureHistoryFragment;
     
     private static final List<GattSensor> gattSensors = new ArrayList<GattSensor>();
     static {
@@ -96,6 +103,13 @@ public class MainActivity extends Activity {
 		
 		MinimumTemperatureAlarmHandler minimumTemperatureAlarm = new MinimumTemperatureAlarmHandler(this);
 		temperatureValueChangeListeners.add(minimumTemperatureAlarm);
+		
+//		TemperatureHistory temperatureHistory = new TemperatureHistory();
+//		temperatureHistory.deleteAll(this);
+//		temperatureValueChangeListeners.add(temperatureHistory);
+		
+		temperatureHistoryFragment = new TemperatureHistoryFragment();
+		temperatureValueChangeListeners.add(temperatureHistoryFragment);
 		
         // TODO: keep this?..
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -437,7 +451,7 @@ public class MainActivity extends Activity {
         } else if (uuidStr.equals(barometerGatt.getDataUuid().toString())) {
             SensorData sensorData = barometerGatt.convert(value);
             for (BarometricPressureValueChangeListener listener : barometricPressureChangeListeners) {
-            	listener.barometricPressureChanged(this, sensorData.getX());            	
+            	listener.barometricPressureChanged(this, sensorData.getX());
             }
         } else {
             Log.e(LOG_TAG, "Unknown uuid: " + uuidStr);
@@ -478,4 +492,12 @@ public class MainActivity extends Activity {
             finish();
         }
     }
+    
+    public void showHistory(View view) {
+    	 FragmentTransaction transaction = getFragmentManager().beginTransaction().replace(R.id.activity_main, temperatureHistoryFragment);
+     	 transaction.addToBackStack(null);
+
+    	 // Commit the transaction
+    	 transaction.commit();
+	}
 }

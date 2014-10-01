@@ -1,52 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <string name="app_name">Weather Station</string>
     <string name="action_settings">Settings</string>
     <string name="action_exit">Exit</string>
-
     <string name="initial_temperature_value">-</string>
     <string name="initial_air_pressure_value">-</string>
     <string name="initial_humidity_value">-</string>
-
     <string name="temperature_label">Temperature</string>
     <string name="air_pressure_label">Air pressure</string>
     <string name="humidity_label">Humidity</string>
-    
     <string name="temperature_unit_degree_celcius">\u2103</string>
     <string name="temperature_unit_degree_fahrenheit">\u2109</string>
     <string name="air_pressure_unit_label">hPa</string>
     <string name="humidity_unit_label">%</string>
-    
     <string name="temperature_icon_description">Temperature icon</string>
     <string name="air_pressure_icon_description">Air pressure icon</string>
     <string name="humidity_icon_description">Humidity icon</string>
-    
     <string name="title_activity_settings">Weather Station - Settings</string>
     <string name="preference_temperature_unit_title">Temperature</string>
     <string name="preference_temperature_unit_summary">Select the unit in which temperatures are displayed</string>
     <string name="preference_temperature_unit_key">temperatureUnit</string>
     <string name="preference_temperature_unit_default_value">\u2103</string>
-    <array name="preference_temperature_unit_entries"><item>\u2103</item><item>\u2109</item></array>
+
+    <array name="preference_temperature_unit_entries">
+        <item>\u2103</item>
+        <item>\u2109</item>
+    </array>
 
     <string name="preference_alarm_minimum_temperature_enabled_key">minimumTemperatureAlarmEnabled</string>
     <string name="preference_alarm_minimum_temperature_value_key">minimumTemperatureAlarmValue</string>
-
     <string name="preference_alarm_maximum_temperature_enabled_key">maximumTemperatureAlarmEnabled</string>
     <string name="preference_alarm_maximum_temperature_value_key">maximumTemperatureAlarmValue</string>
-
     <string name="preference_maximum_temperature_alarm_title">Maximum temperature alarm</string>
     <string name="preference_maximum_temperature_alarm_summary">Receive a notification when the temperature rises above the defined value</string>
     <string name="maximum_temperature_alarm_notification_title">Temperature alarm!</string>
     <string name="maximum_temperature_alarm_notification_text">%1$s %2$s &gt; maximum of %3$s %4$s</string>
-    
     <string name="preference_minimum_temperature_alarm_title">Minimum temperature alarm</string>
     <string name="preference_minimum_temperature_alarm_summary">Receive a notification when the temperature drops below the defined value</string>
     <string name="minimum_temperature_alarm_notification_title">Temperature alarm!</string>
     <string name="minimum_temperature_alarm_notification_text">%1$s %2$s &lt; minimum of %3$s %4$s</string>
-    
+
     <!-- Messages -->
     <string name="ble_not_supported">BLE is not supported</string>
     <string name="bt_on">Bluetooth was turned  on</string>
     <string name="bt_not_on">Bluetooth must be enabled for this application to function correctly</string>
-    
+
 </resources>
