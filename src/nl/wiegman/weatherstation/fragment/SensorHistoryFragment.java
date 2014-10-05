@@ -11,8 +11,8 @@ import java.util.List;
 
 import nl.wiegman.weatherstation.MainActivity;
 import nl.wiegman.weatherstation.R;
-import nl.wiegman.weatherstation.history.SensorHistoryItem;
-import nl.wiegman.weatherstation.history.TemperatureHistoryStore;
+import nl.wiegman.weatherstation.history.SensorValueHistoryItem;
+import nl.wiegman.weatherstation.history.TemperatureHistory;
 import nl.wiegman.weatherstation.sensorvaluelistener.TemperatureValueChangeListener;
 import nl.wiegman.weatherstation.util.TemperatureUtil;
 
@@ -36,6 +36,9 @@ import com.androidplot.xy.SimpleXYSeries;
 import com.androidplot.xy.XYPlot;
 import com.androidplot.xy.XYStepMode;
 
+/**
+ * Fragment containing a graph that shows the sensor values over time
+ */
 public class SensorHistoryFragment extends Fragment implements TemperatureValueChangeListener {
 
 	private XYPlot plot;
@@ -64,7 +67,7 @@ public class SensorHistoryFragment extends Fragment implements TemperatureValueC
         
         plot.setDomainValueFormat(new TimeLabelFormat());
         
-        sensorValueHistorySeries = new SimpleXYSeries("Temperature");
+        sensorValueHistorySeries = new SimpleXYSeries("SensorValue");
 
         LineAndPointFormatter lineAndPointFormatter = new LineAndPointFormatter(Color.BLACK, Color.TRANSPARENT, Color.TRANSPARENT, null);
         Paint paint = lineAndPointFormatter.getLinePaint();
@@ -90,7 +93,7 @@ public class SensorHistoryFragment extends Fragment implements TemperatureValueC
         plot.getGraphWidget().getDomainOriginLinePaint().setColor(Color.BLACK);
         plot.getGraphWidget().getRangeOriginLinePaint().setColor(Color.BLACK);
 
-        //Remove legend
+        // Remove legend
         plot.getLayoutManager().remove(plot.getLegendWidget());
         plot.getLayoutManager().remove(plot.getDomainLabelWidget());
         plot.getLayoutManager().remove(plot.getRangeLabelWidget());
@@ -102,10 +105,9 @@ public class SensorHistoryFragment extends Fragment implements TemperatureValueC
 	}
 	
 	private void addDataFromHistory() {
-		TemperatureHistoryStore historyStore = new TemperatureHistoryStore();
-		List<SensorHistoryItem> history = historyStore.getAll(getActivity());
-		
-		for (SensorHistoryItem item : history) {
+		TemperatureHistory historyStore = new TemperatureHistory();
+		List<SensorValueHistoryItem> history = historyStore.getAll(getActivity());
+		for (SensorValueHistoryItem item : history) {
 			addToGraph(item.getTimestamp(), item.getSensorValue());
 		}
 	}

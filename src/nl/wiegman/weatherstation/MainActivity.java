@@ -17,7 +17,7 @@ import nl.wiegman.weatherstation.gattsensor.GattSensor;
 import nl.wiegman.weatherstation.gattsensor.HygrometerGatt;
 import nl.wiegman.weatherstation.gattsensor.SensorData;
 import nl.wiegman.weatherstation.gattsensor.ThermometerGatt;
-import nl.wiegman.weatherstation.history.TemperatureHistoryStore;
+import nl.wiegman.weatherstation.history.TemperatureHistory;
 import nl.wiegman.weatherstation.sensorvaluelistener.BarometricPressureValueChangeListener;
 import nl.wiegman.weatherstation.sensorvaluelistener.HumidityValueChangeListener;
 import nl.wiegman.weatherstation.sensorvaluelistener.TemperatureValueChangeListener;
@@ -85,7 +85,7 @@ public class MainActivity extends Activity {
 
         setContentView(R.layout.activity_main);
 
-		TemperatureHistoryStore temperatureHistoryStore = new TemperatureHistoryStore();
+		TemperatureHistory temperatureHistoryStore = new TemperatureHistory();
 		addTemperatureValueChangeListener(temperatureHistoryStore);
         
         if (savedInstanceState == null) {

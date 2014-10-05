@@ -9,6 +9,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+/**
+ * {@link SQLiteOpenHelper} for maintaining sensor value history
+ */
 public class SensorValueHistoryDatabase extends SQLiteOpenHelper {
 
 	private static final int DATABASE_VERSION = 1;
@@ -71,18 +74,18 @@ public class SensorValueHistoryDatabase extends SQLiteOpenHelper {
 	    db.close(); // Closing database connection
 	}
 		
-	public List<SensorHistoryItem> getAllHistory() {
-	    List<SensorHistoryItem> allHistory = new ArrayList<SensorHistoryItem>();
+	public List<SensorValueHistoryItem> getAllHistory(String sensorName) {
+	    List<SensorValueHistoryItem> allHistory = new ArrayList<SensorValueHistoryItem>();
 
-	    String selectQuery = "SELECT * FROM " + TABLE_SENSOR_HISTORY;
+	    String selectQuery = "SELECT * FROM " + TABLE_SENSOR_HISTORY + " WHERE " + KEY_SENSOR_NAME + " = ?";
 	 
 	    SQLiteDatabase db = this.getWritableDatabase();
-	    Cursor cursor = db.rawQuery(selectQuery, null);
+	    Cursor cursor = db.rawQuery(selectQuery, new String[] {sensorName});
 	 
 	    // looping through all rows and adding to list
 	    if (cursor.moveToFirst()) {
 	        do {
-	        	SensorHistoryItem historyItem = new SensorHistoryItem();
+	        	SensorValueHistoryItem historyItem = new SensorValueHistoryItem();
 	            historyItem.setId(Integer.parseInt(cursor.getString(0)));
 	            historyItem.setTimestamp(cursor.getLong(1));
 	            historyItem.setSensorName(cursor.getString(2));
