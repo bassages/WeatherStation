@@ -5,6 +5,9 @@ import nl.wiegman.weatherstation.sensorvaluelistener.TemperatureValueChangeListe
 import static nl.wiegman.weatherstation.util.TemperatureUtil.*;
 import android.content.Context;
 
+/**
+ * Issues a notification when the temperature exceeds the user defined value
+ */
 public class MaximumTemperatureAlarmHandler extends ValueAlarmHandler implements TemperatureValueChangeListener {
 
 	public MaximumTemperatureAlarmHandler(Context context) {

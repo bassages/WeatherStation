@@ -2,6 +2,7 @@ package nl.wiegman.weatherstation.fragment;
 
 import java.text.DecimalFormat;
 
+import nl.wiegman.weatherstation.MainActivity;
 import nl.wiegman.weatherstation.R;
 import nl.wiegman.weatherstation.sensorvaluelistener.BarometricPressureValueChangeListener;
 import nl.wiegman.weatherstation.sensorvaluelistener.HumidityValueChangeListener;
@@ -17,7 +18,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 /**
- * Fragment to show the sensor data
+ * Fragment to show the latest sensor data
  */
 public class SensorDataFragment extends Fragment implements TemperatureValueChangeListener, HumidityValueChangeListener, BarometricPressureValueChangeListener {
     private static final String LOG_TAG = SensorDataFragment.class.getSimpleName();
@@ -53,8 +54,17 @@ public class SensorDataFragment extends Fragment implements TemperatureValueChan
     		restoreState(savedInstanceState);
     	}
     	
+    	// Register as listener on various data
+    	getMainActivity().addTemperatureValueChangeListener(this);
+    	getMainActivity().addBarometricPressureValueChangeListener(this);
+    	getMainActivity().addHumidityValueChangeListeners(this);
+    	
     	return rootView;
     }
+
+	private MainActivity getMainActivity() {
+		return (MainActivity)getActivity();
+	}
 
     @Override
     public void onStart() {
@@ -80,35 +90,41 @@ public class SensorDataFragment extends Fragment implements TemperatureValueChan
 	@Override
 	public void temperatureChanged(Context context, Double updatedTemperature) {
         this.temperatureInDegreeCelcius = updatedTemperature;
-        if (temperatureInDegreeCelcius == null) {
-            temperatureValueTextView.setText(R.string.initial_temperature_value);            
-        } else {
-            double temperatureValueInPreferenceUnit = TemperatureUtil.convertFromStorageUnitToPreferenceUnit(getActivity(), temperatureInDegreeCelcius);
-            String temperatureTextViewValue = TemperatureUtil.format(temperatureValueInPreferenceUnit);
-            temperatureValueTextView.setText(temperatureTextViewValue);            
+        if (temperatureValueTextView != null) {
+        	if (temperatureInDegreeCelcius == null) {
+        		temperatureValueTextView.setText(R.string.initial_temperature_value);            
+        	} else {
+        		double temperatureValueInPreferenceUnit = TemperatureUtil.convertFromStorageUnitToPreferenceUnit(getActivity(), temperatureInDegreeCelcius);
+        		String temperatureTextViewValue = TemperatureUtil.format(temperatureValueInPreferenceUnit);
+        		temperatureValueTextView.setText(temperatureTextViewValue);            
+        	}        	
         }
 	}
     
 	@Override
 	public void humidityChanged(Context context, Double updatedHumidity) {
 		this.humidity = updatedHumidity;
-        if (humidity == null) {
-            humidityValueTextView.setText(R.string.initial_humidity_value);
-        } else {
-            String textviewValue = humidityValueTexviewFormat.format(humidity);
-            humidityValueTextView.setText(textviewValue);
-        }	
+		if (humidityValueTextView != null) {
+			if (humidity == null) {
+				humidityValueTextView.setText(R.string.initial_humidity_value);
+			} else {
+				String textviewValue = humidityValueTexviewFormat.format(humidity);
+				humidityValueTextView.setText(textviewValue);
+			}	
+		}
     }
 	
 	@Override
 	public void barometricPressureChanged(Context context, Double updatedBarometricPressure) {
 		this.barometricPressure = updatedBarometricPressure;
-        if (barometricPressure == null) {
-            barometricPressureValueTextView.setText(R.string.initial_air_pressure_value);
-        } else {
-            String textviewValue = barometricPressureValueTextViewFormat.format(barometricPressure);
-            barometricPressureValueTextView.setText(textviewValue);
-        }			
+		if (barometricPressureValueTextView != null) {
+	        if (barometricPressure == null) {
+	            barometricPressureValueTextView.setText(R.string.initial_air_pressure_value);
+	        } else {
+	            String textviewValue = barometricPressureValueTextViewFormat.format(barometricPressure);
+	            barometricPressureValueTextView.setText(textviewValue);
+	        }
+		}
 	}
     
     public void clearAllSensorValues() {

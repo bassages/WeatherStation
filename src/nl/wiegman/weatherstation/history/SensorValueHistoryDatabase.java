@@ -1,11 +1,7 @@
 package nl.wiegman.weatherstation.history;
 
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -13,13 +9,16 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-public class HistoryDatabase extends SQLiteOpenHelper {
+/**
+ * {@link SQLiteOpenHelper} for maintaining sensor value history
+ */
+public class SensorValueHistoryDatabase extends SQLiteOpenHelper {
 
 	private static final int DATABASE_VERSION = 1;
-	private static final String DATABASE_NAME = "WeatherStationDatabase";
+	private static final String DATABASE_NAME = "SensorValueHistoryDatabase";
 	
     // Contacts table name
-    private static final String TABLE_SENSOR_HISTORY = "sensor_history";
+    private static final String TABLE_SENSOR_HISTORY = "sensor_value_history";
  
     // Contacts Table Columns names
     private static final String KEY_ID = "id";
@@ -27,15 +26,27 @@ public class HistoryDatabase extends SQLiteOpenHelper {
     private static final String KEY_SENSOR_NAME = "sensor_name";
     private static final String KEY_SENSOR_VALUE = "sensor_value";
 	
-    public HistoryDatabase(Context context) {
+    private static SensorValueHistoryDatabase mInstance;
+    
+    private SensorValueHistoryDatabase(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
 	}
 	
+    public static SensorValueHistoryDatabase getInstance(Context ctx) {
+        // Use the application context, which will ensure that you 
+        // don't accidentally leak an Activity's context.
+        // See this article for more information: http://bit.ly/6LRzfx
+        if (mInstance == null) {
+          mInstance = new SensorValueHistoryDatabase(ctx.getApplicationContext());
+        }
+        return mInstance;
+      }
+    
 	@Override
 	public void onCreate(SQLiteDatabase db) {
 		String CREATE_CONTACTS_TABLE = "CREATE TABLE " + TABLE_SENSOR_HISTORY + "("
                 + KEY_ID + " INTEGER PRIMARY KEY," 
-				+ KEY_TIMESTAMP + " DATETIME,"
+				+ KEY_TIMESTAMP + " INTEGER,"
 				+ KEY_SENSOR_NAME + " TEXT,"
                 + KEY_SENSOR_VALUE + " DOUBLE" + ")";
         db.execSQL(CREATE_CONTACTS_TABLE);
@@ -54,7 +65,7 @@ public class HistoryDatabase extends SQLiteOpenHelper {
 	    SQLiteDatabase db = this.getWritableDatabase();
 	 
 	    ContentValues values = new ContentValues();
-	    values.put(KEY_TIMESTAMP, getDateTime());
+	    values.put(KEY_TIMESTAMP, System.currentTimeMillis());
 	    values.put(KEY_SENSOR_NAME, sensorName);
 	    values.put(KEY_SENSOR_VALUE, sensorValue);
 	 
@@ -62,28 +73,21 @@ public class HistoryDatabase extends SQLiteOpenHelper {
 	    db.insert(TABLE_SENSOR_HISTORY, null, values);
 	    db.close(); // Closing database connection
 	}
-	
-	private String getDateTime() {
-        SimpleDateFormat dateFormat = new SimpleDateFormat(
-                "yyyy-MM-dd HH:mm:ss", Locale.getDefault());
-        Date date = new Date();
-        return dateFormat.format(date);
-}
-	
-	public List<SensorHistoryItem> getAllHistory() {
-	    List<SensorHistoryItem> allHistory = new ArrayList<SensorHistoryItem>();
+		
+	public List<SensorValueHistoryItem> getAllHistory(String sensorName) {
+	    List<SensorValueHistoryItem> allHistory = new ArrayList<SensorValueHistoryItem>();
 
-	    String selectQuery = "SELECT * FROM " + TABLE_SENSOR_HISTORY;
+	    String selectQuery = "SELECT * FROM " + TABLE_SENSOR_HISTORY + " WHERE " + KEY_SENSOR_NAME + " = ?";
 	 
 	    SQLiteDatabase db = this.getWritableDatabase();
-	    Cursor cursor = db.rawQuery(selectQuery, null);
+	    Cursor cursor = db.rawQuery(selectQuery, new String[] {sensorName});
 	 
 	    // looping through all rows and adding to list
 	    if (cursor.moveToFirst()) {
 	        do {
-	        	SensorHistoryItem historyItem = new SensorHistoryItem();
+	        	SensorValueHistoryItem historyItem = new SensorValueHistoryItem();
 	            historyItem.setId(Integer.parseInt(cursor.getString(0)));
-	            historyItem.setTimestamp(Timestamp.valueOf(cursor.getString(1)));
+	            historyItem.setTimestamp(cursor.getLong(1));
 	            historyItem.setSensorName(cursor.getString(2));
 	            historyItem.setSensorValue(cursor.getDouble(3));
 	            allHistory.add(historyItem);

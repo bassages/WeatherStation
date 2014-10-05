@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 import nl.wiegman.weatherstation.bluetooth.BluetoothDeviceInfo;
 import nl.wiegman.weatherstation.bluetooth.BluetoothLeService;
 import nl.wiegman.weatherstation.fragment.SensorDataFragment;
-import nl.wiegman.weatherstation.fragment.TemperatureHistoryFragment;
+import nl.wiegman.weatherstation.fragment.SensorHistoryFragment;
 import nl.wiegman.weatherstation.fragment.sensorvaluealarm.MaximumTemperatureAlarmHandler;
 import nl.wiegman.weatherstation.fragment.sensorvaluealarm.MinimumTemperatureAlarmHandler;
 import nl.wiegman.weatherstation.gattsensor.BarometerGatt;
@@ -22,7 +22,6 @@ import nl.wiegman.weatherstation.sensorvaluelistener.BarometricPressureValueChan
 import nl.wiegman.weatherstation.sensorvaluelistener.HumidityValueChangeListener;
 import nl.wiegman.weatherstation.sensorvaluelistener.TemperatureValueChangeListener;
 import android.app.Activity;
-import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -48,78 +47,84 @@ public class MainActivity extends Activity {
     private final String LOG_TAG = this.getClass().getSimpleName();
 
     private static final long SENSORS_REFRESH_RATE_IN_MILLISECONDS = TimeUnit.SECONDS.toMillis(5);
-    
+
     // Requests to other activities
     private static final int REQUEST_TO_ENABLE_BLUETOOTHE_LE = 0;
 
     private Intent bluetoothLeServiceBindingIntent;
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothLeService bluetoothLeService;
-    
+
     private BroadcastReceiver sensortagUpdateReceiver;
     private BroadcastReceiver bluetoothEventReceiver;
 
     private volatile BluetoothDeviceInfo connectedDeviceInfo;
-    
+
     private final List<TemperatureValueChangeListener> temperatureValueChangeListeners = new ArrayList<TemperatureValueChangeListener>();
     private final List<HumidityValueChangeListener> humidityValueChangeListeners = new ArrayList<HumidityValueChangeListener>();
-    private final List<BarometricPressureValueChangeListener> barometricPressureChangeListeners = new ArrayList<BarometricPressureValueChangeListener>();
+    private final List<BarometricPressureValueChangeListener> barometricPressureValueChangeListeners = new ArrayList<BarometricPressureValueChangeListener>();
 
     private static final ThermometerGatt thermometerGatt = new ThermometerGatt();
     private static final HygrometerGatt hygrometerGatt = new HygrometerGatt();
     private static final BarometerGatt barometerGatt = new BarometerGatt();
 
     private ScheduledExecutorService periodicGattSensorUpdateRequestsExecutor;
-    
-    private TemperatureHistoryFragment temperatureHistoryFragment;
-    
+
     private static final List<GattSensor> gattSensors = new ArrayList<GattSensor>();
     static {
         gattSensors.add(barometerGatt);
         gattSensors.add(hygrometerGatt);
         gattSensors.add(thermometerGatt);
     }
-    
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         Log.i(LOG_TAG, "onCreate(SavedInstanceState=" + savedInstanceState + ")");
-        
+
         setContentView(R.layout.activity_main);
+
+		TemperatureHistory temperatureHistoryStore = new TemperatureHistory();
+		addTemperatureValueChangeListener(temperatureHistoryStore);
         
-        SensorDataFragment sensorDataFragment = (SensorDataFragment) getFragmentManager().findFragmentById(R.id.activity_main);
-        
-        if (sensorDataFragment == null) {
-            sensorDataFragment = new SensorDataFragment();
-			getFragmentManager().beginTransaction().add(R.id.activity_main, sensorDataFragment).commit();
+        if (savedInstanceState == null) {
+        	SensorDataFragment sensorDataFragment = new SensorDataFragment();
+
+        	FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+        	fragmentTransaction.replace(R.id.fragment_container, sensorDataFragment);
+        	fragmentTransaction.commit();
+        	
+        	temperatureHistoryStore.deleteAll(this);
         }
-		temperatureValueChangeListeners.add(sensorDataFragment);
-		barometricPressureChangeListeners.add(sensorDataFragment);
-		humidityValueChangeListeners.add(sensorDataFragment);
-		
+
 		MaximumTemperatureAlarmHandler maximumTemperatureAlarm = new MaximumTemperatureAlarmHandler(this);
-		temperatureValueChangeListeners.add(maximumTemperatureAlarm);
-		
+		addTemperatureValueChangeListener(maximumTemperatureAlarm);
+
 		MinimumTemperatureAlarmHandler minimumTemperatureAlarm = new MinimumTemperatureAlarmHandler(this);
-		temperatureValueChangeListeners.add(minimumTemperatureAlarm);
-		
-//		TemperatureHistory temperatureHistory = new TemperatureHistory();
-//		temperatureHistory.deleteAll(this);
-//		temperatureValueChangeListeners.add(temperatureHistory);
-		
-		temperatureHistoryFragment = new TemperatureHistoryFragment();
-		temperatureValueChangeListeners.add(temperatureHistoryFragment);
-		
+		addTemperatureValueChangeListener(minimumTemperatureAlarm);
+        
         // TODO: keep this?..
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
+    public void addTemperatureValueChangeListener(TemperatureValueChangeListener temperatureValueChangeListener) {
+    	this.temperatureValueChangeListeners.add(temperatureValueChangeListener);
+    }
+
+    public void addHumidityValueChangeListeners(HumidityValueChangeListener humidityValueChangeListener) {
+    	this.humidityValueChangeListeners.add(humidityValueChangeListener);
+    }
+    
+    public void addBarometricPressureValueChangeListener(BarometricPressureValueChangeListener barometricPressureValueChangeListener) {
+    	this.barometricPressureValueChangeListeners.add(barometricPressureValueChangeListener);
+    }
+    
     @Override
     protected void onStart() {
         super.onStart();
         Log.i(LOG_TAG, "onStart()");
-        
+
         startSensortagConnectionProcedure();
     }
 
@@ -127,27 +132,27 @@ public class MainActivity extends Activity {
     protected void onStop() {
     	super.onStop();
         Log.i(LOG_TAG, "onStop()");
-        
+
         stopScanningForSensortag();
     }
-    
+
     @Override
     public void onDestroy() {
         super.onDestroy();
         Log.i(LOG_TAG, "onDestroy()");
-        
+
         releaseConnectionAndResources();
     }
-        
+
     private void startSensortagConnectionProcedure() {
     	setupBluetooth();
-    	
+
         if (connectedDeviceInfo == null) {
             if (bluetoothAdapter.isEnabled()) {
                 startScanningForSensortag();
             } else {
                 requestUserToEnableBluetooth();
-            }            
+            }
         } else {
         	Log.i(LOG_TAG, "Already connected to device " + connectedDeviceInfo.getBluetoothDevice());
         }
@@ -159,7 +164,7 @@ public class MainActivity extends Activity {
             Toast.makeText(this, R.string.ble_not_supported, Toast.LENGTH_LONG).show();
             finish();
         }
-    	
+
     	if (bluetoothAdapter == null) {
             BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
             bluetoothAdapter = bluetoothManager.getAdapter();
@@ -167,10 +172,10 @@ public class MainActivity extends Activity {
             if (bluetoothAdapter == null) {
                 Toast.makeText(this, R.string.ble_not_supported, Toast.LENGTH_LONG).show();
                 finish();
-            }    		
+            }
     	}
 	}
-    
+
 	private void requestUserToEnableBluetooth() {
 		// Request for the BlueTooth adapter to be turned on
 		Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
@@ -179,7 +184,7 @@ public class MainActivity extends Activity {
 		// report weather or not the user enabled BlueTooth LE
 		startActivityForResult(enableIntent, REQUEST_TO_ENABLE_BLUETOOTHE_LE);
 	}
-    
+
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
@@ -199,7 +204,7 @@ public class MainActivity extends Activity {
             break;
         }
     }
-    
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -230,7 +235,7 @@ public class MainActivity extends Activity {
             finish();
         }
     }
-    
+
     private void stopScanningForSensortag() {
         bluetoothAdapter.stopLeScan(bluetoothLeScanCallback);
     }
@@ -254,9 +259,9 @@ public class MainActivity extends Activity {
 
 		private void bluetoothLeServiceGattDisconnected(Context context, Intent intent) {
 			connectedDeviceInfo = null;
-			SensorDataFragment sensorDataFragment = (SensorDataFragment) getFragmentManager().findFragmentById(R.id.activity_main);
+			SensorDataFragment sensorDataFragment = (SensorDataFragment) getFragmentManager().findFragmentById(R.id.fragment_container);
 			sensorDataFragment.clearAllSensorValues();
-			
+
 			int status = intent.getIntExtra(BluetoothLeService.EXTRA_STATUS, BluetoothGatt.GATT_FAILURE);
 			if (status == BluetoothGatt.GATT_SUCCESS) {
 			    Log.i(LOG_TAG, "Disconnected, trying to reconnect...");
@@ -272,7 +277,7 @@ public class MainActivity extends Activity {
 			    sensortagUpdateReceiver = new SensortagUpdateReceiver();
 			    registerReceiver(sensortagUpdateReceiver, createSensorTagUpdateIntentFilter());
 			    discoverServices();
-			    
+
 			    Log.i(LOG_TAG, "Sucessfully connected to sensortag");
 			} else {
 			    Toast.makeText(context, "Connecting to the sensortag failed. Status: " + status, Toast.LENGTH_LONG).show();
@@ -293,7 +298,7 @@ public class MainActivity extends Activity {
 			    break;
 			}
 		}
-		
+
 	    private IntentFilter createSensorTagUpdateIntentFilter() {
 	        IntentFilter intentFilter = new IntentFilter();
 	        intentFilter.addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
@@ -303,15 +308,15 @@ public class MainActivity extends Activity {
 	        return intentFilter;
 	    }
     };
-    
+
     private void reconnect() {
         releaseConnectionAndResources();
         startSensortagConnectionProcedure();
     }
-    
+
     private void releaseConnectionAndResources() {
         stopScanningForSensortag();
-        
+
         if (bluetoothLeService != null) {
             bluetoothLeService.close();
             unbindService(serviceConnection);
@@ -336,14 +341,13 @@ public class MainActivity extends Activity {
     			periodicGattSensorUpdateRequestsExecutor = null;
     		} catch (InterruptedException e) {
     			Log.e(LOG_TAG, "Periodic updater was not stopped within the timeout period");
-    		}        	
+    		}
         }
-        
+
         connectedDeviceInfo = null;
     }
 
     private final ServiceConnection serviceConnection = new ServiceConnection() {
-
         public void onServiceConnected(ComponentName componentName, IBinder service) {
             bluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
             if (!bluetoothLeService.initialize()) {
@@ -362,7 +366,7 @@ public class MainActivity extends Activity {
             Log.i(LOG_TAG, "BluetoothLeService disconnected");
         }
     };
-    
+
     private void discoverServices() {
         if (BluetoothLeService.getBluetoothGatt().discoverServices()) {
             Log.i(LOG_TAG, "Start service discovery");
@@ -380,9 +384,7 @@ public class MainActivity extends Activity {
             if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 if (status == BluetoothGatt.GATT_SUCCESS) {
                     Log.i(LOG_TAG, "Services discovered");
-
                     startGattSensorDataUpdates();
-                    
                 } else {
                     Toast.makeText(getApplication(), "Service discovery failed", Toast.LENGTH_LONG).show();
                     return;
@@ -416,7 +418,7 @@ public class MainActivity extends Activity {
 			periodicGattSensorUpdateRequestsExecutor.scheduleWithFixedDelay(periodicGattSensorUpdateRequester, startDelay, SENSORS_REFRESH_RATE_IN_MILLISECONDS, TimeUnit.MILLISECONDS);
         }
     };
-    
+
     private void onCharacteristicRead(String uuidStr, byte[] value, int status) {
     	if (value != null) {
             if (uuidStr.equals(BarometerGatt.UUID_CALIBRATION.toString())) {
@@ -441,21 +443,21 @@ public class MainActivity extends Activity {
 		if (uuidStr.equals(thermometerGatt.getDataUuid().toString())) {
         	SensorData sensorData = thermometerGatt.convert(value);
             for (TemperatureValueChangeListener listener : temperatureValueChangeListeners) {
-            	listener.temperatureChanged(this, sensorData.getX());            	
+            	listener.temperatureChanged(this, sensorData.getX());
             }
         } else if (uuidStr.equals(hygrometerGatt.getDataUuid().toString())) {
             SensorData sensorData = hygrometerGatt.convert(value);
             for (HumidityValueChangeListener listener : humidityValueChangeListeners) {
-            	listener.humidityChanged(this, sensorData.getX());            	
+            	listener.humidityChanged(this, sensorData.getX());
             }
         } else if (uuidStr.equals(barometerGatt.getDataUuid().toString())) {
             SensorData sensorData = barometerGatt.convert(value);
-            for (BarometricPressureValueChangeListener listener : barometricPressureChangeListeners) {
+            for (BarometricPressureValueChangeListener listener : barometricPressureValueChangeListeners) {
             	listener.barometricPressureChanged(this, sensorData.getX());
             }
         } else {
             Log.e(LOG_TAG, "Unknown uuid: " + uuidStr);
-        }			
+        }
 }
 
     // Device scan callback.
@@ -465,7 +467,7 @@ public class MainActivity extends Activity {
             stopScanningForSensortag();
             connectToDevice(new BluetoothDeviceInfo(device, rssi));
         }
-        
+
         private void connectToDevice(BluetoothDeviceInfo deviceInfo) {
             connectedDeviceInfo = deviceInfo;
 
@@ -473,7 +475,7 @@ public class MainActivity extends Activity {
             IntentFilter bluetoothEventFilter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
             bluetoothEventFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
             bluetoothEventFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
-            
+
             bluetoothEventReceiver = new BlueToothEventReceiver();
             registerReceiver(bluetoothEventReceiver, bluetoothEventFilter);
 
@@ -492,12 +494,12 @@ public class MainActivity extends Activity {
             finish();
         }
     }
-    
-    public void showHistory(View view) {
-    	 FragmentTransaction transaction = getFragmentManager().beginTransaction().replace(R.id.activity_main, temperatureHistoryFragment);
-     	 transaction.addToBackStack(null);
 
-    	 // Commit the transaction
-    	 transaction.commit();
+    public void showHistory(View view) {
+    	 SensorHistoryFragment temperatureHistoryFragment = new SensorHistoryFragment();
+    	 FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+     	 fragmentTransaction.addToBackStack(null);
+     	 fragmentTransaction.replace(R.id.fragment_container, temperatureHistoryFragment);
+    	 fragmentTransaction.commit();
 	}
 }
