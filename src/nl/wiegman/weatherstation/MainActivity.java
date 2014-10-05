@@ -8,8 +8,9 @@ import java.util.concurrent.TimeUnit;
 
 import nl.wiegman.weatherstation.bluetooth.BluetoothDeviceInfo;
 import nl.wiegman.weatherstation.bluetooth.BluetoothLeService;
+import nl.wiegman.weatherstation.fragment.AmbientTemperatureHistoryFragment;
+import nl.wiegman.weatherstation.fragment.ObjectTemperatureHistoryFragment;
 import nl.wiegman.weatherstation.fragment.SensorDataFragment;
-import nl.wiegman.weatherstation.fragment.TemperatureHistoryFragment;
 import nl.wiegman.weatherstation.fragment.sensorvaluealarm.MaximumTemperatureAlarmHandler;
 import nl.wiegman.weatherstation.fragment.sensorvaluealarm.MinimumTemperatureAlarmHandler;
 import nl.wiegman.weatherstation.gattsensor.BarometerGatt;
@@ -19,11 +20,12 @@ import nl.wiegman.weatherstation.gattsensor.SensorData;
 import nl.wiegman.weatherstation.gattsensor.ThermometerGatt;
 import nl.wiegman.weatherstation.history.AmbientTemperatureHistory;
 import nl.wiegman.weatherstation.history.ObjectTemperatureHistory;
+import nl.wiegman.weatherstation.sensorvaluelistener.AmbientTemperatureListener;
 import nl.wiegman.weatherstation.sensorvaluelistener.BarometricPressureListener;
 import nl.wiegman.weatherstation.sensorvaluelistener.HumidityListener;
-import nl.wiegman.weatherstation.sensorvaluelistener.AmbientTemperatureListener;
 import nl.wiegman.weatherstation.sensorvaluelistener.ObjectTemperatureListener;
 import android.app.Activity;
+import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -35,9 +37,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -512,10 +516,33 @@ public class MainActivity extends Activity {
     }
 
     public void showHistory(View view) {
-    	 TemperatureHistoryFragment temperatureHistoryFragment = new TemperatureHistoryFragment();
-    	 FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
-     	 fragmentTransaction.addToBackStack(null);
-     	 fragmentTransaction.replace(R.id.fragment_container, temperatureHistoryFragment);
-    	 fragmentTransaction.commit();
+    	String temperatureSource = getTemperatureSourcePreference();
+    	    	
+    	Fragment temperatureHistoryFragment = null;
+    	if ("Ambient".equalsIgnoreCase(temperatureSource)) {
+    		temperatureHistoryFragment = new AmbientTemperatureHistoryFragment();
+    	} else if ("Object".equalsIgnoreCase(temperatureSource)) {
+    		temperatureHistoryFragment = new ObjectTemperatureHistoryFragment();
+    	} else {
+    		Log.e(LOG_TAG, "unable to determine which temperature source must be used");
+    	}
+    	
+    	FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+     	fragmentTransaction.addToBackStack(null);
+     	fragmentTransaction.replace(R.id.fragment_container, temperatureHistoryFragment);
+    	fragmentTransaction.commit();
+	}
+    
+	private String getTemperatureSourcePreference() {
+    	SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+    	return sharedPreferences.getString(getTemperatureSourcePreferenceKey(), getDefaultTemperatureSource());
+	}
+
+	private String getTemperatureSourcePreferenceKey() {
+		return getString(R.string.preference_temperature_source_key);
+	}
+    
+	private String getDefaultTemperatureSource() {
+		return getString(R.string.preference_temperature_source_default_value);
 	}
 }

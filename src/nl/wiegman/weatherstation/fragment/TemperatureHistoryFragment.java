@@ -8,14 +8,10 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
-import nl.wiegman.weatherstation.MainActivity;
 import nl.wiegman.weatherstation.R;
 import nl.wiegman.weatherstation.history.SensorValueHistoryItem;
-import nl.wiegman.weatherstation.history.AmbientTemperatureHistory;
-import nl.wiegman.weatherstation.sensorvaluelistener.AmbientTemperatureListener;
 import nl.wiegman.weatherstation.util.TemperatureUtil;
 import android.app.Fragment;
-import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.Bundle;
@@ -39,7 +35,7 @@ import com.androidplot.xy.XYStepMode;
  * "Range" value is the sensor value
  * </pre>
  */
-public class TemperatureHistoryFragment extends Fragment implements AmbientTemperatureListener {
+public abstract class TemperatureHistoryFragment extends Fragment {
 
 	private XYPlot plot;
 	private SimpleXYSeries sensorValueHistorySeries;
@@ -54,10 +50,7 @@ public class TemperatureHistoryFragment extends Fragment implements AmbientTempe
         configureGraph(rootView);
         
         addDataFromHistory();
-        
-        // Register as a temperature listener
-        ((MainActivity)getActivity()).addAmbientTemperatureListener(this);
-        
+                
         return rootView;
 	}
 
@@ -106,19 +99,15 @@ public class TemperatureHistoryFragment extends Fragment implements AmbientTempe
 	}
 	
 	private void addDataFromHistory() {
-		AmbientTemperatureHistory historyStore = new AmbientTemperatureHistory();
-		List<SensorValueHistoryItem> history = historyStore.getAll(getActivity());
+		List<SensorValueHistoryItem> history = getHistoryItems();
 		for (SensorValueHistoryItem item : history) {
 			addToGraph(item.getTimestamp(), item.getSensorValue());
 		}
 	}
-	
-	@Override
-	public void ambientTemperatureUpdate(Context context, Double updatedTemperature) {
-		addToGraph(System.currentTimeMillis(), updatedTemperature);
-	}
-	
-	private void addToGraph(long timestamp, Double value) {
+
+	protected abstract List<SensorValueHistoryItem> getHistoryItems();
+		
+	protected void addToGraph(long timestamp, Double value) {
 		
 		if (plot != null && value != null) {
 			double roundedValue = TemperatureUtil.round(value);
