@@ -1,11 +1,9 @@
 package nl.wiegman.weatherstation.history;
 
-import java.util.Date;
-
 public class SensorHistoryItem {
 
 	private int id;
-	private Date timestamp;
+	private long timestamp;
 	private String sensorName;
 	private double sensorValue;
 
@@ -17,11 +15,11 @@ public class SensorHistoryItem {
 		this.id = id;
 	}
 
-	public Date getTimestamp() {
+	public long getTimestamp() {
 		return timestamp;
 	}
 
-	public void setTimestamp(Date timestamp) {
+	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
 	}
 
@@ -41,4 +39,8 @@ public class SensorHistoryItem {
 		this.sensorValue = sensorValue;
 	}
 
+	@Override
+	public String toString() {
+		return "SensorHistoryItem [id=" + id + ", timestamp=" + timestamp + ", sensorName=" + sensorName + ", sensorValue=" + sensorValue + "]";
+	}
 }
