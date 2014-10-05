@@ -1,5 +1,7 @@
 package nl.wiegman.weatherstation.preference;
 
+import org.apache.commons.lang3.StringUtils;
+
 import nl.wiegman.weatherstation.R;
 import nl.wiegman.weatherstation.util.TemperatureUtil;
 import android.content.Context;
@@ -64,7 +66,7 @@ public abstract class TemperatureAlarmPreference extends DialogPreference implem
             editor.putBoolean(alarmEnabledPreferenceKey, alarmEnabled);
 
             CharSequence alarmValueAsString = alarmValueTextView.getText();
-            if (alarmEnabled && isNotEmpty(alarmValueAsString)) {
+            if (alarmEnabled && StringUtils.isNotBlank(alarmValueAsString)) {
                	float minimumTemperatureValueAsFloat = Float.parseFloat(alarmValueAsString.toString());
                	
                	double alarmValueInStorageUnit = TemperatureUtil.convertFromPreferenceUnitToStorageUnit(getContext(), minimumTemperatureValueAsFloat);
@@ -119,8 +121,4 @@ public abstract class TemperatureAlarmPreference extends DialogPreference implem
         alarmValueTextView.setVisibility(visibility);
         alarmValueUnitLabelTextView.setVisibility(visibility);
     }
-    
-	private boolean isNotEmpty(CharSequence value) {
-    	return value != null && !"".equals(value.toString().trim());
-	}
 }

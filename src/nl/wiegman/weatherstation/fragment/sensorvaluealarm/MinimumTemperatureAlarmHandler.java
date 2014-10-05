@@ -1,21 +1,21 @@
 package nl.wiegman.weatherstation.fragment.sensorvaluealarm;
 
 import nl.wiegman.weatherstation.R;
-import nl.wiegman.weatherstation.sensorvaluelistener.TemperatureValueChangeListener;
+import nl.wiegman.weatherstation.sensorvaluelistener.AmbientTemperatureListener;
 import static nl.wiegman.weatherstation.util.TemperatureUtil.*;
 import android.content.Context;
 
 /**
  * Issues a notification when the temperature get's lower than the user defined value
  */
-public class MinimumTemperatureAlarmHandler extends ValueAlarmHandler implements TemperatureValueChangeListener {
+public class MinimumTemperatureAlarmHandler extends ValueAlarmHandler implements AmbientTemperatureListener {
 
 	public MinimumTemperatureAlarmHandler(Context context) {
 		super(context);
 	}
 	
 	@Override
-	public void temperatureChanged(Context context, Double updatedValue) {
+	public void ambientTemperatureUpdate(Context context, Double updatedValue) {
 		super.valueChanged(context, updatedValue);
 	}
 	

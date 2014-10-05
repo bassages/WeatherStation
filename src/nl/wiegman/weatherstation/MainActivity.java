@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 import nl.wiegman.weatherstation.bluetooth.BluetoothDeviceInfo;
 import nl.wiegman.weatherstation.bluetooth.BluetoothLeService;
 import nl.wiegman.weatherstation.fragment.SensorDataFragment;
-import nl.wiegman.weatherstation.fragment.SensorHistoryFragment;
+import nl.wiegman.weatherstation.fragment.TemperatureHistoryFragment;
 import nl.wiegman.weatherstation.fragment.sensorvaluealarm.MaximumTemperatureAlarmHandler;
 import nl.wiegman.weatherstation.fragment.sensorvaluealarm.MinimumTemperatureAlarmHandler;
 import nl.wiegman.weatherstation.gattsensor.BarometerGatt;
@@ -17,10 +17,12 @@ import nl.wiegman.weatherstation.gattsensor.GattSensor;
 import nl.wiegman.weatherstation.gattsensor.HygrometerGatt;
 import nl.wiegman.weatherstation.gattsensor.SensorData;
 import nl.wiegman.weatherstation.gattsensor.ThermometerGatt;
-import nl.wiegman.weatherstation.history.TemperatureHistory;
-import nl.wiegman.weatherstation.sensorvaluelistener.BarometricPressureValueChangeListener;
-import nl.wiegman.weatherstation.sensorvaluelistener.HumidityValueChangeListener;
-import nl.wiegman.weatherstation.sensorvaluelistener.TemperatureValueChangeListener;
+import nl.wiegman.weatherstation.history.AmbientTemperatureHistory;
+import nl.wiegman.weatherstation.history.ObjectTemperatureHistory;
+import nl.wiegman.weatherstation.sensorvaluelistener.BarometricPressureListener;
+import nl.wiegman.weatherstation.sensorvaluelistener.HumidityListener;
+import nl.wiegman.weatherstation.sensorvaluelistener.AmbientTemperatureListener;
+import nl.wiegman.weatherstation.sensorvaluelistener.ObjectTemperatureListener;
 import android.app.Activity;
 import android.app.FragmentTransaction;
 import android.bluetooth.BluetoothAdapter;
@@ -63,9 +65,10 @@ public class MainActivity extends Activity {
 
     private volatile BluetoothDeviceInfo connectedDeviceInfo;
 
-    private final List<TemperatureValueChangeListener> temperatureValueChangeListeners = new ArrayList<TemperatureValueChangeListener>();
-    private final List<HumidityValueChangeListener> humidityValueChangeListeners = new ArrayList<HumidityValueChangeListener>();
-    private final List<BarometricPressureValueChangeListener> barometricPressureValueChangeListeners = new ArrayList<BarometricPressureValueChangeListener>();
+    private final List<AmbientTemperatureListener> ambientTemperatureListeners = new ArrayList<AmbientTemperatureListener>();
+    private final List<ObjectTemperatureListener> objectTemperatureListeners = new ArrayList<ObjectTemperatureListener>();
+    private final List<HumidityListener> humidityListeners = new ArrayList<HumidityListener>();
+    private final List<BarometricPressureListener> barometricPressureListeners = new ArrayList<BarometricPressureListener>();
 
     private static final ThermometerGatt thermometerGatt = new ThermometerGatt();
     private static final HygrometerGatt hygrometerGatt = new HygrometerGatt();
@@ -88,9 +91,12 @@ public class MainActivity extends Activity {
 
         setContentView(R.layout.activity_main);
 
-		TemperatureHistory temperatureHistoryStore = new TemperatureHistory();
-		addTemperatureValueChangeListener(temperatureHistoryStore);
-        
+		AmbientTemperatureHistory ambientTemperatureHistory = new AmbientTemperatureHistory();
+		addAmbientTemperatureListener(ambientTemperatureHistory);
+
+		ObjectTemperatureHistory objectTemperatureHistory = new ObjectTemperatureHistory();
+		addObjectTemperatureListener(objectTemperatureHistory);
+		
         if (savedInstanceState == null) {
         	SensorDataFragment sensorDataFragment = new SensorDataFragment();
 
@@ -98,29 +104,33 @@ public class MainActivity extends Activity {
         	fragmentTransaction.replace(R.id.fragment_container, sensorDataFragment);
         	fragmentTransaction.commit();
         	
-        	temperatureHistoryStore.deleteAll(this);
+        	ambientTemperatureHistory.deleteAll(this);
         }
 
 		MaximumTemperatureAlarmHandler maximumTemperatureAlarm = new MaximumTemperatureAlarmHandler(this);
-		addTemperatureValueChangeListener(maximumTemperatureAlarm);
+		addAmbientTemperatureListener(maximumTemperatureAlarm);
 
 		MinimumTemperatureAlarmHandler minimumTemperatureAlarm = new MinimumTemperatureAlarmHandler(this);
-		addTemperatureValueChangeListener(minimumTemperatureAlarm);
+		addAmbientTemperatureListener(minimumTemperatureAlarm);
         
         // TODO: keep this?..
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
-    public void addTemperatureValueChangeListener(TemperatureValueChangeListener temperatureValueChangeListener) {
-    	this.temperatureValueChangeListeners.add(temperatureValueChangeListener);
+    public void addAmbientTemperatureListener(AmbientTemperatureListener temperatureListener) {
+    	this.ambientTemperatureListeners.add(temperatureListener);
     }
 
-    public void addHumidityValueChangeListeners(HumidityValueChangeListener humidityValueChangeListener) {
-    	this.humidityValueChangeListeners.add(humidityValueChangeListener);
+    public void addObjectTemperatureListener(ObjectTemperatureListener temperatureListener) {
+    	this.objectTemperatureListeners.add(temperatureListener);
     }
     
-    public void addBarometricPressureValueChangeListener(BarometricPressureValueChangeListener barometricPressureValueChangeListener) {
-    	this.barometricPressureValueChangeListeners.add(barometricPressureValueChangeListener);
+    public void addHumidityListener(HumidityListener humidityListener) {
+    	this.humidityListeners.add(humidityListener);
+    }
+    
+    public void addBarometricPressureListener(BarometricPressureListener barometricPressureListener) {
+    	this.barometricPressureListeners.add(barometricPressureListener);
     }
     
     @Override
@@ -445,23 +455,26 @@ public class MainActivity extends Activity {
 	private void processChangedGattCharacteristic(String uuidStr, byte[] value) {
 		if (uuidStr.equals(thermometerGatt.getDataUuid().toString())) {
         	SensorData sensorData = thermometerGatt.convert(value);
-            for (TemperatureValueChangeListener listener : temperatureValueChangeListeners) {
-            	listener.temperatureChanged(this, sensorData.getX());
+            for (AmbientTemperatureListener listener : ambientTemperatureListeners) {
+            	listener.ambientTemperatureUpdate(this, sensorData.getX());
             }
-        } else if (uuidStr.equals(hygrometerGatt.getDataUuid().toString())) {
+            for (ObjectTemperatureListener listener : objectTemperatureListeners) {
+            	listener.objectTemperatureUpdate(this, sensorData.getY());
+            }
+		} else if (uuidStr.equals(hygrometerGatt.getDataUuid().toString())) {
             SensorData sensorData = hygrometerGatt.convert(value);
-            for (HumidityValueChangeListener listener : humidityValueChangeListeners) {
-            	listener.humidityChanged(this, sensorData.getX());
+            for (HumidityListener listener : humidityListeners) {
+            	listener.humidityUpdate(this, sensorData.getX());
             }
         } else if (uuidStr.equals(barometerGatt.getDataUuid().toString())) {
             SensorData sensorData = barometerGatt.convert(value);
-            for (BarometricPressureValueChangeListener listener : barometricPressureValueChangeListeners) {
-            	listener.barometricPressureChanged(this, sensorData.getX());
+            for (BarometricPressureListener listener : barometricPressureListeners) {
+            	listener.barometricPressureUpdate(this, sensorData.getX());
             }
         } else {
             Log.e(LOG_TAG, "Unknown uuid: " + uuidStr);
         }
-}
+	}
 
     // Device scan callback.
     // NB! Nexus 4 and Nexus 7 (2012) only provide one scan result per scan
@@ -499,7 +512,7 @@ public class MainActivity extends Activity {
     }
 
     public void showHistory(View view) {
-    	 SensorHistoryFragment temperatureHistoryFragment = new SensorHistoryFragment();
+    	 TemperatureHistoryFragment temperatureHistoryFragment = new TemperatureHistoryFragment();
     	 FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
      	 fragmentTransaction.addToBackStack(null);
      	 fragmentTransaction.replace(R.id.fragment_container, temperatureHistoryFragment);

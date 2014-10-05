@@ -2,18 +2,18 @@ package nl.wiegman.weatherstation.history;
 
 import java.util.List;
 
-import nl.wiegman.weatherstation.sensorvaluelistener.TemperatureValueChangeListener;
+import nl.wiegman.weatherstation.sensorvaluelistener.ObjectTemperatureListener;
 import android.content.Context;
 
 /**
- * Maintains the temperature history
+ * Maintains the object temperature history
  */
-public class TemperatureHistory implements TemperatureValueChangeListener {
+public class ObjectTemperatureHistory implements ObjectTemperatureListener {
 
-	private static final String DB_SENSOR_NAME = "temperature";
+	private static final String DB_SENSOR_NAME = "object_temperature";
 	
 	@Override
-	public void temperatureChanged(Context context, Double updatedTemperature) {
+	public void objectTemperatureUpdate(Context context, Double updatedTemperature) {
 		SensorValueHistoryDatabase.getInstance(context).addSensorValue(DB_SENSOR_NAME, updatedTemperature);
 	}
 

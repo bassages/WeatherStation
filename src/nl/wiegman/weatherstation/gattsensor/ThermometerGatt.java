@@ -1,9 +1,8 @@
 package nl.wiegman.weatherstation.gattsensor;
 
-import java.util.UUID;
+import static java.util.UUID.fromString;
 
-import android.util.Log;
-import static java.util.UUID.*;
+import java.util.UUID;
 
 /**
  * <pre>
@@ -52,9 +51,6 @@ public class ThermometerGatt extends AbstractGattSensor {
          */
         double ambient = extractAmbientTemperature(value);
         double target = extractTargetTemperature(value, ambient);
-        
-        Log.i(this.getClass().getSimpleName(), "Ambient temperature from thermometer sensor: " + ambient);
-        Log.i(this.getClass().getSimpleName(), "Target temperature from thermometer sensor: " + target);
         
         return new SensorData(ambient, target, 0);
     }

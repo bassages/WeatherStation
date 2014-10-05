@@ -5,19 +5,15 @@ import java.text.FieldPosition;
 import java.text.Format;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
 import nl.wiegman.weatherstation.MainActivity;
 import nl.wiegman.weatherstation.R;
 import nl.wiegman.weatherstation.history.SensorValueHistoryItem;
-import nl.wiegman.weatherstation.history.TemperatureHistory;
-import nl.wiegman.weatherstation.sensorvaluelistener.TemperatureValueChangeListener;
+import nl.wiegman.weatherstation.history.AmbientTemperatureHistory;
+import nl.wiegman.weatherstation.sensorvaluelistener.AmbientTemperatureListener;
 import nl.wiegman.weatherstation.util.TemperatureUtil;
-
-import org.apache.commons.lang3.time.DateUtils;
-
 import android.app.Fragment;
 import android.content.Context;
 import android.graphics.Color;
@@ -37,9 +33,13 @@ import com.androidplot.xy.XYPlot;
 import com.androidplot.xy.XYStepMode;
 
 /**
- * Fragment containing a graph that shows the sensor values over time
+ * <pre>
+ * Fragment containing a graph that shows the sensor values over time.
+ * "Domain" value is timestamp at which the sample has been taken
+ * "Range" value is the sensor value
+ * </pre>
  */
-public class SensorHistoryFragment extends Fragment implements TemperatureValueChangeListener {
+public class TemperatureHistoryFragment extends Fragment implements AmbientTemperatureListener {
 
 	private XYPlot plot;
 	private SimpleXYSeries sensorValueHistorySeries;
@@ -55,7 +55,8 @@ public class SensorHistoryFragment extends Fragment implements TemperatureValueC
         
         addDataFromHistory();
         
-        ((MainActivity)getActivity()).addTemperatureValueChangeListener(this);
+        // Register as a temperature listener
+        ((MainActivity)getActivity()).addAmbientTemperatureListener(this);
         
         return rootView;
 	}
@@ -105,7 +106,7 @@ public class SensorHistoryFragment extends Fragment implements TemperatureValueC
 	}
 	
 	private void addDataFromHistory() {
-		TemperatureHistory historyStore = new TemperatureHistory();
+		AmbientTemperatureHistory historyStore = new AmbientTemperatureHistory();
 		List<SensorValueHistoryItem> history = historyStore.getAll(getActivity());
 		for (SensorValueHistoryItem item : history) {
 			addToGraph(item.getTimestamp(), item.getSensorValue());
@@ -113,7 +114,7 @@ public class SensorHistoryFragment extends Fragment implements TemperatureValueC
 	}
 	
 	@Override
-	public void temperatureChanged(Context context, Double updatedTemperature) {
+	public void ambientTemperatureUpdate(Context context, Double updatedTemperature) {
 		addToGraph(System.currentTimeMillis(), updatedTemperature);
 	}
 	
@@ -122,25 +123,26 @@ public class SensorHistoryFragment extends Fragment implements TemperatureValueC
 		if (plot != null && value != null) {
 			double roundedValue = TemperatureUtil.round(value);
 			
-			Date timestampRoundedOnSecond = DateUtils.round(new Date(timestamp), Calendar.SECOND);
-			long time = timestampRoundedOnSecond.getTime();
-			
-			sensorValueHistorySeries.addLast(time, TemperatureUtil.round(roundedValue));
+			sensorValueHistorySeries.addLast(timestamp, TemperatureUtil.round(roundedValue));
 
-			if (maxAddedValue == null || roundedValue > maxAddedValue) {
-				maxAddedValue = roundedValue;
-			}
-			if (minAddedValue == null || roundedValue < minAddedValue) {
-				minAddedValue = roundedValue;
-			}
-			
-			if (minAddedValue.doubleValue() == maxAddedValue.doubleValue()) {
-				plot.setRangeBoundaries(minAddedValue - 0.1, maxAddedValue + 0.1, BoundaryMode.FIXED);
-			} else {
-				plot.setRangeBoundaries(minAddedValue, maxAddedValue, BoundaryMode.AUTO);
-			}
+			setBoundaries(roundedValue);
 			
 			plot.redraw();
+		}
+	}
+
+	private void setBoundaries(double roundedValue) {
+		if (maxAddedValue == null || roundedValue > maxAddedValue) {
+			maxAddedValue = roundedValue;
+		}
+		if (minAddedValue == null || roundedValue < minAddedValue) {
+			minAddedValue = roundedValue;
+		}
+		
+		if (minAddedValue.doubleValue() == maxAddedValue.doubleValue()) {
+			plot.setRangeBoundaries(minAddedValue - 0.1, maxAddedValue + 0.1, BoundaryMode.FIXED);
+		} else {
+			plot.setRangeBoundaries(minAddedValue, maxAddedValue, BoundaryMode.AUTO);
 		}
 	}
 	

@@ -1,21 +1,21 @@
 package nl.wiegman.weatherstation.fragment.sensorvaluealarm;
 
 import nl.wiegman.weatherstation.R;
-import nl.wiegman.weatherstation.sensorvaluelistener.TemperatureValueChangeListener;
+import nl.wiegman.weatherstation.sensorvaluelistener.AmbientTemperatureListener;
 import static nl.wiegman.weatherstation.util.TemperatureUtil.*;
 import android.content.Context;
 
 /**
  * Issues a notification when the temperature exceeds the user defined value
  */
-public class MaximumTemperatureAlarmHandler extends ValueAlarmHandler implements TemperatureValueChangeListener {
+public class MaximumTemperatureAlarmHandler extends ValueAlarmHandler implements AmbientTemperatureListener {
 
 	public MaximumTemperatureAlarmHandler(Context context) {
 		super(context);
 	}
 	
 	@Override
-	public void temperatureChanged(Context context, Double updatedValue) {
+	public void ambientTemperatureUpdate(Context context, Double updatedValue) {
 		super.valueChanged(context, updatedValue);
 	}
 	

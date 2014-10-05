@@ -18,9 +18,6 @@ public abstract class AbstractGattSensor implements GattSensor {
     @Override
     public abstract SensorData convert(byte[] value);
     
-    /**
-     * Constructor
-     * */
     protected AbstractGattSensor(UUID serviceUuid, UUID dataUuid, UUID configUuid) {
         this.serviceUuid = serviceUuid;
         this.dataUuid = dataUuid;
