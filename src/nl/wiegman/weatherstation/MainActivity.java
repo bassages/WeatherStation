@@ -43,6 +43,9 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
 
+/**
+ * Main activity of the application
+ */
 public class MainActivity extends Activity {
     private final String LOG_TAG = this.getClass().getSimpleName();
 
