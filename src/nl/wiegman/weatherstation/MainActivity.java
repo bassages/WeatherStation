@@ -49,6 +49,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
 
+// TODO: on disconnect, clear history
 /**
  * Main activity of the application
  */
@@ -109,6 +110,7 @@ public class MainActivity extends Activity {
         	fragmentTransaction.commit();
         	
         	ambientTemperatureHistory.deleteAll(this);
+        	objectTemperatureHistory.deleteAll(this);
         }
 
 		MaximumTemperatureAlarmHandler maximumTemperatureAlarm = new MaximumTemperatureAlarmHandler(this);
@@ -276,16 +278,17 @@ public class MainActivity extends Activity {
 
 		private void bluetoothLeServiceGattDisconnected(Context context, Intent intent) {
 			connectedDeviceInfo = null;
-			SensorDataFragment sensorDataFragment = (SensorDataFragment) getFragmentManager().findFragmentById(R.id.fragment_container);
-			sensorDataFragment.clearAllSensorValues();
-
-			int status = intent.getIntExtra(BluetoothLeService.EXTRA_STATUS, BluetoothGatt.GATT_FAILURE);
-			if (status == BluetoothGatt.GATT_SUCCESS) {
-			    Log.i(LOG_TAG, "Disconnected, trying to reconnect...");
-			    reconnect();
-			} else {
-			    Toast.makeText(context, "Disconnect failed. Status: " + status + status, Toast.LENGTH_LONG).show();
+			
+			Fragment currentFragment = getFragmentManager().findFragmentById(R.id.fragment_container);
+			if (!(currentFragment instanceof SensorDataFragment)) {
+				getFragmentManager().popBackStackImmediate();
 			}
+			currentFragment = getFragmentManager().findFragmentById(R.id.fragment_container);
+			if (currentFragment instanceof SensorDataFragment) {
+				((SensorDataFragment)currentFragment).clearAllSensorValues();
+			}
+
+		    reconnect();
 		}
 
 		private void bluetoothLeServiceGattConnected(Context context, Intent intent) {
@@ -516,6 +519,9 @@ public class MainActivity extends Activity {
     }
 
     public void showHistory(View view) {
+    	
+    	// TODO: when not connected, do not go to history
+    	
     	String temperatureSource = getTemperatureSourcePreference();
     	    	
     	Fragment temperatureHistoryFragment = null;
