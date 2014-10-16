@@ -1,5 +1,7 @@
 package nl.wiegman.weatherstation.fragment;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.DateFormat;
 import java.text.FieldPosition;
 import java.text.Format;
@@ -75,7 +77,6 @@ public abstract class TemperatureHistoryFragment extends Fragment {
         
         plot.setBorderStyle(BorderStyle.NONE, null, null);
 
-        plot.setRangeStep(XYStepMode.INCREMENT_BY_VAL, 0.1d);
         plot.setDomainStep(XYStepMode.SUBDIVIDE, 15);
         
         // Colors
@@ -114,24 +115,39 @@ public abstract class TemperatureHistoryFragment extends Fragment {
 			
 			sensorValueHistorySeries.addLast(timestamp, TemperatureUtil.round(roundedValue));
 
-			setBoundaries(roundedValue);
+			updateMinMaxValues(roundedValue);
+			setBoundaries();
+			setRangeScale();
 			
 			plot.redraw();
 		}
 	}
 
-	private void setBoundaries(double roundedValue) {
+	private void updateMinMaxValues(double roundedValue) {
 		if (maxAddedValue == null || roundedValue > maxAddedValue) {
 			maxAddedValue = roundedValue;
 		}
 		if (minAddedValue == null || roundedValue < minAddedValue) {
 			minAddedValue = roundedValue;
 		}
-		
+	}
+	
+	private void setBoundaries() {
 		if (minAddedValue.doubleValue() == maxAddedValue.doubleValue()) {
 			plot.setRangeBoundaries(minAddedValue - 0.1, maxAddedValue + 0.1, BoundaryMode.FIXED);
 		} else {
 			plot.setRangeBoundaries(minAddedValue, maxAddedValue, BoundaryMode.AUTO);
+		}
+	}
+
+	private void setRangeScale() {
+		double difference = maxAddedValue.doubleValue() - minAddedValue.doubleValue();
+		if (difference == 0 || difference <= 1.0) { 
+			plot.setRangeStep(XYStepMode.INCREMENT_BY_VAL, 0.1);
+		} else {
+			double step = difference / 14;
+			double roundedStep = new BigDecimal(step).setScale(1, RoundingMode.HALF_UP).doubleValue();
+			plot.setRangeStep(XYStepMode.INCREMENT_BY_VAL, roundedStep);
 		}
 	}
 	
