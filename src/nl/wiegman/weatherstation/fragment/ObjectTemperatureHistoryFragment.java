@@ -43,6 +43,6 @@ public class ObjectTemperatureHistoryFragment extends AbstractTemperatureHistory
 	@Override
 	protected List<SensorValueHistoryItem> getHistoryItems() {
 		ObjectTemperatureHistory historyStore = new ObjectTemperatureHistory();
-		return historyStore.getAll(getActivity());
+		return historyStore.getAll(getActivity().getApplicationContext());
 	}
 }

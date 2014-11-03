@@ -113,14 +113,14 @@ public class MainActivity extends Activity {
         	fragmentTransaction.replace(R.id.fragment_container, sensorDataFragment);
         	fragmentTransaction.commit();
         	
-        	ambientTemperatureHistory.deleteAll(this);
-        	objectTemperatureHistory.deleteAll(this);
+        	ambientTemperatureHistory.deleteAll(this.getApplicationContext());
+        	objectTemperatureHistory.deleteAll(this.getApplicationContext());
         }
 
-		MaximumTemperatureAlarmHandler maximumTemperatureAlarm = new MaximumTemperatureAlarmHandler(this);
+		MaximumTemperatureAlarmHandler maximumTemperatureAlarm = new MaximumTemperatureAlarmHandler(this.getApplicationContext());
 		addAmbientTemperatureListener(maximumTemperatureAlarm);
 
-		MinimumTemperatureAlarmHandler minimumTemperatureAlarm = new MinimumTemperatureAlarmHandler(this);
+		MinimumTemperatureAlarmHandler minimumTemperatureAlarm = new MinimumTemperatureAlarmHandler(this.getApplicationContext());
 		addAmbientTemperatureListener(minimumTemperatureAlarm);
         
         // TODO: keep this?..
@@ -150,8 +150,6 @@ public class MainActivity extends Activity {
     public void addBarometricPressureListener(BarometricPressureListener barometricPressureListener) {
     	this.barometricPressureListeners.add(barometricPressureListener);
     }
-
-    
     
     @Override
     protected void onStart() {
@@ -224,7 +222,6 @@ public class MainActivity extends Activity {
         switch (requestCode) {
         case REQUEST_TO_ENABLE_BLUETOOTHE_LE:
             if (resultCode == Activity.RESULT_OK) {
-                Toast.makeText(this, R.string.bt_on, Toast.LENGTH_SHORT).show();
                 startScanningForSensortag();
             } else {
                 // User did not enable BlueTooth or an error occurred
@@ -477,20 +474,20 @@ public class MainActivity extends Activity {
 		if (uuidStr.equals(thermometerGatt.getDataUuid().toString())) {
         	SensorData sensorData = thermometerGatt.convert(value);
             for (AmbientTemperatureListener listener : ambientTemperatureListeners) {
-            	listener.ambientTemperatureUpdate(this, sensorData.getX());
+            	listener.ambientTemperatureUpdate(this.getApplicationContext(), sensorData.getX());
             }
             for (ObjectTemperatureListener listener : objectTemperatureListeners) {
-            	listener.objectTemperatureUpdate(this, sensorData.getY());
+            	listener.objectTemperatureUpdate(this.getApplicationContext(), sensorData.getY());
             }
 		} else if (uuidStr.equals(hygrometerGatt.getDataUuid().toString())) {
             SensorData sensorData = hygrometerGatt.convert(value);
             for (HumidityListener listener : humidityListeners) {
-            	listener.humidityUpdate(this, sensorData.getX());
+            	listener.humidityUpdate(this.getApplicationContext(), sensorData.getX());
             }
         } else if (uuidStr.equals(barometerGatt.getDataUuid().toString())) {
             SensorData sensorData = barometerGatt.convert(value);
             for (BarometricPressureListener listener : barometricPressureListeners) {
-            	listener.barometricPressureUpdate(this, sensorData.getX());
+            	listener.barometricPressureUpdate(this.getApplicationContext(), sensorData.getX());
             }
         } else {
             Log.e(LOG_TAG, "Unknown uuid: " + uuidStr);
@@ -554,7 +551,7 @@ public class MainActivity extends Activity {
 	}
     
 	private String getTemperatureSourcePreference() {
-    	SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+    	SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this.getApplicationContext());
     	return sharedPreferences.getString(getTemperatureSourcePreferenceKey(), getDefaultTemperatureSource());
 	}
 

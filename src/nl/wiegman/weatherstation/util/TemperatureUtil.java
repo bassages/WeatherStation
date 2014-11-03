@@ -32,7 +32,7 @@ public final class TemperatureUtil {
 	public static double convertFromStorageUnitToPreferenceUnit(Context context, double temperatureValueInStorageUnit) {
     	double result = temperatureValueInStorageUnit;
     	
-    	String fahrenheit = context.getString(R.string.temperature_unit_degree_fahrenheit);    	
+    	String fahrenheit = context.getString(R.string.temperature_unit_degree_fahrenheit);
     	String preferredTemperatureUnit = getPreferredTemperatureUnit(context);
     	
     	if (fahrenheit.equals(preferredTemperatureUnit)) {

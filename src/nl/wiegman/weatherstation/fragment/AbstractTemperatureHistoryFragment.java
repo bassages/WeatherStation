@@ -59,10 +59,10 @@ public abstract class AbstractTemperatureHistoryFragment extends Fragment {
 		// It will not be gc'd as long as this instance is kept referenced
     	preferenceListener = new PreferenceListener();	
     	
-    	SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+    	SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
 		sharedPreferences.registerOnSharedPreferenceChangeListener(preferenceListener);
 		
-		preferenceTemperatureUnitKey = getActivity().getString(R.string.preference_temperature_unit_key);
+		preferenceTemperatureUnitKey = getActivity().getApplicationContext().getString(R.string.preference_temperature_unit_key);
     }
     
 	@Override
@@ -71,6 +71,18 @@ public abstract class AbstractTemperatureHistoryFragment extends Fragment {
         configureGraph(rootView);
         addDataFromHistory();
         return rootView;
+	}
+	
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		
+    	SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
+		sharedPreferences.unregisterOnSharedPreferenceChangeListener(preferenceListener);
+		
+		plot.clear();
+		sensorValueHistorySeries = null;
+		plot = null;
 	}
 	
 	private void configureGraph(View rootView) {
@@ -141,7 +153,7 @@ public abstract class AbstractTemperatureHistoryFragment extends Fragment {
 		
 	protected void addToGraph(long timestamp, Double value) {
 		if (plot != null && value != null) {
-			double valueInPrefereneUnit = TemperatureUtil.convertFromStorageUnitToPreferenceUnit(getActivity(), value);
+			double valueInPrefereneUnit = TemperatureUtil.convertFromStorageUnitToPreferenceUnit(getActivity().getApplicationContext(), value);
 			sensorValueHistorySeries.addLast(timestamp, valueInPrefereneUnit);
 
 			double roundedValue = TemperatureUtil.round(value);
