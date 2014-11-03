@@ -20,7 +20,7 @@ import nl.wiegman.weatherstation.sensorvaluelistener.AmbientTemperatureListener;
  * "Range" value is the sensor value
  * </pre>
  */
-public class AmbientTemperatureHistoryFragment extends TemperatureHistoryFragment implements AmbientTemperatureListener {
+public class AmbientTemperatureHistoryFragment extends AbstractTemperatureHistoryFragment implements AmbientTemperatureListener {
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {

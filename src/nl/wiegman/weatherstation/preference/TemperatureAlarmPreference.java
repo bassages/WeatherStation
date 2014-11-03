@@ -74,7 +74,7 @@ public abstract class TemperatureAlarmPreference extends DialogPreference implem
                	Log.i(LOG_TAG, "Setting preference " + alarmValuePreferenceKey + " to " + alarmValueInStorageUnit);
                	editor.putFloat(alarmValuePreferenceKey, (float)alarmValueInStorageUnit);
             }
-            editor.commit();
+            editor.apply();
         }
     }
 	

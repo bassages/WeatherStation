@@ -17,6 +17,7 @@ import android.app.Fragment;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
@@ -39,7 +40,7 @@ import com.androidplot.xy.XYStepMode;
  * "Range" value is the sensor value
  * </pre>
  */
-public abstract class TemperatureHistoryFragment extends Fragment {
+public abstract class AbstractTemperatureHistoryFragment extends Fragment {
 	private XYPlot plot;
 	private SimpleXYSeries sensorValueHistorySeries;
 
@@ -47,6 +48,8 @@ public abstract class TemperatureHistoryFragment extends Fragment {
 	private Double minAddedValue = null;
 	
     private SharedPreferences.OnSharedPreferenceChangeListener preferenceListener;
+    
+	private String preferenceTemperatureUnitKey;
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -58,6 +61,8 @@ public abstract class TemperatureHistoryFragment extends Fragment {
     	
     	SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
 		sharedPreferences.registerOnSharedPreferenceChangeListener(preferenceListener);
+		
+		preferenceTemperatureUnitKey = getActivity().getString(R.string.preference_temperature_unit_key);
     }
     
 	@Override
@@ -115,10 +120,21 @@ public abstract class TemperatureHistoryFragment extends Fragment {
 	}
 	
 	private void addDataFromHistory() {
-		List<SensorValueHistoryItem> history = getHistoryItems();
-		for (SensorValueHistoryItem item : history) {
-			addToGraph(item.getTimestamp(), item.getSensorValue());
-		}
+		// Do not block the UI thread, by using an aSyncTask
+		AsyncTask<Void,Void,List<SensorValueHistoryItem>> asyncTask = new AsyncTask<Void, Void, List<SensorValueHistoryItem>>() {
+			@Override
+			protected List<SensorValueHistoryItem> doInBackground(Void... params) {
+				return getHistoryItems();
+			}
+			
+			@Override
+			protected void onPostExecute(List<SensorValueHistoryItem> result) {
+				for (SensorValueHistoryItem item : result) {
+					addToGraph(item.getTimestamp(), item.getSensorValue());
+				}
+			}
+		};
+		asyncTask.execute();
 	}
 
 	protected abstract List<SensorValueHistoryItem> getHistoryItems();
@@ -171,7 +187,7 @@ public abstract class TemperatureHistoryFragment extends Fragment {
 	private final class PreferenceListener implements SharedPreferences.OnSharedPreferenceChangeListener {
 		@Override
 		public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-			if (key.equals(getActivity().getString(R.string.preference_temperature_unit_key))) {
+			if (key.equals(preferenceTemperatureUnitKey)) {
 				clear();
 				addDataFromHistory();
 			}

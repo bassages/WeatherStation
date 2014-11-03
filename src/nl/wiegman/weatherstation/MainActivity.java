@@ -41,6 +41,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Menu;
@@ -94,6 +95,9 @@ public class MainActivity extends Activity {
 
         Log.i(LOG_TAG, "onCreate(SavedInstanceState=" + savedInstanceState + ")");
 
+        // TODO: Development feature... turn this off
+		StrictMode.enableDefaults();
+        
         setContentView(R.layout.activity_main);
 
 		AmbientTemperatureHistory ambientTemperatureHistory = new AmbientTemperatureHistory();

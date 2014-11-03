@@ -19,7 +19,7 @@ import android.view.ViewGroup;
  * "Range" value is the sensor value
  * </pre>
  */
-public class ObjectTemperatureHistoryFragment extends TemperatureHistoryFragment implements ObjectTemperatureListener {
+public class ObjectTemperatureHistoryFragment extends AbstractTemperatureHistoryFragment implements ObjectTemperatureListener {
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {

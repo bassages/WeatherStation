@@ -80,21 +80,24 @@ public class SensorValueHistoryDatabase extends SQLiteOpenHelper {
 	    String selectQuery = "SELECT * FROM " + TABLE_SENSOR_HISTORY + " WHERE " + KEY_SENSOR_NAME + " = ?";
 	 
 	    SQLiteDatabase db = this.getWritableDatabase();
+	    
 	    Cursor cursor = db.rawQuery(selectQuery, new String[] {sensorName});
-	 
-	    // looping through all rows and adding to list
-	    if (cursor.moveToFirst()) {
-	        do {
-	        	SensorValueHistoryItem historyItem = new SensorValueHistoryItem();
-	            historyItem.setId(Integer.parseInt(cursor.getString(0)));
-	            historyItem.setTimestamp(cursor.getLong(1));
-	            historyItem.setSensorName(cursor.getString(2));
-	            historyItem.setSensorValue(cursor.getDouble(3));
-	            allHistory.add(historyItem);
-	        } while (cursor.moveToNext());
+	    try {
+	    	// looping through all rows and adding to list
+	    	if (cursor.moveToFirst()) {
+	    		do {
+	    			SensorValueHistoryItem historyItem = new SensorValueHistoryItem();
+	    			historyItem.setId(Integer.parseInt(cursor.getString(0)));
+	    			historyItem.setTimestamp(cursor.getLong(1));
+	    			historyItem.setSensorName(cursor.getString(2));
+	    			historyItem.setSensorValue(cursor.getDouble(3));
+	    			allHistory.add(historyItem);
+	    		} while (cursor.moveToNext());
+	    	}	    	
+	    } finally {
+	    	cursor.close();	    	
 	    }
-	 
-	    // return contact list
+
 	    return allHistory;
 	}
 
