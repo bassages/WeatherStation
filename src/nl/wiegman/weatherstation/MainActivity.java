@@ -49,7 +49,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
 
-// TODO: on disconnect, clear history
+// TODO: on disconnect, clear history?
 /**
  * Main activity of the application
  */
@@ -127,9 +127,17 @@ public class MainActivity extends Activity {
     	this.ambientTemperatureListeners.add(temperatureListener);
     }
 
+    public void removeAmbientTemperatureListener(AmbientTemperatureListener temperatureListener) {
+    	this.ambientTemperatureListeners.remove(temperatureListener);
+    }
+    
     public void addObjectTemperatureListener(ObjectTemperatureListener temperatureListener) {
     	this.objectTemperatureListeners.add(temperatureListener);
     }
+
+    public void removeObjectTemperatureListener(ObjectTemperatureListener temperatureListener) {
+    	this.objectTemperatureListeners.remove(temperatureListener);
+    }    
     
     public void addHumidityListener(HumidityListener humidityListener) {
     	this.humidityListeners.add(humidityListener);
@@ -138,6 +146,8 @@ public class MainActivity extends Activity {
     public void addBarometricPressureListener(BarometricPressureListener barometricPressureListener) {
     	this.barometricPressureListeners.add(barometricPressureListener);
     }
+
+    
     
     @Override
     protected void onStart() {
@@ -487,7 +497,8 @@ public class MainActivity extends Activity {
     // NB! Nexus 4 and Nexus 7 (2012) only provide one scan result per scan
     private BluetoothAdapter.LeScanCallback bluetoothLeScanCallback = new BluetoothAdapter.LeScanCallback() {
         public void onLeScan(final BluetoothDevice device, final int rssi, byte[] scanRecord) {
-            stopScanningForSensortag();
+            // Just connect to the first found device
+        	stopScanningForSensortag();
             connectToDevice(new BluetoothDeviceInfo(device, rssi));
         }
 
@@ -519,24 +530,23 @@ public class MainActivity extends Activity {
     }
 
     public void showHistory(View view) {
-    	
-    	// TODO: when not connected, do not go to history
-    	
-    	String temperatureSource = getTemperatureSourcePreference();
-    	    	
-    	Fragment temperatureHistoryFragment = null;
-    	if ("Ambient".equalsIgnoreCase(temperatureSource)) {
-    		temperatureHistoryFragment = new AmbientTemperatureHistoryFragment();
-    	} else if ("Object".equalsIgnoreCase(temperatureSource)) {
-    		temperatureHistoryFragment = new ObjectTemperatureHistoryFragment();
-    	} else {
-    		Log.e(LOG_TAG, "unable to determine which temperature source must be used");
-    	}
-    	
-    	FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
-     	fragmentTransaction.addToBackStack(null);
-     	fragmentTransaction.replace(R.id.fragment_container, temperatureHistoryFragment);
-    	fragmentTransaction.commit();
+    	if (connectedDeviceInfo != null) {
+        	String temperatureSource = getTemperatureSourcePreference();
+	    	
+        	Fragment temperatureHistoryFragment = null;
+        	if ("Ambient".equalsIgnoreCase(temperatureSource)) {
+        		temperatureHistoryFragment = new AmbientTemperatureHistoryFragment();
+        	} else if ("Object".equalsIgnoreCase(temperatureSource)) {
+        		temperatureHistoryFragment = new ObjectTemperatureHistoryFragment();
+        	} else {
+        		Log.e(LOG_TAG, "unable to determine which temperature source must be used");
+        	}
+        	
+        	FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+         	fragmentTransaction.addToBackStack(null);
+         	fragmentTransaction.replace(R.id.fragment_container, temperatureHistoryFragment);
+        	fragmentTransaction.commit();	
+    	}    	
 	}
     
 	private String getTemperatureSourcePreference() {

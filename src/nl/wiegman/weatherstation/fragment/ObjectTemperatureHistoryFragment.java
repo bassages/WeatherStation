@@ -30,6 +30,12 @@ public class ObjectTemperatureHistoryFragment extends TemperatureHistoryFragment
 	}
 	
 	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		((MainActivity)getActivity()).removeObjectTemperatureListener(this);
+	}
+	
+	@Override
 	public void objectTemperatureUpdate(Context context, Double updatedTemperature) {
 		addToGraph(System.currentTimeMillis(), updatedTemperature);
 	}

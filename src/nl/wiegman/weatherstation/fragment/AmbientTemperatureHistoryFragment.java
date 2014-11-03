@@ -31,6 +31,12 @@ public class AmbientTemperatureHistoryFragment extends TemperatureHistoryFragmen
 	}
 	
 	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		((MainActivity)getActivity()).removeAmbientTemperatureListener(this);
+	}
+	
+	@Override
 	public void ambientTemperatureUpdate(Context context, Double updatedTemperature) {
 		addToGraph(System.currentTimeMillis(), updatedTemperature);
 	}

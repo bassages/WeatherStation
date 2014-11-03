@@ -14,9 +14,11 @@ import nl.wiegman.weatherstation.R;
 import nl.wiegman.weatherstation.history.SensorValueHistoryItem;
 import nl.wiegman.weatherstation.util.TemperatureUtil;
 import android.app.Fragment;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,24 +40,34 @@ import com.androidplot.xy.XYStepMode;
  * </pre>
  */
 public abstract class TemperatureHistoryFragment extends Fragment {
-
 	private XYPlot plot;
 	private SimpleXYSeries sensorValueHistorySeries;
 
 	private Double maxAddedValue = null;
 	private Double minAddedValue = null;
 	
+    private SharedPreferences.OnSharedPreferenceChangeListener preferenceListener;
+    
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+    	super.onCreate(savedInstanceState);
+
+		// Use instance field for listener
+		// It will not be gc'd as long as this instance is kept referenced
+    	preferenceListener = new PreferenceListener();	
+    	
+    	SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+		sharedPreferences.registerOnSharedPreferenceChangeListener(preferenceListener);
+    }
+    
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View rootView = inflater.inflate(R.layout.fragment_sensorhistory, container, false);
-
         configureGraph(rootView);
-        
         addDataFromHistory();
-                
         return rootView;
 	}
-
+	
 	private void configureGraph(View rootView) {
 		plot = (XYPlot) rootView.findViewById(R.id.sensorValueHistoryPlot);
         plot.setDomainLabel("");
@@ -63,13 +75,7 @@ public abstract class TemperatureHistoryFragment extends Fragment {
         
         plot.setDomainValueFormat(new TimeLabelFormat());
         
-        sensorValueHistorySeries = new SimpleXYSeries("SensorValue");
-
-        LineAndPointFormatter lineAndPointFormatter = new LineAndPointFormatter(Color.BLACK, Color.TRANSPARENT, Color.TRANSPARENT, null);
-        Paint paint = lineAndPointFormatter.getLinePaint();
-        paint.setStrokeWidth(8);
-        lineAndPointFormatter.setLinePaint(paint);
-        plot.addSeries(sensorValueHistorySeries, lineAndPointFormatter);
+        addNewSensorValueSerieToPlot();
  
         plot.getGraphWidget().setDomainLabelOrientation(-90);
         plot.getGraphWidget().setDomainLabelVerticalOffset(-35);
@@ -98,6 +104,15 @@ public abstract class TemperatureHistoryFragment extends Fragment {
                 0, SizeLayoutType.FILL,
                 0, SizeLayoutType.FILL));
 	}
+
+	private void addNewSensorValueSerieToPlot() {
+		sensorValueHistorySeries = new SimpleXYSeries("SensorValue");
+        LineAndPointFormatter lineAndPointFormatter = new LineAndPointFormatter(Color.BLACK, Color.TRANSPARENT, Color.TRANSPARENT, null);
+        Paint paint = lineAndPointFormatter.getLinePaint();
+        paint.setStrokeWidth(8);
+        lineAndPointFormatter.setLinePaint(paint);
+        plot.addSeries(sensorValueHistorySeries, lineAndPointFormatter);
+	}
 	
 	private void addDataFromHistory() {
 		List<SensorValueHistoryItem> history = getHistoryItems();
@@ -109,12 +124,11 @@ public abstract class TemperatureHistoryFragment extends Fragment {
 	protected abstract List<SensorValueHistoryItem> getHistoryItems();
 		
 	protected void addToGraph(long timestamp, Double value) {
-		
 		if (plot != null && value != null) {
-			double roundedValue = TemperatureUtil.round(value);
-			
-			sensorValueHistorySeries.addLast(timestamp, TemperatureUtil.round(roundedValue));
+			double valueInPrefereneUnit = TemperatureUtil.convertFromStorageUnitToPreferenceUnit(getActivity(), value);
+			sensorValueHistorySeries.addLast(timestamp, valueInPrefereneUnit);
 
+			double roundedValue = TemperatureUtil.round(value);
 			updateMinMaxValues(roundedValue);
 			setBoundaries();
 			setRangeScale();
@@ -149,6 +163,24 @@ public abstract class TemperatureHistoryFragment extends Fragment {
 			double roundedStep = new BigDecimal(step).setScale(1, RoundingMode.HALF_UP).doubleValue();
 			plot.setRangeStep(XYStepMode.INCREMENT_BY_VAL, roundedStep);
 		}
+	}
+	
+	/**
+	 * Handles changes in the temperature source preference
+	 */
+	private final class PreferenceListener implements SharedPreferences.OnSharedPreferenceChangeListener {
+		@Override
+		public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+			if (key.equals(getActivity().getString(R.string.preference_temperature_unit_key))) {
+				clear();
+				addDataFromHistory();
+			}
+		}
+	}
+	
+	private void clear() {
+		plot.clear();
+        addNewSensorValueSerieToPlot();
 	}
 	
 	private final class TimeLabelFormat extends Format {
