@@ -11,8 +11,6 @@ import nl.wiegman.weatherstation.bluetooth.BluetoothLeService;
 import nl.wiegman.weatherstation.fragment.AmbientTemperatureHistoryFragment;
 import nl.wiegman.weatherstation.fragment.ObjectTemperatureHistoryFragment;
 import nl.wiegman.weatherstation.fragment.SensorDataFragment;
-import nl.wiegman.weatherstation.fragment.sensorvaluealarm.MaximumTemperatureAlarmHandler;
-import nl.wiegman.weatherstation.fragment.sensorvaluealarm.MinimumTemperatureAlarmHandler;
 import nl.wiegman.weatherstation.gattsensor.BarometerGatt;
 import nl.wiegman.weatherstation.gattsensor.GattSensor;
 import nl.wiegman.weatherstation.gattsensor.HygrometerGatt;
@@ -20,6 +18,9 @@ import nl.wiegman.weatherstation.gattsensor.SensorData;
 import nl.wiegman.weatherstation.gattsensor.ThermometerGatt;
 import nl.wiegman.weatherstation.history.AmbientTemperatureHistory;
 import nl.wiegman.weatherstation.history.ObjectTemperatureHistory;
+import nl.wiegman.weatherstation.preference.KeepScreenOnHelper;
+import nl.wiegman.weatherstation.sensorvaluealarm.MaximumTemperatureAlarmHandler;
+import nl.wiegman.weatherstation.sensorvaluealarm.MinimumTemperatureAlarmHandler;
 import nl.wiegman.weatherstation.sensorvaluelistener.AmbientTemperatureListener;
 import nl.wiegman.weatherstation.sensorvaluelistener.BarometricPressureListener;
 import nl.wiegman.weatherstation.sensorvaluelistener.HumidityListener;
@@ -42,22 +43,21 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.Toast;
 
-// TODO: on disconnect, clear history?
 /**
  * Main activity of the application
  */
 public class MainActivity extends Activity {
     private final String LOG_TAG = this.getClass().getSimpleName();
 
-    private static final long SENSORS_REFRESH_RATE_IN_MILLISECONDS = TimeUnit.SECONDS.toMillis(5);
+    private static final long SENSORS_REFRESH_RATE_IN_MILLISECONDS = TimeUnit.SECONDS.toMillis(10);
 
     // Requests to other activities
     private static final int REQUEST_TO_ENABLE_BLUETOOTHE_LE = 0;
@@ -98,8 +98,9 @@ public class MainActivity extends Activity {
 
         Log.i(LOG_TAG, "onCreate(SavedInstanceState=" + savedInstanceState + ")");
 
-        // Development feature... turn this off in final product
-//		StrictMode.enableDefaults();
+        if (DevelopmentMode.getDevelopmentMode()) {
+        	StrictMode.enableDefaults();
+        }
         
 		// Use instance field for listener
 		// It will not be gc'd as long as this instance is kept referenced
@@ -136,9 +137,8 @@ public class MainActivity extends Activity {
 
 		MinimumTemperatureAlarmHandler minimumTemperatureAlarm = new MinimumTemperatureAlarmHandler(this.getApplicationContext());
 		addAmbientTemperatureListener(minimumTemperatureAlarm);
-        
-        // TODO: keep this?..
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+		KeepScreenOnHelper.setKeepScreenOnFlagBasedOnPreference(this);
     }
 
 	public void addAmbientTemperatureListener(AmbientTemperatureListener temperatureListener) {
@@ -454,19 +454,19 @@ public class MainActivity extends Activity {
                 Log.e(LOG_TAG, "GATT error code: " + status);
             }
         }
-
-        private void startGattSensorDataUpdates() {
-            for (GattSensor gattSensor: gattSensors) {
-                gattSensor.calibrate();
-                gattSensor.enable();
-            }
-            periodicGattSensorUpdateRequestsExecutor = new ScheduledThreadPoolExecutor(1, new GattSensorDataUpdateThreadFactory());
-            int startDelay = 500;
-			PeriodicGattSensorUpdateRequester periodicGattSensorUpdateRequester = new PeriodicGattSensorUpdateRequester(gattSensors);
-			periodicGattSensorUpdateRequestsExecutor.scheduleWithFixedDelay(periodicGattSensorUpdateRequester, startDelay, SENSORS_REFRESH_RATE_IN_MILLISECONDS, TimeUnit.MILLISECONDS);
-        }
     };
 
+    private void startGattSensorDataUpdates() {
+        for (GattSensor gattSensor: gattSensors) {
+            gattSensor.calibrate();
+            gattSensor.enable();
+        }
+        periodicGattSensorUpdateRequestsExecutor = new ScheduledThreadPoolExecutor(1, new GattSensorDataUpdateThreadFactory());
+        int startDelay = 500;
+		PeriodicGattSensorUpdateRequester periodicGattSensorUpdateRequester = new PeriodicGattSensorUpdateRequester(gattSensors);
+		periodicGattSensorUpdateRequestsExecutor.scheduleWithFixedDelay(periodicGattSensorUpdateRequester, startDelay, SENSORS_REFRESH_RATE_IN_MILLISECONDS, TimeUnit.MILLISECONDS);
+    }
+    
     private void onCharacteristicRead(String uuidStr, byte[] value, int status) {
     	if (value != null) {
             if (uuidStr.equals(BarometerGatt.UUID_CALIBRATION.toString())) {
@@ -580,13 +580,17 @@ public class MainActivity extends Activity {
 	}
 	
 	/**
-	 * Handles changes in the theme preference
+	 * Handles changes in the preferences
 	 */
 	private final class PreferenceListener implements SharedPreferences.OnSharedPreferenceChangeListener {
 		@Override
 		public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+			String preferenceKeepScreenOnPreferenceKey = getApplicationContext().getString(R.string.preference_keep_screen_on_key);
+			
 			if (key.equals(preferenceThemeKey)) {
 				recreate();
+			} if (key.equals(preferenceKeepScreenOnPreferenceKey)) {
+				KeepScreenOnHelper.setKeepScreenOnFlagBasedOnPreference(MainActivity.this);
 			}
 		}
 	}

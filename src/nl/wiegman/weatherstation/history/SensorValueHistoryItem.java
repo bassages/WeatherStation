@@ -1,5 +1,8 @@
 package nl.wiegman.weatherstation.history;
 
+/**
+ * Represents an item from the history database 
+ */
 public class SensorValueHistoryItem {
 
 	private int id;

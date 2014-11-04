@@ -39,6 +39,8 @@ import android.util.Log;
  */
 public class BarometerGatt extends AbstractGattSensor {
 
+	private String LOG_TAG = this.getClass().getSimpleName();
+	
     private static final UUID UUID_SERVICE = fromString("f000aa40-0451-4000-b000-000000000000");
     private static final UUID UUID_DATA = fromString("f000aa41-0451-4000-b000-000000000000");
     public static final UUID UUID_CONFIGURATION = fromString("f000aa42-0451-4000-b000-000000000000"); // 0: disable, 1: enable
@@ -59,7 +61,7 @@ public class BarometerGatt extends AbstractGattSensor {
         SensorData sensorData = null;
         
         if (calibrationCoefficients == null) {
-            Log.w("Custom", "Data notification arrived for barometer before it was calibrated.");
+            Log.w(LOG_TAG, "Data notification arrived for barometer before it was calibrated.");
             sensorData = new SensorData(0, 0, 0);
         } else {
             final int[] c; // Calibration coefficients
@@ -107,7 +109,7 @@ public class BarometerGatt extends AbstractGattSensor {
     }
 
     public void processCalibrationResults(byte[] value) {
-        Log.i(this.getClass().getSimpleName(), "The barometer was sucessfully calibrated");
+        Log.i(LOG_TAG, "The barometer was sucessfully calibrated");
         // Barometer calibration values are read.
         List<Integer> calibration = new ArrayList<Integer>();
         for (int offset = 0; offset < 8; offset += 2) {

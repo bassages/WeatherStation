@@ -13,6 +13,7 @@ import java.util.List;
 import nl.wiegman.weatherstation.R;
 import nl.wiegman.weatherstation.history.SensorValueHistoryItem;
 import nl.wiegman.weatherstation.util.TemperatureUtil;
+import nl.wiegman.weatherstation.util.ThemeUtil;
 import android.app.Fragment;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -85,6 +86,8 @@ public abstract class AbstractTemperatureHistoryFragment extends Fragment {
 	}
 	
 	private void configureGraph(View rootView) {
+		String themeFromPreferences = ThemeUtil.getThemeFromPreferences(getActivity().getApplicationContext());
+
 		plot = (XYPlot) rootView.findViewById(R.id.sensorValueHistoryPlot);
         plot.setDomainLabel("");
         plot.setRangeLabel("");
@@ -101,14 +104,24 @@ public abstract class AbstractTemperatureHistoryFragment extends Fragment {
 
         plot.setDomainStep(XYStepMode.SUBDIVIDE, 15);
         
+        
+        int baseColor;
+        int highlightColor;
+		if ("Dark".equals(themeFromPreferences)) {
+			baseColor = Color.BLACK;
+			highlightColor = Color.WHITE;
+		} else {
+			baseColor = Color.WHITE;
+			highlightColor = Color.BLACK;
+		}
         // Colors
-        plot.getGraphWidget().getBackgroundPaint().setColor(Color.WHITE);
-        plot.getGraphWidget().getGridBackgroundPaint().setColor(Color.WHITE);
-        plot.getGraphWidget().getDomainLabelPaint().setColor(Color.BLACK);
-        plot.getGraphWidget().getRangeLabelPaint().setColor(Color.BLACK);
-        plot.getGraphWidget().getDomainOriginLabelPaint().setColor(Color.BLACK);
-        plot.getGraphWidget().getDomainOriginLinePaint().setColor(Color.BLACK);
-        plot.getGraphWidget().getRangeOriginLinePaint().setColor(Color.BLACK);
+        plot.getGraphWidget().getBackgroundPaint().setColor(baseColor);
+        plot.getGraphWidget().getGridBackgroundPaint().setColor(baseColor);
+        plot.getGraphWidget().getDomainLabelPaint().setColor(highlightColor);
+        plot.getGraphWidget().getRangeLabelPaint().setColor(highlightColor);
+        plot.getGraphWidget().getDomainOriginLabelPaint().setColor(highlightColor);
+        plot.getGraphWidget().getDomainOriginLinePaint().setColor(highlightColor);
+        plot.getGraphWidget().getRangeOriginLinePaint().setColor(highlightColor);
 
         // Remove legend
         plot.getLayoutManager().remove(plot.getLegendWidget());
@@ -122,8 +135,18 @@ public abstract class AbstractTemperatureHistoryFragment extends Fragment {
 	}
 
 	private void addNewSensorValueSerieToPlot() {
+		String themeFromPreferences = ThemeUtil.getThemeFromPreferences(getActivity().getApplicationContext());
+
 		sensorValueHistorySeries = new SimpleXYSeries("SensorValue");
-        LineAndPointFormatter lineAndPointFormatter = new LineAndPointFormatter(Color.BLACK, Color.TRANSPARENT, Color.TRANSPARENT, null);
+		
+		int lineColor;
+		if ("Dark".equals(themeFromPreferences)) {
+			lineColor = Color.WHITE;
+		} else {
+			lineColor = Color.BLACK;
+		}
+		
+        LineAndPointFormatter lineAndPointFormatter = new LineAndPointFormatter(lineColor, Color.TRANSPARENT, Color.TRANSPARENT, null);
         Paint paint = lineAndPointFormatter.getLinePaint();
         paint.setStrokeWidth(8);
         lineAndPointFormatter.setLinePaint(paint);

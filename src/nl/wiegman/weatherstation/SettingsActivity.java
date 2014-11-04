@@ -1,5 +1,6 @@
 package nl.wiegman.weatherstation;
 
+import nl.wiegman.weatherstation.preference.KeepScreenOnHelper;
 import nl.wiegman.weatherstation.util.ThemeUtil;
 import android.app.Activity;
 import android.content.Intent;
@@ -9,12 +10,10 @@ import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NavUtils;
 import android.view.MenuItem;
-import android.view.WindowManager;
 
 public class SettingsActivity extends Activity {
     
 	private SharedPreferences.OnSharedPreferenceChangeListener preferenceListener;
-	private String preferenceThemeKey;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -26,9 +25,7 @@ public class SettingsActivity extends Activity {
     	
     	SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		sharedPreferences.registerOnSharedPreferenceChangeListener(preferenceListener);
-		
-		preferenceThemeKey = getApplicationContext().getString(R.string.preference_theme_key);
-		
+				
 		ThemeUtil.setThemeFromPreferences(this);
 		
 		setContentView(R.layout.activity_settings);
@@ -37,8 +34,7 @@ public class SettingsActivity extends Activity {
 			getFragmentManager().beginTransaction().add(R.id.activity_settings, new PrefsFragment()).commit();
 		}
 		
-		// TODO: keep this?
-		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+		KeepScreenOnHelper.setKeepScreenOnFlagBasedOnPreference(this);
 	}
 	
     public static class PrefsFragment extends PreferenceFragment {   
@@ -71,13 +67,18 @@ public class SettingsActivity extends Activity {
     }
     
 	/**
-	 * Handles changes in the theme preference
+	 * Handles changes in the preferences
 	 */
 	private final class PreferenceListener implements SharedPreferences.OnSharedPreferenceChangeListener {
 		@Override
 		public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+			String preferenceThemeKey = getApplicationContext().getString(R.string.preference_theme_key);
+			String preferenceKeepScreenOnPreferenceKey = getApplicationContext().getString(R.string.preference_keep_screen_on_key);
+			
 			if (key.equals(preferenceThemeKey)) {
 				recreate();
+			} if (key.equals(preferenceKeepScreenOnPreferenceKey)) {
+				KeepScreenOnHelper.setKeepScreenOnFlagBasedOnPreference(SettingsActivity.this);
 			}
 		}
 	}

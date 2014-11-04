@@ -18,7 +18,7 @@
     <string name="air_pressure_icon_description">Air pressure icon</string>
     <string name="humidity_icon_description">Humidity icon</string>
     <string name="title_activity_settings">Weather Station - Settings</string>
-    <string name="preference_temperature_unit_title">Temperature unit</string>
+    <string name="preference_temperature_unit_title">Unit</string>
     <string name="preference_temperature_unit_summary">Select the unit in which temperatures are displayed</string>
     <string name="preference_temperature_unit_key">temperatureUnit</string>
     <string name="preference_temperature_unit_default_value">\u2103</string>
@@ -28,8 +28,8 @@
         <item>\u2109</item>
     </array>
 
-    <string name="preference_temperature_source_title">Temperature source</string>
-    <string name="preference_temperature_source_summary">Select the source for the temperature readings</string>
+    <string name="preference_temperature_source_title">Sensor source</string>
+    <string name="preference_temperature_source_summary">Select the sensor source for the temperature readings</string>
     <string name="preference_temperature_source_key">temperature_source</string>
     <string name="preference_temperature_source_default_value">Ambient</string>
 
@@ -38,11 +38,19 @@
         <item>Object</item>
     </array>
 
+    <string name="preference_theme_title">Select a theme</string>
+    <string name="preference_theme_summary">Change the colors of this app by choosing a theme</string>
     <string name="preference_theme_key">theme</string>
+    <string name="preference_theme_default_value">Light</string>
     <array name="preference_theme_entries">
         <item>Light</item>
         <item>Dark</item>
     </array>
+    
+    <string name="preference_keep_screen_on_title">Always keep the screen on</string>
+    <string name="preference_keep_screen_on_summary">Ignore the default device settings</string>
+    <string name="preference_keep_screen_on_key">keep_screen_on</string>
+    <string name="preference_keep_screen_on_default_value">false</string>
     
     <string name="preference_alarm_minimum_temperature_enabled_key">minimumTemperatureAlarmEnabled</string>
     <string name="preference_alarm_minimum_temperature_value_key">minimumTemperatureAlarmValue</string>
@@ -57,6 +65,9 @@
     <string name="minimum_temperature_alarm_notification_title">Temperature alarm!</string>
     <string name="minimum_temperature_alarm_notification_text">%1$s %2$s &lt; minimum of %3$s %4$s</string>
 
+    <string name="preference_category_appearance">Appearance</string>
+    <string name="preference_category_temperature">Temperature</string>
+    
     <!-- Messages -->
     <string name="ble_not_supported">BLE is not supported</string>
     <string name="bt_not_on">Bluetooth must be enabled for this application to function correctly</string>

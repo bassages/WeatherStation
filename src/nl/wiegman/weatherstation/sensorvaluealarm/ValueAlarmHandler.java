@@ -1,4 +1,4 @@
-package nl.wiegman.weatherstation.fragment.sensorvaluealarm;
+package nl.wiegman.weatherstation.sensorvaluealarm;
 
 import nl.wiegman.weatherstation.R;
 import android.app.Activity;
