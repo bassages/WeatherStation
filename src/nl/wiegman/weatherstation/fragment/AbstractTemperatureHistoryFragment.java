@@ -48,7 +48,6 @@ public abstract class AbstractTemperatureHistoryFragment extends Fragment {
 	private Double minAddedValue = null;
 	
     private SharedPreferences.OnSharedPreferenceChangeListener preferenceListener;
-    
 	private String preferenceTemperatureUnitKey;
     
     @Override

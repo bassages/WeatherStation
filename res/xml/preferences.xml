@@ -20,7 +20,16 @@
         android:key="@string/preference_temperature_source_key"
         android:summary="@string/preference_temperature_source_summary"
         android:title="@string/preference_temperature_source_title" />
-    
+
+      <ListPreference
+        android:defaultValue="Light"
+        android:dialogTitle="Select a theme"
+        android:entries="@array/preference_theme_entries"
+        android:entryValues="@array/preference_theme_entries"
+        android:key="@string/preference_theme_key"
+        android:summary="Change the colors of this app by choosing a theme"
+        android:title="Theme" />
+   
     <nl.wiegman.weatherstation.preference.MinimumTemperatureAlarmPreference 
         android:title="@string/preference_minimum_temperature_alarm_title" 
         android:summary="@string/preference_minimum_temperature_alarm_summary" />

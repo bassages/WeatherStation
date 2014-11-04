@@ -9,6 +9,7 @@ import nl.wiegman.weatherstation.sensorvaluelistener.BarometricPressureListener;
 import nl.wiegman.weatherstation.sensorvaluelistener.HumidityListener;
 import nl.wiegman.weatherstation.sensorvaluelistener.ObjectTemperatureListener;
 import nl.wiegman.weatherstation.util.TemperatureUtil;
+import nl.wiegman.weatherstation.util.ThemeUtil;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -18,6 +19,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 /**
@@ -47,16 +49,18 @@ public class SensorDataFragment extends Fragment implements AmbientTemperatureLi
     
     private SharedPreferences.OnSharedPreferenceChangeListener preferenceListener;
     
+    private String themePreferenceKey;
 	private String temperatureSourcePreferenceKey;
     private String temperatureSource;
 	    
     @Override
     public void onCreate(Bundle savedInstanceState) {
     	super.onCreate(savedInstanceState);
-    
+    	
     	SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-    	temperatureSourcePreferenceKey = getTemperatureSourcePreferenceKey(getActivity());
+    	temperatureSourcePreferenceKey = getTemperatureSourcePreferenceKey(getActivity().getApplicationContext());
     	temperatureSource = sharedPreferences.getString(temperatureSourcePreferenceKey, getDefaultTemperatureSource());
+    	themePreferenceKey = getActivity().getApplicationContext().getString(R.string.preference_theme_key);
     	
 		// Use instance field for listener
 		// It will not be gc'd as long as this instance is kept referenced
@@ -64,6 +68,14 @@ public class SensorDataFragment extends Fragment implements AmbientTemperatureLi
 		sharedPreferences.registerOnSharedPreferenceChangeListener(preferenceListener);
 
     	Log.i(LOG_TAG, "onCreate sensorDataFragment");  	
+    }
+
+    @Override
+    public void onDestroy() {
+    	super.onDestroy();
+    	
+    	SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+    	sharedPreferences.unregisterOnSharedPreferenceChangeListener(preferenceListener);
     }
     
     @Override
@@ -74,6 +86,8 @@ public class SensorDataFragment extends Fragment implements AmbientTemperatureLi
     	temperatureValueTextView = (TextView) rootView.findViewById(R.id.temperatureValue);
     	humidityValueTextView = (TextView) rootView.findViewById(R.id.humidityValue);
     	barometricPressureValueTextView = (TextView) rootView.findViewById(R.id.airPressureValue);
+    	
+    	setImagesBasedOnTheme(rootView);
     	
     	if (savedInstanceState != null) {
     		restoreState(savedInstanceState);
@@ -87,6 +101,23 @@ public class SensorDataFragment extends Fragment implements AmbientTemperatureLi
     	
     	return rootView;
     }
+
+	private void setImagesBasedOnTheme(View rootView) {
+		ImageView humidityImageView = (ImageView)rootView.findViewById(R.id.humidityImage);
+    	ImageView airPressureImageView = (ImageView)rootView.findViewById(R.id.airPressureImage);
+    	ImageView temperatureImageView = (ImageView)rootView.findViewById(R.id.temperatureImage);
+    	
+    	String themeFromPreferences = ThemeUtil.getThemeFromPreferences(getActivity().getApplicationContext());
+    	if (themeFromPreferences.equals("Dark")) {
+    		humidityImageView.setImageResource(R.drawable.humidity_white);
+    		airPressureImageView.setImageResource(R.drawable.airpressure_white);
+    		temperatureImageView.setImageResource(R.drawable.temperature_white);
+    	} else {
+    		humidityImageView.setImageResource(R.drawable.humidity_black);
+    		airPressureImageView.setImageResource(R.drawable.airpressure_black);
+    		temperatureImageView.setImageResource(R.drawable.temperature_black);
+    	}
+	}
 
 	private MainActivity getMainActivity() {
 		return (MainActivity)getActivity();
@@ -219,6 +250,8 @@ public class SensorDataFragment extends Fragment implements AmbientTemperatureLi
 		public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 			if (key.equals(temperatureSourcePreferenceKey)) {
 				temperatureSource = sharedPreferences.getString(key, getDefaultTemperatureSource());
+			} else if (key.equals(themePreferenceKey)) {
+				getActivity().recreate();
 			}
 		}
 	}

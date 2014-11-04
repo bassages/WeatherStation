@@ -22,6 +22,7 @@
     <string name="preference_temperature_unit_summary">Select the unit in which temperatures are displayed</string>
     <string name="preference_temperature_unit_key">temperatureUnit</string>
     <string name="preference_temperature_unit_default_value">\u2103</string>
+
     <array name="preference_temperature_unit_entries">
         <item>\u2103</item>
         <item>\u2109</item>
@@ -31,10 +32,17 @@
     <string name="preference_temperature_source_summary">Select the source for the temperature readings</string>
     <string name="preference_temperature_source_key">temperature_source</string>
     <string name="preference_temperature_source_default_value">Ambient</string>
+
     <array name="preference_temperature_source_entries">
-       	<item>Ambient</item>
-       	<item>Object</item>
-   	</array>
+        <item>Ambient</item>
+        <item>Object</item>
+    </array>
+
+    <string name="preference_theme_key">theme</string>
+    <array name="preference_theme_entries">
+        <item>Light</item>
+        <item>Dark</item>
+    </array>
     
     <string name="preference_alarm_minimum_temperature_enabled_key">minimumTemperatureAlarmEnabled</string>
     <string name="preference_alarm_minimum_temperature_value_key">minimumTemperatureAlarmValue</string>

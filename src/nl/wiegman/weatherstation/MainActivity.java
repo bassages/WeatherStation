@@ -24,6 +24,7 @@ import nl.wiegman.weatherstation.sensorvaluelistener.AmbientTemperatureListener;
 import nl.wiegman.weatherstation.sensorvaluelistener.BarometricPressureListener;
 import nl.wiegman.weatherstation.sensorvaluelistener.HumidityListener;
 import nl.wiegman.weatherstation.sensorvaluelistener.ObjectTemperatureListener;
+import nl.wiegman.weatherstation.util.ThemeUtil;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
@@ -41,7 +42,6 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Menu;
@@ -82,6 +82,9 @@ public class MainActivity extends Activity {
 
     private ScheduledExecutorService periodicGattSensorUpdateRequestsExecutor;
 
+    private SharedPreferences.OnSharedPreferenceChangeListener preferenceListener;
+    private String preferenceThemeKey;
+    
     private static final List<GattSensor> gattSensors = new ArrayList<GattSensor>();
     static {
         gattSensors.add(barometerGatt);
@@ -95,8 +98,19 @@ public class MainActivity extends Activity {
 
         Log.i(LOG_TAG, "onCreate(SavedInstanceState=" + savedInstanceState + ")");
 
-        // TODO: Development feature... turn this off
-		StrictMode.enableDefaults();
+        // Development feature... turn this off in final product
+//		StrictMode.enableDefaults();
+        
+		// Use instance field for listener
+		// It will not be gc'd as long as this instance is kept referenced
+    	preferenceListener = new PreferenceListener();	
+    	
+    	SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		sharedPreferences.registerOnSharedPreferenceChangeListener(preferenceListener);
+		
+		preferenceThemeKey = getApplicationContext().getString(R.string.preference_theme_key);
+        
+        ThemeUtil.setThemeFromPreferences(this);
         
         setContentView(R.layout.activity_main);
 
@@ -127,7 +141,7 @@ public class MainActivity extends Activity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
-    public void addAmbientTemperatureListener(AmbientTemperatureListener temperatureListener) {
+	public void addAmbientTemperatureListener(AmbientTemperatureListener temperatureListener) {
     	this.ambientTemperatureListeners.add(temperatureListener);
     }
 
@@ -172,6 +186,9 @@ public class MainActivity extends Activity {
         super.onDestroy();
         Log.i(LOG_TAG, "onDestroy()");
 
+    	SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		sharedPreferences.unregisterOnSharedPreferenceChangeListener(preferenceListener);
+        
         releaseConnectionAndResources();
     }
 
@@ -542,7 +559,6 @@ public class MainActivity extends Activity {
         	} else {
         		Log.e(LOG_TAG, "unable to determine which temperature source must be used");
         	}
-        	
         	FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
          	fragmentTransaction.addToBackStack(null);
          	fragmentTransaction.replace(R.id.fragment_container, temperatureHistoryFragment);
@@ -561,5 +577,17 @@ public class MainActivity extends Activity {
     
 	private String getDefaultTemperatureSource() {
 		return getString(R.string.preference_temperature_source_default_value);
+	}
+	
+	/**
+	 * Handles changes in the theme preference
+	 */
+	private final class PreferenceListener implements SharedPreferences.OnSharedPreferenceChangeListener {
+		@Override
+		public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+			if (key.equals(preferenceThemeKey)) {
+				recreate();
+			}
+		}
 	}
 }

@@ -47,6 +47,13 @@ public class BluetoothLeService extends Service {
     private BluetoothGatt bluetoothGatt = null;
     private String bluetoothDeviceAddress;
 
+    /**
+     * From the TI wiki:
+     * You can't do two writes immediately after each other. The Android BLE stack can only handle one "remote" request at a time, 
+     * meaning that if you do a write immediately after another write the second request will be silently ignored.
+     * 
+     * For this reason, in this class a CountDownLatch is used to be sure only one remote request at one time is handled.
+     */
     private CountDownLatch waitForResponseLatch = null;
     
     /**

@@ -34,8 +34,7 @@
             android:layout_below="@+id/airPressureImage"
             android:gravity="center"
             android:layout_marginTop="0dp"
-            android:text="@string/air_pressure_label"
-            android:textColor="@android:color/black" />
+            android:text="@string/air_pressure_label" />
 
         <ImageView
             android:id="@+id/airPressureImage"
@@ -150,8 +149,7 @@
             android:layout_below="@+id/temperatureImage"
             android:layout_marginTop="10dp"
             android:gravity="center"
-            android:text="@string/temperature_label"
-            android:textColor="@android:color/black" />
+            android:text="@string/temperature_label" />
 
         <TextView
             android:id="@+id/humidityLabel"
@@ -162,8 +160,7 @@
             android:layout_below="@+id/humidityImage"
             android:gravity="center"
             android:text="@string/humidity_label"
-            android:layout_marginTop="10dp"
-            android:textColor="@android:color/black" />
+            android:layout_marginTop="10dp" />
 
     </RelativeLayout>
 
