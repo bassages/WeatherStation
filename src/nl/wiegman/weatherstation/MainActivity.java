@@ -443,7 +443,7 @@ public class MainActivity extends Activity {
                 gattSensor.calibrate();
                 gattSensor.enable();
             }
-            periodicGattSensorUpdateRequestsExecutor = new ScheduledThreadPoolExecutor(1);
+            periodicGattSensorUpdateRequestsExecutor = new ScheduledThreadPoolExecutor(1, new GattSensorDataUpdateThreadFactory());
             int startDelay = 500;
 			PeriodicGattSensorUpdateRequester periodicGattSensorUpdateRequester = new PeriodicGattSensorUpdateRequester(gattSensors);
 			periodicGattSensorUpdateRequestsExecutor.scheduleWithFixedDelay(periodicGattSensorUpdateRequester, startDelay, SENSORS_REFRESH_RATE_IN_MILLISECONDS, TimeUnit.MILLISECONDS);

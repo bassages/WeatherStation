@@ -5,7 +5,7 @@ import java.util.List;
 import nl.wiegman.weatherstation.gattsensor.GattSensor;
 
 /**
- * Runnable that initiates a read on all known gatt sensors
+ * Runnable that initiates a read on all registered gatt sensors
  */
 public class PeriodicGattSensorUpdateRequester implements Runnable {
 
