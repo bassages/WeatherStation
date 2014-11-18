@@ -69,7 +69,12 @@
     <string name="preference_category_temperature">Temperature</string>
     
     <!-- Messages -->
-    <string name="ble_not_supported">BLE is not supported</string>
-    <string name="bt_not_on">Bluetooth must be enabled for this application to function correctly</string>
+    <string name="bluetooth_le_not_supported">Could not connect to Sensortag because bluetooth LE is not supported by your device</string>
+    <string name="bluetooth_not_enabled">Could not connect to Sensortag because bluetooth is not enabled</string>
+    <string name="start_le_scan_failed">Failed to connect to TI sensortag</string>
+    <string name="sensortag_service_discovery_failed">Failed to connect to TI sensortag</string>
+    <string name="failed_to_connect_to_sensortag">Failed to connect to TI sensortag</string>
+    <string name="searching_for_sensortag">Connecting to TI sensortag</string>
+    <string name="connection_lost_trying_reconnect">Connection with TI sensortag was lost, trying to reconnect</string>
 
 </resources>

@@ -1,6 +1,6 @@
 package nl.wiegman.weatherstation;
 
-import nl.wiegman.weatherstation.preference.KeepScreenOnHelper;
+import nl.wiegman.weatherstation.util.KeepScreenOnUtil;
 import nl.wiegman.weatherstation.util.ThemeUtil;
 import android.app.Activity;
 import android.content.Intent;
@@ -34,7 +34,7 @@ public class SettingsActivity extends Activity {
 			getFragmentManager().beginTransaction().add(R.id.activity_settings, new PrefsFragment()).commit();
 		}
 		
-		KeepScreenOnHelper.setKeepScreenOnFlagBasedOnPreference(this);
+		KeepScreenOnUtil.setKeepScreenOnFlagBasedOnPreference(this);
 	}
 	
     public static class PrefsFragment extends PreferenceFragment {   
@@ -78,7 +78,7 @@ public class SettingsActivity extends Activity {
 			if (key.equals(preferenceThemeKey)) {
 				recreate();
 			} if (key.equals(preferenceKeepScreenOnPreferenceKey)) {
-				KeepScreenOnHelper.setKeepScreenOnFlagBasedOnPreference(SettingsActivity.this);
+				KeepScreenOnUtil.setKeepScreenOnFlagBasedOnPreference(SettingsActivity.this);
 			}
 		}
 	}
