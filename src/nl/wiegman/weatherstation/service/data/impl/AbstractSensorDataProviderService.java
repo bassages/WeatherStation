@@ -25,7 +25,13 @@ public abstract class AbstractSensorDataProviderService extends Service implemen
 			sensorValueListeners.put(sensorType, new ArrayList<SensorValueListener>());
 		}
 	}
-    
+
+	@Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        // We want this service to continue running until it is explicitly stopped, so return sticky.
+        return START_STICKY;
+    }
+	
     @Override
 	public void addSensorValueListener(SensorValueListener sensorValueListener, SensorType sensorType) {
     	this.sensorValueListeners.get(sensorType).add(sensorValueListener);

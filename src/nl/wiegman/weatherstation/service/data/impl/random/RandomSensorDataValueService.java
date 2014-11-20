@@ -9,33 +9,25 @@ import nl.wiegman.weatherstation.SensorType;
 import nl.wiegman.weatherstation.sensorvaluelistener.SensorValueListener;
 import nl.wiegman.weatherstation.service.data.impl.AbstractSensorDataProviderService;
 import nl.wiegman.weatherstation.util.NamedThreadFactory;
-import android.content.Intent;
 import android.util.Log;
 
 /**
  * Supplies a random sensor value for test purposes
  */
-public class RandomSensorDataValueServiceImpl extends AbstractSensorDataProviderService {
+public class RandomSensorDataValueService extends AbstractSensorDataProviderService {
+	private static final String LOG_TAG = RandomSensorDataValueService.class.getSimpleName();
 
-	private static final String LOG_TAG = RandomSensorDataValueServiceImpl.class.getSimpleName();
-
-	private static final long SENSORS_REFRESH_RATE_IN_MILLISECONDS = 3000;
+	private static final long PUBLISH_RATE_IN_MILLISECONDS = 3000;
 		
-	private ScheduledExecutorService periodicSensorUpdateExecutor;
-
-	@Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        // We want this service to continue running until it is explicitly stopped, so return sticky.
-        return START_STICKY;
-    }
+	private ScheduledExecutorService periodicSensorValueUpdateProducerExecutor;
 
 	@Override
 	public void activate() {
-		if (periodicSensorUpdateExecutor == null) {
-			periodicSensorUpdateExecutor = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("RandomSensorValueUpdateThread"));
+		if (periodicSensorValueUpdateProducerExecutor == null) {
+			periodicSensorValueUpdateProducerExecutor = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("RandomSensorValueUpdateThread"));
 			int startDelay = 500;
-			SensorValueProducer periodicGattSensorUpdateRequester = new SensorValueProducer();
-			periodicSensorUpdateExecutor.scheduleWithFixedDelay(periodicGattSensorUpdateRequester, startDelay, SENSORS_REFRESH_RATE_IN_MILLISECONDS, TimeUnit.MILLISECONDS);
+			SensorValueUpdateProducer periodicGattSensorUpdateRequester = new SensorValueUpdateProducer();
+			periodicSensorValueUpdateProducerExecutor.scheduleWithFixedDelay(periodicGattSensorUpdateRequester, startDelay, PUBLISH_RATE_IN_MILLISECONDS, TimeUnit.MILLISECONDS);
 		}
 	}
     	
@@ -46,32 +38,36 @@ public class RandomSensorDataValueServiceImpl extends AbstractSensorDataProvider
 	}
 	
 	private void stopSensorDataUpdates() {
-        if (periodicSensorUpdateExecutor != null) {
-        	periodicSensorUpdateExecutor.shutdown();
+        if (periodicSensorValueUpdateProducerExecutor != null) {
+        	periodicSensorValueUpdateProducerExecutor.shutdown();
             try {
-            	periodicSensorUpdateExecutor.awaitTermination(5, TimeUnit.SECONDS);
-            	periodicSensorUpdateExecutor = null;
+            	periodicSensorValueUpdateProducerExecutor.awaitTermination(5, TimeUnit.SECONDS);
+            	periodicSensorValueUpdateProducerExecutor = null;
     		} catch (InterruptedException e) {
     			Log.e(LOG_TAG, "Periodic updater was not stopped within the timeout period");
     		}
         }
 	}
 
-	private class SensorValueProducer implements Runnable {
+	private class SensorValueUpdateProducer implements Runnable {
 
 		@Override
 		public void run() {
 			try {
-				double randomTemperature = getRandom(10, 20);
+				double randomAmbientTemperature = getRandom(0, 35);
+				double randomObjectTemperature = getRandom(0, 100);
 				double randomHumidity = getRandom(0, 100);
 				double randomAirPressure = getRandom(950, 1050);
 
-				Log.d(LOG_TAG, "Update temperature to: " + randomTemperature);
+				Log.d(LOG_TAG, "Update temperature to: " + randomAmbientTemperature);
 				Log.d(LOG_TAG, "Update humidity to: " + randomHumidity);
 				Log.d(LOG_TAG, "Update air pressure to: " + randomAirPressure);
 	            
 				for (SensorValueListener listener : sensorValueListeners.get(SensorType.AmbientTemperature)) {
-					listener.valueUpdate(getApplicationContext(), SensorType.AmbientTemperature, randomTemperature);
+					listener.valueUpdate(getApplicationContext(), SensorType.AmbientTemperature, randomAmbientTemperature);
+	            }
+				for (SensorValueListener listener : sensorValueListeners.get(SensorType.ObjectTemperature)) {
+					listener.valueUpdate(getApplicationContext(), SensorType.ObjectTemperature, randomObjectTemperature);
 	            }
 				for (SensorValueListener listener : sensorValueListeners.get(SensorType.Humidity)) {
 					listener.valueUpdate(getApplicationContext(), SensorType.Humidity, randomHumidity);

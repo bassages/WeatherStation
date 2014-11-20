@@ -29,7 +29,10 @@
             android:name="nl.wiegman.weatherstation.service.data.impl.sensortag.BluetoothLeService"
             android:enabled="true" />
         <service
-            android:name="nl.wiegman.weatherstation.service.data.impl.random.RandomSensorDataValueServiceImpl"
+            android:name="nl.wiegman.weatherstation.service.data.impl.device.DeviceSensorService"
+            android:enabled="true" />        
+        <service
+            android:name="nl.wiegman.weatherstation.service.data.impl.random.RandomSensorDataValueService"
             android:enabled="true" />        
         <service
             android:name="nl.wiegman.weatherstation.service.history.impl.SensorValueHistoryServiceImpl"

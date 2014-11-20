@@ -33,10 +33,9 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 public class SensorTagService extends AbstractSensorDataProviderService {
-
-	private static final String LOG_TAG = SensorTagService.class.getSimpleName();
+	private final String LOG_TAG = this.getClass().getSimpleName();
 	
-	private static final long SENSORS_REFRESH_RATE_IN_MILLISECONDS = TimeUnit.SECONDS.toMillis(10);
+	private static final long PUBLISH_RATE_IN_MILLISECONDS = 10000;
 	
 	private BluetoothAdapter bluetoothAdapter;
 	private BluetoothLeService bluetoothLeService;
@@ -58,12 +57,6 @@ public class SensorTagService extends AbstractSensorDataProviderService {
         gattSensors.add(barometerGatt);
         gattSensors.add(hygrometerGatt);
         gattSensors.add(thermometerGatt);
-    }
-		
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        // We want this service to continue running until it is explicitly stopped, so return sticky.
-        return START_STICKY;
     }
 
     @Override
@@ -343,7 +336,7 @@ public class SensorTagService extends AbstractSensorDataProviderService {
         periodicGattSensorUpdateRequestsExecutor = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("SensorTagUpdateRequestThread"));
         int startDelay = 500;
 		PeriodicGattSensorUpdateRequester periodicGattSensorUpdateRequester = new PeriodicGattSensorUpdateRequester(gattSensors);
-		periodicGattSensorUpdateRequestsExecutor.scheduleWithFixedDelay(periodicGattSensorUpdateRequester, startDelay, SENSORS_REFRESH_RATE_IN_MILLISECONDS, TimeUnit.MILLISECONDS);
+		periodicGattSensorUpdateRequestsExecutor.scheduleWithFixedDelay(periodicGattSensorUpdateRequester, startDelay, PUBLISH_RATE_IN_MILLISECONDS, TimeUnit.MILLISECONDS);
     }
 
     private void reconnect() {
