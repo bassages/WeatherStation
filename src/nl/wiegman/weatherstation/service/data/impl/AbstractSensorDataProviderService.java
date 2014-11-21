@@ -15,7 +15,7 @@ import android.os.IBinder;
 
 public abstract class AbstractSensorDataProviderService extends Service implements SensorDataProviderService {
 
-    protected final Map<SensorType, List<SensorValueListener>> sensorValueListeners = new HashMap<SensorType, List<SensorValueListener>>();
+    private final Map<SensorType, List<SensorValueListener>> sensorValueListeners = new HashMap<SensorType, List<SensorValueListener>>();
 
 	@Override
 	public void onCreate() {
@@ -40,6 +40,12 @@ public abstract class AbstractSensorDataProviderService extends Service implemen
     @Override
 	public void removeSensorValueListener(SensorValueListener sensorValueListener, SensorType sensorType) {
     	this.sensorValueListeners.get(sensorType).remove(sensorValueListener);
+	}
+    
+	protected void publishSensorValueUpdate(SensorType sensorType, Double sensorValue) {
+		for (SensorValueListener listener : sensorValueListeners.get(sensorType)) {
+			listener.valueUpdate(getApplicationContext(), sensorType, sensorValue);
+        }
 	}
     
 	private final IBinder binder = new LocalBinder();

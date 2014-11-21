@@ -6,11 +6,8 @@ import nl.wiegman.weatherstation.service.alarm.SensorValueAlarmService;
 import nl.wiegman.weatherstation.service.alarm.impl.MaximumTemperatureAlarm;
 import nl.wiegman.weatherstation.service.alarm.impl.MinimumTemperatureAlarm;
 import nl.wiegman.weatherstation.service.alarm.impl.SensorValueAlarmServiceImpl;
-import nl.wiegman.weatherstation.service.data.SensorDataProviderAvailabilityBroadcast;
 import nl.wiegman.weatherstation.service.data.SensorDataProviderService;
 import nl.wiegman.weatherstation.service.data.impl.AbstractSensorDataProviderService;
-import nl.wiegman.weatherstation.service.data.impl.device.DeviceSensorService;
-import nl.wiegman.weatherstation.service.data.impl.random.RandomSensorDataValueService;
 import nl.wiegman.weatherstation.service.data.impl.sensortag.SensorTagService;
 import nl.wiegman.weatherstation.service.history.SensorValueHistoryService;
 import nl.wiegman.weatherstation.service.history.impl.SensorValueHistoryServiceImpl;
@@ -50,9 +47,9 @@ public class MainActivity extends Activity {
     private SharedPreferences.OnSharedPreferenceChangeListener preferenceListener;
     private String preferenceThemeKey;
     
-    private final Class<?> sensorDataProviderServiceClass = DeviceSensorService.class;
+//    private final Class<?> sensorDataProviderServiceClass = DeviceSensorService.class;
 //    private final Class<?> sensorDataProviderServiceClass = RandomSensorDataValueService.class;
-//    private final Class<?> sensorDataProviderServiceClass = SensorTagService.class;
+    private final Class<?> sensorDataProviderServiceClass = SensorTagService.class;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,7 +68,7 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 		
         LocalBroadcastManager.getInstance(this).registerReceiver(sensorDataProviderAvailabilityReceiver,
-        	      new IntentFilter(SensorDataProviderAvailabilityBroadcast.ACTION_AVAILABILITY_UPDATE));
+        	      new IntentFilter(SensorDataProviderService.ACTION_AVAILABILITY_UPDATE));
         
         startAndBindServices();
 
@@ -195,7 +192,7 @@ public class MainActivity extends Activity {
 	private BroadcastReceiver sensorDataProviderAvailabilityReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			Integer messageId = (Integer) intent.getSerializableExtra(SensorDataProviderAvailabilityBroadcast.AVAILABILITY_UPDATE_MESSAGEID);
+			Integer messageId = (Integer) intent.getSerializableExtra(SensorDataProviderService.AVAILABILITY_UPDATE_MESSAGEID);
 			Toast.makeText(MainActivity.this, getString(messageId), Toast.LENGTH_SHORT).show();
 		}
 	};

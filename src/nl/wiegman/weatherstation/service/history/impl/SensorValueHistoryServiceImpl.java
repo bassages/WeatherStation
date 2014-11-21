@@ -78,15 +78,17 @@ public class SensorValueHistoryServiceImpl extends Service implements SensorValu
 	};
 	
 	private void registerUpdatedValue(final Context context, final Double updatedSensorValue, final SensorType sensorType) {
-		// Do not block the UI thread, by using an aSyncTask
-		AsyncTask<Void,Void,Void> asyncTask = new AsyncTask<Void, Void, Void>() {
-			@Override
-			protected Void doInBackground(Void... params) {
-				SensorValueHistoryDatabase.getInstance(context).addSensorValue(sensorType.name(), updatedSensorValue);
-				return null;
-			}
-		};
-		asyncTask.execute();
+		if (updatedSensorValue != null) {
+			// Do not block the UI thread, by using an aSyncTask
+			AsyncTask<Void,Void,Void> asyncTask = new AsyncTask<Void, Void, Void>() {
+				@Override
+				protected Void doInBackground(Void... params) {
+					SensorValueHistoryDatabase.getInstance(context).addSensorValue(sensorType, updatedSensorValue);
+					return null;
+				}
+			};
+			asyncTask.execute();
+		}
 	}
 	
 	private void registerAsSensorValueListener() {

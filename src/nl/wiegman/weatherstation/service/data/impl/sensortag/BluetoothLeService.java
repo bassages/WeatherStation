@@ -190,7 +190,6 @@ public class BluetoothLeService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.i(TAG, "Received start id " + startId + ": " + intent);
         // We want this service to continue running until it is explicitly stopped, so return sticky.
         return START_STICKY;
     }

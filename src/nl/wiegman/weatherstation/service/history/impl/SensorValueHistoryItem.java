@@ -1,13 +1,15 @@
 package nl.wiegman.weatherstation.service.history.impl;
 
+import nl.wiegman.weatherstation.SensorType;
+
 /**
- * Represents an item from the history database 
+ * Holds one value of one sensor on one moment in time 
  */
 public class SensorValueHistoryItem {
 
 	private int id;
 	private long timestamp;
-	private String sensorName;
+	private SensorType sensorType;
 	private double sensorValue;
 
 	public int getId() {
@@ -26,14 +28,6 @@ public class SensorValueHistoryItem {
 		this.timestamp = timestamp;
 	}
 
-	public String getSensorName() {
-		return sensorName;
-	}
-
-	public void setSensorName(String sensorName) {
-		this.sensorName = sensorName;
-	}
-
 	public double getSensorValue() {
 		return sensorValue;
 	}
@@ -42,8 +36,16 @@ public class SensorValueHistoryItem {
 		this.sensorValue = sensorValue;
 	}
 
+	public SensorType getSensorType() {
+		return sensorType;
+	}
+
+	public void setSensorType(SensorType sensorType) {
+		this.sensorType = sensorType;
+	}
+
 	@Override
 	public String toString() {
-		return "SensorHistoryItem [id=" + id + ", timestamp=" + timestamp + ", sensorName=" + sensorName + ", sensorValue=" + sensorValue + "]";
+		return "SensorHistoryItem [id=" + id + ", timestamp=" + timestamp + ", sensorType=" + sensorType + ", sensorValue=" + sensorValue + "]";
 	}
 }

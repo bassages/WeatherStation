@@ -3,6 +3,8 @@ package nl.wiegman.weatherstation.service.history.impl;
 import java.util.ArrayList;
 import java.util.List;
 
+import nl.wiegman.weatherstation.SensorType;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -23,7 +25,7 @@ public class SensorValueHistoryDatabase extends SQLiteOpenHelper {
     // Contacts Table Columns names
     private static final String KEY_ID = "id";
     private static final String KEY_TIMESTAMP = "timestamp";
-    private static final String KEY_SENSOR_NAME = "sensor_name";
+    private static final String KEY_SENSOR_TYPE = "sensor_type";
     private static final String KEY_SENSOR_VALUE = "sensor_value";
 	
     private static SensorValueHistoryDatabase mInstance;
@@ -47,7 +49,7 @@ public class SensorValueHistoryDatabase extends SQLiteOpenHelper {
 		String CREATE_CONTACTS_TABLE = "CREATE TABLE " + TABLE_SENSOR_HISTORY + "("
                 + KEY_ID + " INTEGER PRIMARY KEY," 
 				+ KEY_TIMESTAMP + " INTEGER,"
-				+ KEY_SENSOR_NAME + " TEXT,"
+				+ KEY_SENSOR_TYPE + " TEXT,"
                 + KEY_SENSOR_VALUE + " DOUBLE" + ")";
         db.execSQL(CREATE_CONTACTS_TABLE);
 	}
@@ -61,12 +63,12 @@ public class SensorValueHistoryDatabase extends SQLiteOpenHelper {
         onCreate(db);
 	}
 
-	public void addSensorValue(String sensorName, double sensorValue) {
+	public void addSensorValue(SensorType sensorType, double sensorValue) {
 	    SQLiteDatabase db = this.getWritableDatabase();
 	 
 	    ContentValues values = new ContentValues();
 	    values.put(KEY_TIMESTAMP, System.currentTimeMillis());
-	    values.put(KEY_SENSOR_NAME, sensorName);
+	    values.put(KEY_SENSOR_TYPE, sensorType.name());
 	    values.put(KEY_SENSOR_VALUE, sensorValue);
 	 
 	    // Inserting Row
@@ -77,7 +79,7 @@ public class SensorValueHistoryDatabase extends SQLiteOpenHelper {
 	public List<SensorValueHistoryItem> getAllHistory(String sensorName) {
 	    List<SensorValueHistoryItem> allHistory = new ArrayList<SensorValueHistoryItem>();
 
-	    String selectQuery = "SELECT * FROM " + TABLE_SENSOR_HISTORY + " WHERE " + KEY_SENSOR_NAME + " = ?";
+	    String selectQuery = "SELECT * FROM " + TABLE_SENSOR_HISTORY + " WHERE " + KEY_SENSOR_TYPE + " = ?";
 	 
 	    SQLiteDatabase db = this.getWritableDatabase();
 	    
@@ -89,7 +91,7 @@ public class SensorValueHistoryDatabase extends SQLiteOpenHelper {
 	    			SensorValueHistoryItem historyItem = new SensorValueHistoryItem();
 	    			historyItem.setId(Integer.parseInt(cursor.getString(0)));
 	    			historyItem.setTimestamp(cursor.getLong(1));
-	    			historyItem.setSensorName(cursor.getString(2));
+	    			historyItem.setSensorType(SensorType.valueOf(cursor.getString(2)));
 	    			historyItem.setSensorValue(cursor.getDouble(3));
 	    			allHistory.add(historyItem);
 	    		} while (cursor.moveToNext());

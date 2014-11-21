@@ -6,7 +6,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import nl.wiegman.weatherstation.SensorType;
-import nl.wiegman.weatherstation.sensorvaluelistener.SensorValueListener;
 import nl.wiegman.weatherstation.service.data.impl.AbstractSensorDataProviderService;
 import nl.wiegman.weatherstation.util.NamedThreadFactory;
 import android.util.Log;
@@ -55,27 +54,17 @@ public class RandomSensorDataValueService extends AbstractSensorDataProviderServ
 		public void run() {
 			try {
 				double randomAmbientTemperature = getRandom(0, 35);
-				double randomObjectTemperature = getRandom(0, 100);
-				double randomHumidity = getRandom(0, 100);
-				double randomAirPressure = getRandom(950, 1050);
+				publishSensorValueUpdate(SensorType.AmbientTemperature, randomAmbientTemperature);
 
-				Log.d(LOG_TAG, "Update temperature to: " + randomAmbientTemperature);
-				Log.d(LOG_TAG, "Update humidity to: " + randomHumidity);
-				Log.d(LOG_TAG, "Update air pressure to: " + randomAirPressure);
-	            
-				for (SensorValueListener listener : sensorValueListeners.get(SensorType.AmbientTemperature)) {
-					listener.valueUpdate(getApplicationContext(), SensorType.AmbientTemperature, randomAmbientTemperature);
-	            }
-				for (SensorValueListener listener : sensorValueListeners.get(SensorType.ObjectTemperature)) {
-					listener.valueUpdate(getApplicationContext(), SensorType.ObjectTemperature, randomObjectTemperature);
-	            }
-				for (SensorValueListener listener : sensorValueListeners.get(SensorType.Humidity)) {
-					listener.valueUpdate(getApplicationContext(), SensorType.Humidity, randomHumidity);
-	            }
-				for (SensorValueListener listener : sensorValueListeners.get(SensorType.AirPressure)) {
-					listener.valueUpdate(getApplicationContext(), SensorType.AirPressure, randomAirPressure);
-	            }
-			} catch (Exception e) {
+				double randomObjectTemperature = getRandom(0, 100);
+				publishSensorValueUpdate(SensorType.ObjectTemperature, randomObjectTemperature);
+
+				double randomHumidity = getRandom(0, 100);
+				publishSensorValueUpdate(SensorType.Humidity, randomHumidity);
+
+				double randomAirPressure = getRandom(950, 1050);
+				publishSensorValueUpdate(SensorType.AirPressure, randomAirPressure);
+			} catch (Exception e) { // Catch exceptions to make sure the executorService keeps running
 				Log.wtf(LOG_TAG, e);
 			}
 		}

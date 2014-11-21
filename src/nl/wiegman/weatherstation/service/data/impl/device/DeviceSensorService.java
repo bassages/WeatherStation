@@ -5,7 +5,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import nl.wiegman.weatherstation.SensorType;
-import nl.wiegman.weatherstation.sensorvaluelistener.SensorValueListener;
 import nl.wiegman.weatherstation.service.data.impl.AbstractSensorDataProviderService;
 import nl.wiegman.weatherstation.util.NamedThreadFactory;
 import android.content.Context;
@@ -14,6 +13,8 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.util.Log;
+
+//TODO: Object temperature???
 
 public class DeviceSensorService extends AbstractSensorDataProviderService implements SensorEventListener {
 	private final String LOG_TAG = this.getClass().getSimpleName();
@@ -24,10 +25,10 @@ public class DeviceSensorService extends AbstractSensorDataProviderService imple
 
 	private SensorManager sensorManager;
 	
-	private double ambientTemperature;
-	private double objectTemperature;
-	private double humidity;
-	private double airPressure;
+	private Double ambientTemperature = null;
+	private Double objectTemperature = null;
+	private Double humidity = null;
+	private Double airPressure = null;
 	
 	@Override
 	public void activate() {
@@ -76,23 +77,11 @@ public class DeviceSensorService extends AbstractSensorDataProviderService imple
 		@Override
 		public void run() {
 			try {
-				Log.d(LOG_TAG, "Update temperature to: " + ambientTemperature);
-				Log.d(LOG_TAG, "Update humidity to: " + humidity);
-				Log.d(LOG_TAG, "Update air pressure to: " + airPressure);
-	            
-				for (SensorValueListener listener : sensorValueListeners.get(SensorType.AmbientTemperature)) {
-					listener.valueUpdate(getApplicationContext(), SensorType.AmbientTemperature, ambientTemperature);
-	            }
-				for (SensorValueListener listener : sensorValueListeners.get(SensorType.ObjectTemperature)) {
-					listener.valueUpdate(getApplicationContext(), SensorType.ObjectTemperature, objectTemperature);
-	            }
-				for (SensorValueListener listener : sensorValueListeners.get(SensorType.Humidity)) {
-					listener.valueUpdate(getApplicationContext(), SensorType.Humidity, humidity);
-	            }
-				for (SensorValueListener listener : sensorValueListeners.get(SensorType.AirPressure)) {
-					listener.valueUpdate(getApplicationContext(), SensorType.AirPressure, airPressure);
-	            }
-			} catch (Exception e) {
+				publishSensorValueUpdate(SensorType.AmbientTemperature, ambientTemperature);
+				publishSensorValueUpdate(SensorType.ObjectTemperature, objectTemperature);
+				publishSensorValueUpdate(SensorType.Humidity, humidity);
+				publishSensorValueUpdate(SensorType.AirPressure, airPressure);
+			} catch (Exception e) { // Catch exceptions to make sure the executorService keeps running
 				Log.wtf(LOG_TAG, e);
 			}
 		}
@@ -106,11 +95,11 @@ public class DeviceSensorService extends AbstractSensorDataProviderService imple
 	@Override
 	public void onSensorChanged(SensorEvent event) {
 		if (event.sensor.getType() == Sensor.TYPE_AMBIENT_TEMPERATURE) {
-			ambientTemperature = event.values[0];	
+			ambientTemperature = (double)event.values[0];	
 		} else if (event.sensor.getType() == Sensor.TYPE_PRESSURE) {
-			airPressure = event.values[0];
+			airPressure = (double)event.values[0];
 		} else if (event.sensor.getType() == Sensor.TYPE_RELATIVE_HUMIDITY) {
-			humidity = event.values[0];	
+			humidity = (double)event.values[0];
 		}
 	}
 

@@ -5,7 +5,6 @@ import java.text.DecimalFormat;
 import nl.wiegman.weatherstation.R;
 import nl.wiegman.weatherstation.SensorType;
 import nl.wiegman.weatherstation.sensorvaluelistener.SensorValueListener;
-import nl.wiegman.weatherstation.service.data.SensorDataProviderAvailabilityBroadcast;
 import nl.wiegman.weatherstation.service.data.SensorDataProviderService;
 import nl.wiegman.weatherstation.service.data.impl.AbstractSensorDataProviderService;
 import nl.wiegman.weatherstation.util.TemperatureUtil;
@@ -79,7 +78,7 @@ public class SensorDataFragment extends Fragment implements SensorValueListener 
 		Bundle arguments = getArguments();
 		
         LocalBroadcastManager.getInstance(this.getActivity()).registerReceiver(sensorDataProviderAvailabilityReceiver,
-      	      new IntentFilter(SensorDataProviderAvailabilityBroadcast.ACTION_AVAILABILITY_UPDATE));
+      	      new IntentFilter(SensorDataProviderService.ACTION_AVAILABILITY_UPDATE));
 		
 		String sensorDataProviderServiceClassName = arguments.getString(SensorDataProviderService.class.getSimpleName());
 		try {
@@ -312,7 +311,7 @@ public class SensorDataFragment extends Fragment implements SensorValueListener 
 	private BroadcastReceiver sensorDataProviderAvailabilityReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			boolean available = intent.getBooleanExtra(SensorDataProviderAvailabilityBroadcast.AVAILABILITY_UPDATE_AVAILABLE, false);
+			boolean available = intent.getBooleanExtra(SensorDataProviderService.AVAILABILITY_UPDATE_AVAILABLE, false);
 			if (!available) {
 				clearAllSensorValues();
 			}

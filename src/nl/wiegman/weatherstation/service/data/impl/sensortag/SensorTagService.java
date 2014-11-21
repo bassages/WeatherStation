@@ -8,8 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 import nl.wiegman.weatherstation.R;
 import nl.wiegman.weatherstation.SensorType;
-import nl.wiegman.weatherstation.sensorvaluelistener.SensorValueListener;
-import nl.wiegman.weatherstation.service.data.SensorDataProviderAvailabilityBroadcast;
+import nl.wiegman.weatherstation.service.data.SensorDataProviderService;
 import nl.wiegman.weatherstation.service.data.impl.AbstractSensorDataProviderService;
 import nl.wiegman.weatherstation.service.data.impl.sensortag.gattsensor.BarometerGatt;
 import nl.wiegman.weatherstation.service.data.impl.sensortag.gattsensor.GattSensor;
@@ -103,9 +102,9 @@ public class SensorTagService extends AbstractSensorDataProviderService {
 	}
 	
 	private void broadCastAvailability(boolean available, Integer messageStringId) {
-        final Intent intent = new Intent(SensorDataProviderAvailabilityBroadcast.ACTION_AVAILABILITY_UPDATE);
-        intent.putExtra(SensorDataProviderAvailabilityBroadcast.AVAILABILITY_UPDATE_AVAILABLE, available);
-        intent.putExtra(SensorDataProviderAvailabilityBroadcast.AVAILABILITY_UPDATE_MESSAGEID, messageStringId);
+        final Intent intent = new Intent(SensorDataProviderService.ACTION_AVAILABILITY_UPDATE);
+        intent.putExtra(SensorDataProviderService.AVAILABILITY_UPDATE_AVAILABLE, available);
+        intent.putExtra(SensorDataProviderService.AVAILABILITY_UPDATE_MESSAGEID, messageStringId);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
 	}
 
@@ -307,22 +306,14 @@ public class SensorTagService extends AbstractSensorDataProviderService {
 	private void processChangedGattCharacteristic(String uuidStr, byte[] value) {
 		if (uuidStr.equals(thermometerGatt.getDataUuid().toString())) {
         	SensorData sensorData = thermometerGatt.convert(value);
-            for (SensorValueListener listener : sensorValueListeners.get(SensorType.AmbientTemperature)) {
-            	listener.valueUpdate(getApplicationContext(), SensorType.AmbientTemperature, sensorData.getX());
-            }
-            for (SensorValueListener listener : sensorValueListeners.get(SensorType.ObjectTemperature)) {
-            	listener.valueUpdate(getApplicationContext(), SensorType.ObjectTemperature, sensorData.getY());
-            }
+        	publishSensorValueUpdate(SensorType.AmbientTemperature, sensorData.getX());
+        	publishSensorValueUpdate(SensorType.ObjectTemperature, sensorData.getY());
 		} else if (uuidStr.equals(hygrometerGatt.getDataUuid().toString())) {
-            SensorData sensorData = hygrometerGatt.convert(value);
-            for (SensorValueListener listener : sensorValueListeners.get(SensorType.Humidity)) {
-            	listener.valueUpdate(getApplicationContext(), SensorType.Humidity, sensorData.getX());
-            }
+			SensorData sensorData = hygrometerGatt.convert(value);
+        	publishSensorValueUpdate(SensorType.Humidity, sensorData.getX());
         } else if (uuidStr.equals(barometerGatt.getDataUuid().toString())) {
             SensorData sensorData = barometerGatt.convert(value);
-            for (SensorValueListener listener : sensorValueListeners.get(SensorType.AirPressure)) {
-            	listener.valueUpdate(getApplicationContext(), SensorType.AirPressure, sensorData.getX());
-            }
+            publishSensorValueUpdate(SensorType.AirPressure, sensorData.getX());
         } else {
             Log.e(LOG_TAG, "Unknown uuid: " + uuidStr);
         }
