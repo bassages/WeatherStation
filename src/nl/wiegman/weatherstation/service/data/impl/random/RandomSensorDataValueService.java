@@ -11,17 +11,24 @@ import nl.wiegman.weatherstation.util.NamedThreadFactory;
 import android.util.Log;
 
 /**
- * Supplies a random sensor value for test purposes
+ * Provides a random sensor value for test purposes
  */
 public class RandomSensorDataValueService extends AbstractSensorDataProviderService {
 	private static final String LOG_TAG = RandomSensorDataValueService.class.getSimpleName();
 
-	private static final long PUBLISH_RATE_IN_MILLISECONDS = 3000;
+	private static final long PUBLISH_RATE_IN_MILLISECONDS = 10000;
 		
 	private ScheduledExecutorService periodicSensorValueUpdateProducerExecutor;
 
 	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		deactivate();
+	}
+	
+	@Override
 	public void activate() {
+		Log.d(LOG_TAG, "activate");
 		if (periodicSensorValueUpdateProducerExecutor == null) {
 			periodicSensorValueUpdateProducerExecutor = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("RandomSensorValueUpdateThread"));
 			int startDelay = 500;
@@ -31,8 +38,8 @@ public class RandomSensorDataValueService extends AbstractSensorDataProviderServ
 	}
     	
 	@Override
-	public void onDestroy() {
-		super.onDestroy();
+	public void deactivate() {
+		Log.d(LOG_TAG, "deactivate");
 		stopSensorDataUpdates();
 	}
 	
@@ -55,9 +62,6 @@ public class RandomSensorDataValueService extends AbstractSensorDataProviderServ
 			try {
 				double randomAmbientTemperature = getRandom(0, 35);
 				publishSensorValueUpdate(SensorType.AmbientTemperature, randomAmbientTemperature);
-
-				double randomObjectTemperature = getRandom(0, 100);
-				publishSensorValueUpdate(SensorType.ObjectTemperature, randomObjectTemperature);
 
 				double randomHumidity = getRandom(0, 100);
 				publishSensorValueUpdate(SensorType.Humidity, randomHumidity);

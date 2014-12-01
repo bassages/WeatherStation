@@ -31,6 +31,9 @@ import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+/**
+ * Provides sensor values from a TI sensortag
+ */
 public class SensorTagService extends AbstractSensorDataProviderService {
 	private final String LOG_TAG = this.getClass().getSimpleName();
 	
@@ -61,16 +64,13 @@ public class SensorTagService extends AbstractSensorDataProviderService {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.d(LOG_TAG, "onDestroy() called");
-        releaseConnectionAndResources();
-        
-        if (bluetoothEventReceiver != null) {
-            unregisterReceiver(bluetoothEventReceiver);
-        }
+        deactivate();
     }
     
 	@Override
 	public void activate() {
+		Log.d(LOG_TAG, "activate");
+		
 		// Register the BroadcastReceiver to handle events from BluetoothAdapter and BluetoothLeService
         IntentFilter bluetoothEventFilter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
         bluetoothEventFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
@@ -80,6 +80,17 @@ public class SensorTagService extends AbstractSensorDataProviderService {
 		if (connectedDeviceInfo == null && checkBluetoothAvailable()) {
 			startScanningForSensortag();
 		}
+	}
+
+	@Override
+	public void deactivate() {
+		Log.d(LOG_TAG, "deactivate");
+		
+        releaseConnectionAndResources();
+        
+        if (bluetoothEventReceiver != null) {
+            unregisterReceiver(bluetoothEventReceiver);
+        }
 	}
 
 	private boolean checkBluetoothAvailable() {
@@ -307,7 +318,6 @@ public class SensorTagService extends AbstractSensorDataProviderService {
 		if (uuidStr.equals(thermometerGatt.getDataUuid().toString())) {
         	SensorData sensorData = thermometerGatt.convert(value);
         	publishSensorValueUpdate(SensorType.AmbientTemperature, sensorData.getX());
-        	publishSensorValueUpdate(SensorType.ObjectTemperature, sensorData.getY());
 		} else if (uuidStr.equals(hygrometerGatt.getDataUuid().toString())) {
 			SensorData sensorData = hygrometerGatt.convert(value);
         	publishSensorValueUpdate(SensorType.Humidity, sensorData.getX());
@@ -368,4 +378,5 @@ public class SensorTagService extends AbstractSensorDataProviderService {
 		BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
 		return bluetoothManager.getAdapter();
 	}
+
 }

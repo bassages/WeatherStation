@@ -10,7 +10,7 @@ public interface SensorValueAlarmService {
 	/**
 	 * Activates this service.
 	 */
-	void activate(Class<?> dataProviderServiceClass, AlarmStrategy ... strategies);
+	void activate(AlarmStrategy ... strategies);
 
 	/**
 	 * De-activates this service.

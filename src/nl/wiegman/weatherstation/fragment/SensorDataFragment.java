@@ -7,6 +7,7 @@ import nl.wiegman.weatherstation.SensorType;
 import nl.wiegman.weatherstation.sensorvaluelistener.SensorValueListener;
 import nl.wiegman.weatherstation.service.data.SensorDataProviderService;
 import nl.wiegman.weatherstation.service.data.impl.AbstractSensorDataProviderService;
+import nl.wiegman.weatherstation.service.data.impl.PreferredSensorDataProviderService;
 import nl.wiegman.weatherstation.util.TemperatureUtil;
 import nl.wiegman.weatherstation.util.ThemeUtil;
 import android.app.Fragment;
@@ -34,7 +35,6 @@ import android.widget.TextView;
 public class SensorDataFragment extends Fragment implements SensorValueListener {
 
 	private static final String AMBIENT_TEMPERATURE_SAVED_INSTANCE_STATE_KEY = "ambient_temperature";
-	private static final String OBJECT_TEMPERATURE_SAVED_INSTANCE_STATE_KEY = "object_temperature";
     private static final String BAROMETRIC_PRESSURE_SAVED_INSTANCE_STATE_KEY = "barometric_pressure";
 	private static final String HUMIDITY_SAVED_INSTANCE_STATE_KEY = "humidity";
 
@@ -43,7 +43,6 @@ public class SensorDataFragment extends Fragment implements SensorValueListener 
     private TextView temperatureValueTextView;
     private TextView temperatureUnitTextView;
     private Double ambientTemperatureInDegreeCelcius = null;
-    private Double objectTemperatureInDegreeCelcius = null;
 
     private static final DecimalFormat humidityValueTexviewFormat = new DecimalFormat("0.0;0.0");
     private TextView humidityValueTextView;
@@ -56,8 +55,6 @@ public class SensorDataFragment extends Fragment implements SensorValueListener 
     private SharedPreferences.OnSharedPreferenceChangeListener preferenceListener;
 
     private String themePreferenceKey;
-	private String temperatureSourcePreferenceKey;
-    private String preferredTemperatureSource;
 
     private SensorDataProviderService dataProviderService;
     
@@ -66,8 +63,6 @@ public class SensorDataFragment extends Fragment implements SensorValueListener 
     	super.onCreate(savedInstanceState);
 
     	SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-    	temperatureSourcePreferenceKey = getTemperatureSourcePreferenceKey(getActivity().getApplicationContext());
-    	preferredTemperatureSource = sharedPreferences.getString(temperatureSourcePreferenceKey, getDefaultTemperatureSource());
     	themePreferenceKey = getActivity().getApplicationContext().getString(R.string.preference_theme_key);
 
 		// Use instance field for listener
@@ -75,18 +70,10 @@ public class SensorDataFragment extends Fragment implements SensorValueListener 
 		preferenceListener = new PreferenceListener();
 		sharedPreferences.registerOnSharedPreferenceChangeListener(preferenceListener);
 		
-		Bundle arguments = getArguments();
-		
         LocalBroadcastManager.getInstance(this.getActivity()).registerReceiver(sensorDataProviderAvailabilityReceiver,
       	      new IntentFilter(SensorDataProviderService.ACTION_AVAILABILITY_UPDATE));
 		
-		String sensorDataProviderServiceClassName = arguments.getString(SensorDataProviderService.class.getSimpleName());
-		try {
-			Class<?> sensorDataProviderServiceClass = Class.forName(sensorDataProviderServiceClassName);
-			bindSensorDataProviderService(sensorDataProviderServiceClass);
-		} catch (ClassNotFoundException e) {
-			Log.e(LOG_TAG, "Unable to bind SensorDataProviderService of class " + sensorDataProviderServiceClassName);
-		}
+		bindSensorDataProviderService(PreferredSensorDataProviderService.class);
     }
 
     @Override
@@ -119,9 +106,6 @@ public class SensorDataFragment extends Fragment implements SensorValueListener 
     	if (ambientTemperatureInDegreeCelcius != null) {
     		outState.putDouble(AMBIENT_TEMPERATURE_SAVED_INSTANCE_STATE_KEY, ambientTemperatureInDegreeCelcius);
     	}
-    	if (objectTemperatureInDegreeCelcius != null) {
-    		outState.putDouble(OBJECT_TEMPERATURE_SAVED_INSTANCE_STATE_KEY, objectTemperatureInDegreeCelcius);
-    	}
     	if (humidity != null) {
     		outState.putDouble(HUMIDITY_SAVED_INSTANCE_STATE_KEY, humidity);
     	}
@@ -149,9 +133,6 @@ public class SensorDataFragment extends Fragment implements SensorValueListener 
 		switch (sensortype) {
 		case AmbientTemperature:
 			ambientTemperatureUpdate(context, updatedValue);
-			break;
-		case ObjectTemperature:
-			objectTemperatureUpdate(context, updatedValue);
 			break;
 		case Humidity:
 			humidityUpdate(context, updatedValue);
@@ -190,19 +171,10 @@ public class SensorDataFragment extends Fragment implements SensorValueListener 
 	}
 
 	private void ambientTemperatureUpdate(Context context, Double updatedTemperature) {
-		if ("ambient".equalsIgnoreCase(preferredTemperatureSource)) {
-			ambientTemperatureInDegreeCelcius = updatedTemperature;
-			processTemperatureUpdate(updatedTemperature);
-		}
+		ambientTemperatureInDegreeCelcius = updatedTemperature;
+		processTemperatureUpdate(updatedTemperature);
 	}
 	
-	private void objectTemperatureUpdate(Context context, Double updatedTemperature) {
-		if ("object".equalsIgnoreCase(preferredTemperatureSource)) {
-			objectTemperatureInDegreeCelcius = updatedTemperature;
-			processTemperatureUpdate(updatedTemperature);
-		}
-	}
-
 	private void processTemperatureUpdate(final Double updatedTemperature) {
 		if (temperatureValueTextView != null) {
 			getActivity().runOnUiThread(new Runnable() {
@@ -265,10 +237,6 @@ public class SensorDataFragment extends Fragment implements SensorValueListener 
 		if (ambientTemperatureInDegreeCelcius == Double.MIN_VALUE) {
 			ambientTemperatureInDegreeCelcius = null;
 		}
-		objectTemperatureInDegreeCelcius = savedInstanceState.getDouble(OBJECT_TEMPERATURE_SAVED_INSTANCE_STATE_KEY, Double.MIN_VALUE);
-		if (objectTemperatureInDegreeCelcius == Double.MIN_VALUE) {
-			objectTemperatureInDegreeCelcius = null;
-		}
 		humidity = savedInstanceState.getDouble(HUMIDITY_SAVED_INSTANCE_STATE_KEY, Double.MIN_VALUE);
 		if (humidity == Double.MIN_VALUE) {
 			humidity = null;
@@ -284,7 +252,6 @@ public class SensorDataFragment extends Fragment implements SensorValueListener 
         setTemperatureUnitLabelBasedOnPreference();
 
         valueUpdate(getActivity(), SensorType.AmbientTemperature, ambientTemperatureInDegreeCelcius);
-        valueUpdate(getActivity(), SensorType.ObjectTemperature, objectTemperatureInDegreeCelcius);
         valueUpdate(getActivity(), SensorType.Humidity, humidity);
         valueUpdate(getActivity(), SensorType.AirPressure, barometricPressure);
     }
@@ -295,14 +262,12 @@ public class SensorDataFragment extends Fragment implements SensorValueListener 
     }
 
 	/**
-	 * Handles changes in the temperature source preference
+	 * Handles changes in the preferences
 	 */
 	private class PreferenceListener implements SharedPreferences.OnSharedPreferenceChangeListener {
 		@Override
 		public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-			if (key.equals(temperatureSourcePreferenceKey)) {
-				preferredTemperatureSource = sharedPreferences.getString(key, getDefaultTemperatureSource());
-			} else if (key.equals(themePreferenceKey)) {
+			if (key.equals(themePreferenceKey)) {
 				getActivity().recreate();
 			}
 		}
@@ -318,14 +283,6 @@ public class SensorDataFragment extends Fragment implements SensorValueListener 
 		}
 	};
 	
-	private String getTemperatureSourcePreferenceKey(Context context) {
-		return context.getString(R.string.preference_temperature_source_key);
-	}
-
-	private String getDefaultTemperatureSource() {
-		return getActivity().getString(R.string.preference_temperature_source_default_value);
-	}
-
 	private ServiceConnection sensorDataProviderServiceConnection = new ServiceConnection() {
 		@Override
 		public void onServiceConnected(ComponentName name, IBinder service) {

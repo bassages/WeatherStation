@@ -6,6 +6,7 @@ import nl.wiegman.weatherstation.SensorType;
 import nl.wiegman.weatherstation.sensorvaluelistener.SensorValueListener;
 import nl.wiegman.weatherstation.service.data.SensorDataProviderService;
 import nl.wiegman.weatherstation.service.data.impl.AbstractSensorDataProviderService;
+import nl.wiegman.weatherstation.service.data.impl.PreferredSensorDataProviderService;
 import nl.wiegman.weatherstation.service.history.SensorValueHistoryService;
 import android.app.Service;
 import android.content.ComponentName;
@@ -29,8 +30,8 @@ public class SensorValueHistoryServiceImpl extends Service implements SensorValu
 	}
 	
 	@Override
-	public void activate(Class<?> dataProviderServiceClass) {
-        Intent intent = new Intent(this, dataProviderServiceClass);
+	public void activate() {
+        Intent intent = new Intent(this, PreferredSensorDataProviderService.class);
         boolean serviceSucessfullyBound = bindService(intent, dataProviderServiceConnection, Context.BIND_AUTO_CREATE);
         if (!serviceSucessfullyBound) {
         	Log.e(LOG_TAG, "Unable to bind dataprovider service");

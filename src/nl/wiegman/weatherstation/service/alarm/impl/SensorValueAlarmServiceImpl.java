@@ -6,6 +6,7 @@ import nl.wiegman.weatherstation.sensorvaluelistener.SensorValueListener;
 import nl.wiegman.weatherstation.service.alarm.SensorValueAlarmService;
 import nl.wiegman.weatherstation.service.data.SensorDataProviderService;
 import nl.wiegman.weatherstation.service.data.impl.AbstractSensorDataProviderService;
+import nl.wiegman.weatherstation.service.data.impl.PreferredSensorDataProviderService;
 import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -41,10 +42,10 @@ public class SensorValueAlarmServiceImpl extends Service implements SensorValueA
 	}
 	
 	@Override
-	public void activate(Class<?> dataProviderServiceClass, AlarmStrategy ... strategies) {
+	public void activate(AlarmStrategy ... strategies) {
 		this.strategies = strategies;
 
-		Intent intent = new Intent(this, dataProviderServiceClass);
+		Intent intent = new Intent(this, PreferredSensorDataProviderService.class);
         boolean serviceSucessfullyBound = bindService(intent, dataProviderServiceConnection, Context.BIND_AUTO_CREATE);
         if (!serviceSucessfullyBound) {
         	Log.e(LOG_TAG, "Unable to bind dataprovider service");

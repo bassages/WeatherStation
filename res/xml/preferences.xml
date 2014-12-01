@@ -3,6 +3,17 @@
     android:orderingFromXml="true"
     android:persistent="true" >
 
+    <PreferenceCategory android:title="@string/preference_category_general" >
+        <ListPreference
+            android:defaultValue="@string/preference_sensor_source_default_value"
+            android:dialogTitle="@string/preference_sensor_source_title"
+            android:entries="@array/preference_sensor_source_entries"
+            android:entryValues="@array/preference_sensor_source_entries"
+            android:key="@string/preference_sensor_source_key"
+            android:summary="@string/preference_sensor_source_summary"
+            android:title="@string/preference_sensor_source_title" />
+    </PreferenceCategory>
+    
     <PreferenceCategory android:title="@string/preference_category_temperature" >
         <ListPreference
             android:defaultValue="@string/preference_temperature_unit_default_value"
@@ -13,15 +24,6 @@
             android:summary="@string/preference_temperature_unit_summary"
             android:title="@string/preference_temperature_unit_title" />
         
-        <ListPreference
-            android:defaultValue="@string/preference_temperature_source_default_value"
-            android:dialogTitle="@string/preference_temperature_source_title"
-            android:entries="@array/preference_temperature_source_entries"
-            android:entryValues="@array/preference_temperature_source_entries"
-            android:key="@string/preference_temperature_source_key"
-            android:summary="@string/preference_temperature_source_summary"
-            android:title="@string/preference_temperature_source_title" />
-
         <nl.wiegman.weatherstation.preference.MinimumTemperatureAlarmPreference
             android:summary="@string/preference_minimum_temperature_alarm_summary"
             android:title="@string/preference_minimum_temperature_alarm_title" />

@@ -12,9 +12,9 @@ import android.content.Context;
 public interface SensorValueHistoryService {
 
 	/**
-	 * Activates this service. Begin collecting sensor updates provided by dataProviderServiceClass.
+	 * Activates this service. Begin collecting sensor updates.
 	 */
-	void activate(Class<?> dataProviderServiceClass);
+	void activate();
 
 	/**
 	 * De-activates this service. Stop collecting sensor updates.

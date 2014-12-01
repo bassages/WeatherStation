@@ -15,6 +15,7 @@ import nl.wiegman.weatherstation.SensorType;
 import nl.wiegman.weatherstation.sensorvaluelistener.SensorValueListener;
 import nl.wiegman.weatherstation.service.data.SensorDataProviderService;
 import nl.wiegman.weatherstation.service.data.impl.AbstractSensorDataProviderService;
+import nl.wiegman.weatherstation.service.data.impl.PreferredSensorDataProviderService;
 import nl.wiegman.weatherstation.service.history.SensorValueHistoryService;
 import nl.wiegman.weatherstation.service.history.impl.SensorValueHistoryItem;
 import nl.wiegman.weatherstation.service.history.impl.SensorValueHistoryServiceImpl;
@@ -65,7 +66,6 @@ public class TemperatureHistoryFragment extends Fragment implements SensorValueL
     private SharedPreferences.OnSharedPreferenceChangeListener preferenceListener;
 	private String preferenceTemperatureUnitKey;
     
-	private Class<?> sensorDataProviderServiceClass;
 	private SensorDataProviderService sensorDataProviderService;
 	
 	private SensorValueHistoryService sensorHistoryService;
@@ -88,14 +88,8 @@ public class TemperatureHistoryFragment extends Fragment implements SensorValueL
 		Bundle arguments = getArguments();
 		sensorType = SensorType.valueOf(arguments.getString(SensorType.class.getSimpleName()));
 		
-		String sensorDataProviderServiceClassName = arguments.getString(SensorDataProviderService.class.getSimpleName());
-		try {
-			bindSensorHistoryService();
-			sensorDataProviderServiceClass = Class.forName(sensorDataProviderServiceClassName);
-			bindSensorDataProviderService(sensorDataProviderServiceClass);
-		} catch (ClassNotFoundException e) {
-			Log.e(LOG_TAG, "Unable to bind SensorDataProviderService of class " + sensorDataProviderServiceClassName);
-		}
+		bindService(PreferredSensorDataProviderService.class, sensorDataProviderServiceConnection);
+		bindService(SensorValueHistoryServiceImpl.class, sensorHistoryServiceConnection);
     }
 
 	@Override
@@ -196,22 +190,14 @@ public class TemperatureHistoryFragment extends Fragment implements SensorValueL
         plot.addSeries(sensorValueHistorySeries, lineAndPointFormatter);
 	}
 	
-    private void bindSensorHistoryService() {	
-    	Intent intent = new Intent(this.getActivity(), SensorValueHistoryServiceImpl.class);
-    	boolean bindServiceSuccessFull = getActivity().bindService(intent, sensorHistoryServiceConnection, Context.BIND_AUTO_CREATE);
+    private void bindService(Class<?> serviceClass, ServiceConnection serviceConnection) {	
+    	Intent intent = new Intent(this.getActivity(), serviceClass);
+    	boolean bindServiceSuccessFull = getActivity().bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
     	if (!bindServiceSuccessFull) {
-    		Log.e(LOG_TAG, "Binding to HistoryService was not successfull");
+    		Log.e(LOG_TAG, "Binding to " + serviceClass.getSimpleName() + " was not successfull");
     	}
     }
     
-    private void bindSensorDataProviderService(Class<?> sensorDataProviderServiceClassToStart) {	
-    	Intent intent = new Intent(this.getActivity(), sensorDataProviderServiceClassToStart);
-    	boolean bindServiceSuccessFull = getActivity().bindService(intent, sensorDataProviderServiceConnection, Context.BIND_AUTO_CREATE);
-    	if (!bindServiceSuccessFull) {
-    		Log.e(LOG_TAG, "Binding to SensorDataProviderService was not successfull");
-    	}
-    }
-
 	private void addDataFromHistory() {
 		// Do not block the UI thread, by using an aSyncTask
 		AsyncTask<Void,Void,List<SensorValueHistoryItem>> asyncTask = new AsyncTask<Void, Void, List<SensorValueHistoryItem>>() {

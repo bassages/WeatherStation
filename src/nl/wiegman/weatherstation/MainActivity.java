@@ -8,7 +8,7 @@ import nl.wiegman.weatherstation.service.alarm.impl.MinimumTemperatureAlarm;
 import nl.wiegman.weatherstation.service.alarm.impl.SensorValueAlarmServiceImpl;
 import nl.wiegman.weatherstation.service.data.SensorDataProviderService;
 import nl.wiegman.weatherstation.service.data.impl.AbstractSensorDataProviderService;
-import nl.wiegman.weatherstation.service.data.impl.sensortag.SensorTagService;
+import nl.wiegman.weatherstation.service.data.impl.PreferredSensorDataProviderService;
 import nl.wiegman.weatherstation.service.history.SensorValueHistoryService;
 import nl.wiegman.weatherstation.service.history.impl.SensorValueHistoryServiceImpl;
 import nl.wiegman.weatherstation.util.KeepScreenOnUtil;
@@ -46,11 +46,7 @@ public class MainActivity extends Activity {
 
     private SharedPreferences.OnSharedPreferenceChangeListener preferenceListener;
     private String preferenceThemeKey;
-    
-//    private final Class<?> sensorDataProviderServiceClass = DeviceSensorService.class;
-//    private final Class<?> sensorDataProviderServiceClass = RandomSensorDataValueService.class;
-    private final Class<?> sensorDataProviderServiceClass = SensorTagService.class;
-    
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -103,7 +99,7 @@ public class MainActivity extends Activity {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.i(LOG_TAG, "onDestroy()");
+        Log.d(LOG_TAG, "onDestroy()");
 
         LocalBroadcastManager.getInstance(this).unregisterReceiver(sensorDataProviderAvailabilityReceiver);
         
@@ -116,52 +112,30 @@ public class MainActivity extends Activity {
 	private void showSensorData() {
 		SensorDataFragment sensorDataFragment = new SensorDataFragment();
 
-		Bundle arguments = new Bundle();
-		arguments.putString(SensorDataProviderService.class.getSimpleName(), sensorDataProviderServiceClass.getName());
-		sensorDataFragment.setArguments(arguments);
-		
 		FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
 		fragmentTransaction.replace(R.id.fragment_container, sensorDataFragment);
 		fragmentTransaction.commit();
 	}
 
     public void showHistory(View view) {
-    	SensorType sensorType = getPreferredTemperatureSourceSensorType();
-    	if (sensorType != null) {
-    		Fragment temperatureHistoryFragment = new TemperatureHistoryFragment();
-    		Bundle arguments = new Bundle();
-    		arguments.putString(SensorType.class.getSimpleName(), sensorType.name());
-    		arguments.putString(SensorDataProviderService.class.getSimpleName(), sensorDataProviderServiceClass.getName());
-    		temperatureHistoryFragment.setArguments(arguments);
+    	Fragment temperatureHistoryFragment = new TemperatureHistoryFragment();
+    	Bundle arguments = new Bundle();
+    	arguments.putString(SensorType.class.getSimpleName(), SensorType.AmbientTemperature.name());
+    	temperatureHistoryFragment.setArguments(arguments);
     		
-    		FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
-    		fragmentTransaction.addToBackStack(null);
-    		fragmentTransaction.replace(R.id.fragment_container, temperatureHistoryFragment);
-    		fragmentTransaction.commit();	
-    	}
-	}
-
-	private SensorType getPreferredTemperatureSourceSensorType() {
-		String temperatureSource = getTemperatureSourcePreference();
-    	
-    	SensorType sensorType = null;
-    	if ("Ambient".equalsIgnoreCase(temperatureSource)) {
-    		sensorType = SensorType.AmbientTemperature;    	
-    	} else if ("Object".equalsIgnoreCase(temperatureSource)) {
-    		sensorType = SensorType.ObjectTemperature;
-    	} else {
-    		Log.e(LOG_TAG, "unable to determine which temperature source must be used based on source name: " + temperatureSource);
-    	}
-		return sensorType;
+    	FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+    	fragmentTransaction.addToBackStack(null);
+    	fragmentTransaction.replace(R.id.fragment_container, temperatureHistoryFragment);
+   		fragmentTransaction.commit();	
 	}
     
     private void startAndBindServices() {
-        startAndBindService(sensorDataProviderServiceClass, sensorDataProviderServiceConnection);
+        startAndBindService(PreferredSensorDataProviderService.class, sensorDataProviderServiceConnection);
         startAndBindService(SensorValueHistoryServiceImpl.class, sensorValueHistoryServiceConnection);
         startAndBindService(SensorValueAlarmServiceImpl.class, sensorValueAlarmServiceConnection);
 	}
-    
-    private void startAndBindService(Class<?> serviceClass, ServiceConnection serviceConnection) {
+
+	private void startAndBindService(Class<?> serviceClass, ServiceConnection serviceConnection) {
     	Intent intent = new Intent(this, serviceClass);
     	ComponentName startedService = getApplicationContext().startService(intent);
     	if (startedService != null) {
@@ -213,7 +187,7 @@ public class MainActivity extends Activity {
     	@Override
     	public void onServiceConnected(ComponentName componentName, IBinder service) {    	
     		sensorValueHistoryService = ((SensorValueHistoryServiceImpl.LocalBinder) service).getService();
-    		sensorValueHistoryService.activate(sensorDataProviderServiceClass);
+    		sensorValueHistoryService.activate();
     	}
     	@Override
     	public void onServiceDisconnected(ComponentName componentName) {
@@ -225,26 +199,13 @@ public class MainActivity extends Activity {
     	@Override
     	public void onServiceConnected(ComponentName componentName, IBinder service) {    	
     		sensorValueAlarmService = ((SensorValueAlarmServiceImpl.LocalBinder) service).getService();
-    		sensorValueAlarmService.activate(sensorDataProviderServiceClass, new MinimumTemperatureAlarm(), new MaximumTemperatureAlarm());
+    		sensorValueAlarmService.activate(new MinimumTemperatureAlarm(), new MaximumTemperatureAlarm());
     	}
     	@Override
     	public void onServiceDisconnected(ComponentName componentName) {
     		sensorValueAlarmService = null;
     	}
     };
-    
-	private String getTemperatureSourcePreference() {
-    	SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this.getApplicationContext());
-    	return sharedPreferences.getString(getTemperatureSourcePreferenceKey(), getDefaultTemperatureSource());
-	}
-
-	private String getTemperatureSourcePreferenceKey() {
-		return getString(R.string.preference_temperature_source_key);
-	}
-    
-	private String getDefaultTemperatureSource() {
-		return getString(R.string.preference_temperature_source_default_value);
-	}
 	
 	private void registerPreferenceListener() {
 		// Use instance field for listener
@@ -264,7 +225,7 @@ public class MainActivity extends Activity {
 			
 			if (key.equals(preferenceThemeKey)) {
 				recreate();
-			} if (key.equals(preferenceKeepScreenOnPreferenceKey)) {
+			} else if (key.equals(preferenceKeepScreenOnPreferenceKey)) {
 				KeepScreenOnUtil.setKeepScreenOnFlagBasedOnPreference(MainActivity.this);
 			}
 		}

@@ -18,26 +18,26 @@
     <string name="air_pressure_icon_description">Air pressure icon</string>
     <string name="humidity_icon_description">Humidity icon</string>
     <string name="title_activity_settings">Weather Station - Settings</string>
+    
     <string name="preference_temperature_unit_title">Unit</string>
     <string name="preference_temperature_unit_summary">Select the unit in which temperatures are displayed</string>
     <string name="preference_temperature_unit_key">temperatureUnit</string>
     <string name="preference_temperature_unit_default_value">\u2103</string>
-
     <array name="preference_temperature_unit_entries">
         <item>\u2103</item>
         <item>\u2109</item>
     </array>
 
-    <string name="preference_temperature_source_title">Sensor source</string>
-    <string name="preference_temperature_source_summary">Select the sensor source for the temperature readings</string>
-    <string name="preference_temperature_source_key">temperature_source</string>
-    <string name="preference_temperature_source_default_value">Ambient</string>
-
-    <array name="preference_temperature_source_entries">
-        <item>Ambient</item>
-        <item>Object</item>
+    <string name="preference_sensor_source_title">Sensor source</string>
+    <string name="preference_sensor_source_summary">Select the sensor source for the sensor readings</string>
+    <string name="preference_sensor_source_key">sensor_source</string>
+    <string name="preference_sensor_source_default_value">TI SensorTag</string>
+    <array name="preference_sensor_source_entries">
+        <item>TI SensorTag</item>
+        <item>Device</item>
+        <item>Random</item>
     </array>
-
+    
     <string name="preference_theme_title">Select a theme</string>
     <string name="preference_theme_summary">Change the colors of this app by choosing a theme</string>
     <string name="preference_theme_key">theme</string>
@@ -65,6 +65,7 @@
     <string name="minimum_temperature_alarm_notification_title">Temperature alarm!</string>
     <string name="minimum_temperature_alarm_notification_text">%1$s %2$s &lt; minimum of %3$s %4$s</string>
 
+    <string name="preference_category_general">General</string>
     <string name="preference_category_appearance">Appearance</string>
     <string name="preference_category_temperature">Temperature</string>
     

@@ -23,6 +23,9 @@
         android:theme="@style/light" >
 
         <service
+            android:name="nl.wiegman.weatherstation.service.data.impl.PreferredSensorDataProviderService"
+            android:enabled="true" />
+        <service
             android:name="nl.wiegman.weatherstation.service.data.impl.sensortag.SensorTagService"
             android:enabled="true" />
         <service

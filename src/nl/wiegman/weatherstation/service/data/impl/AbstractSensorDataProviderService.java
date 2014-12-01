@@ -33,17 +33,24 @@ public abstract class AbstractSensorDataProviderService extends Service implemen
     }
 	
     @Override
-	public void addSensorValueListener(SensorValueListener sensorValueListener, SensorType sensorType) {
-    	this.sensorValueListeners.get(sensorType).add(sensorValueListener);
+	public void addSensorValueListener(SensorValueListener sensorValueListener, SensorType ... sensorTypes) {
+    	for (SensorType sensorType : sensorTypes) {
+    		List<SensorValueListener> listeners = sensorValueListeners.get(sensorType);
+			listeners.add(sensorValueListener);
+    	}
     }
 	
     @Override
-	public void removeSensorValueListener(SensorValueListener sensorValueListener, SensorType sensorType) {
-    	this.sensorValueListeners.get(sensorType).remove(sensorValueListener);
+	public void removeSensorValueListener(SensorValueListener sensorValueListener, SensorType ... sensorTypes) {
+    	for (SensorType sensorType : sensorTypes) {
+    		List<SensorValueListener> listeners = sensorValueListeners.get(sensorType);
+			listeners.remove(sensorValueListener);
+    	}
 	}
     
 	protected void publishSensorValueUpdate(SensorType sensorType, Double sensorValue) {
-		for (SensorValueListener listener : sensorValueListeners.get(sensorType)) {
+		List<SensorValueListener> listeners = sensorValueListeners.get(sensorType);
+		for (SensorValueListener listener : listeners) {
 			listener.valueUpdate(getApplicationContext(), sensorType, sensorValue);
         }
 	}
