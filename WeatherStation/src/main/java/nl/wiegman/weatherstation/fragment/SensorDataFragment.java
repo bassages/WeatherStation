@@ -30,7 +30,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 /**
- * Fragment to show the latest sensor data
+ * Fragment to show the sensor data
  */
 public class SensorDataFragment extends Fragment implements SensorValueListener {
 
