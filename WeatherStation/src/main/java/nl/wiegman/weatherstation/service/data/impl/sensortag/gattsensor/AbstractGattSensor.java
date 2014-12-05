@@ -9,9 +9,9 @@ import android.bluetooth.BluetoothGattService;
 public abstract class AbstractGattSensor implements GattSensor {
 
     private final UUID serviceUuid, dataUuid, configUuid;
-    
-    public static final byte DISABLE_SENSOR_CODE = 0;
+
     public static final byte ENABLE_SENSOR_CODE = 1;
+    public static final byte DISABLE_SENSOR_CODE = 0;
 
     protected String LOG_TAG = this.getClass().getSimpleName();
     
