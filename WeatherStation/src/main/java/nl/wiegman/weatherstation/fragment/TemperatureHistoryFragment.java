@@ -239,7 +239,7 @@ public class TemperatureHistoryFragment extends Fragment implements SensorValueL
 	}
 	
 	private void setBoundaries() {
-		if (minAddedValue.doubleValue() == maxAddedValue.doubleValue()) {
+		if (minAddedValue == maxAddedValue) {
 			plot.setRangeBoundaries(minAddedValue - 0.1, maxAddedValue + 0.1, BoundaryMode.FIXED);
 		} else {
 			plot.setRangeBoundaries(minAddedValue, maxAddedValue, BoundaryMode.AUTO);
@@ -247,7 +247,7 @@ public class TemperatureHistoryFragment extends Fragment implements SensorValueL
 	}
 
 	private void setRangeScale() {
-		double difference = maxAddedValue.doubleValue() - minAddedValue.doubleValue();
+		double difference = maxAddedValue - minAddedValue;
 		if (difference == 0 || difference <= 1.0) { 
 			plot.setRangeStep(XYStepMode.INCREMENT_BY_VAL, 0.1);
 		} else {

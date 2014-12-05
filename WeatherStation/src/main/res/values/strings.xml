@@ -34,6 +34,7 @@
     <string name="preference_sensor_source_default_value">TI SensorTag</string>
     <array name="preference_sensor_source_entries">
         <item>TI SensorTag</item>
+        <item>Open Weather Map</item>
         <item>Device</item>
         <item>Random</item>
     </array>

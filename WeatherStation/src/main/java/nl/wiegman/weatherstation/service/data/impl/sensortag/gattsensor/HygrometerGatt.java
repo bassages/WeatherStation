@@ -44,8 +44,7 @@ public class HygrometerGatt extends AbstractGattSensor {
 
     private float getAmbientTemperature(final byte[] value) {
         int temperatureRaw = shortUnsignedAtOffset(value, 0);
-        float temperature = -46.85f + 175.72f/65536f *(float)temperatureRaw;
-        return temperature;
+        return -46.85f + 175.72f/65536f *(float)temperatureRaw;
     }
 
     private float getHumidity(final byte[] value) {
@@ -54,8 +53,7 @@ public class HygrometerGatt extends AbstractGattSensor {
         // to the user guide, but the iOS code doesn't bother. It should
         // have minimal impact.
         a = a - (a % 4);
-        float humidity = (-6f) + 125f * (a / 65535f);
-        return humidity;
+        return (-6f) + 125f * (a / 65535f);
     }
 
     @Override

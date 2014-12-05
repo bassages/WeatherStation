@@ -87,10 +87,7 @@ public class SensorTagService extends AbstractSensorDataProviderService {
 		Log.d(LOG_TAG, "deactivate");
 		
         releaseConnectionAndResources();
-        
-        if (bluetoothEventReceiver != null) {
-            unregisterReceiver(bluetoothEventReceiver);
-        }
+        unregisterReceiver(bluetoothEventReceiver);
 	}
 
 	private boolean checkBluetoothAvailable() {
@@ -142,7 +139,7 @@ public class SensorTagService extends AbstractSensorDataProviderService {
         public void onLeScan(final BluetoothDevice device, final int rssi, byte[] scanRecord) {
             // Just connect to the first found device
         	stopScanningForSensortag();
-            connectToDevice(new BluetoothDeviceInfo(device, rssi));
+            connectToDevice(new BluetoothDeviceInfo(device));
         }
 
         private void connectToDevice(BluetoothDeviceInfo deviceInfo) {
@@ -198,23 +195,25 @@ public class SensorTagService extends AbstractSensorDataProviderService {
             if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)) {
             	int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1);
                 bluetoothAdapterActionStateChanged(state);
-            } else if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
-                bluetoothLeServiceGattConnected(context, intent);
-            } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
-                bluetoothLeServiceGattDisconnected(context, intent);
             } else {
-                Log.w(LOG_TAG, "Unknown action: " + action);
+                if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
+                    bluetoothLeServiceGattConnected(intent);
+                } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
+                    bluetoothLeServiceGattDisconnected();
+                } else {
+                    Log.w(LOG_TAG, "Unknown action: " + action);
+                }
             }
         }
 
-		private void bluetoothLeServiceGattDisconnected(Context context, Intent intent) {
+		private void bluetoothLeServiceGattDisconnected() {
 			connectedDeviceInfo = null;
 			Log.i(LOG_TAG, "Reconnect to sensortag");
 			broadCastAvailability(false, R.string.connection_lost_trying_reconnect);
 		    reconnect();
 		}
 
-		private void bluetoothLeServiceGattConnected(Context context, Intent intent) {
+		private void bluetoothLeServiceGattConnected(Intent intent) {
 			int status = intent.getIntExtra(BluetoothLeService.EXTRA_STATUS, BluetoothGatt.GATT_FAILURE);
 			if (status == BluetoothGatt.GATT_SUCCESS) {
 				sensortagUpdateReceiver = new SensortagUpdateReceiver();
@@ -292,7 +291,7 @@ public class SensorTagService extends AbstractSensorDataProviderService {
                 Log.e(LOG_TAG, "GATT error code: " + status);
             }
         }
-    };
+    }
 
     private void onCharacteristicRead(String uuidStr, byte[] value, int status) {
     	if (value != null) {

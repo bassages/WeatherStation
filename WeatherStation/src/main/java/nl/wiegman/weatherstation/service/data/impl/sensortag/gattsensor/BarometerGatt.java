@@ -54,11 +54,9 @@ public class BarometerGatt extends AbstractGattSensor {
         super(UUID_SERVICE, UUID_DATA, UUID_CONFIGURATION);
     }
 
-    public static final double PA_PER_METER = 12.0;
-    
     @Override
     public SensorData convert(final byte[] value) {
-        SensorData sensorData = null;
+        SensorData sensorData;
         
         if (calibrationCoefficients == null) {
             Log.w(LOG_TAG, "Data notification arrived for barometer before it was calibrated.");

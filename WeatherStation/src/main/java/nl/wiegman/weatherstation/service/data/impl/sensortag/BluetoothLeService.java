@@ -250,7 +250,7 @@ public class BluetoothLeService extends Service {
      * 
      * @param characteristic
      *            Characteristic to act on.
-     * @param enabled
+     * @param enable
      *            If true, enable notification. False otherwise.
      */
     public void initiateNotificationCharacteristic(BluetoothGattCharacteristic characteristic, boolean enable) {
@@ -320,10 +320,6 @@ public class BluetoothLeService extends Service {
                 }
             }
 
-            if (device == null) {
-                Log.w(TAG, "Device not found.  Unable to connect.");
-                return false;
-            }
             // We want to directly connect to the device, so we are setting the
             // autoConnect parameter to false.
             Log.d(TAG, "Create a new GATT connection.");
