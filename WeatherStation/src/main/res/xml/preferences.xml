@@ -49,5 +49,4 @@
             android:summary="@string/preference_keep_screen_on_summary"
             android:defaultValue="@string/preference_keep_screen_on_default_value" />
     </PreferenceCategory>
-    
 </PreferenceScreen>
