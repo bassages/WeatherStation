@@ -7,7 +7,9 @@ import java.util.UUID;
 /**
  * <pre>
  *
- * Texas Instruments TMP006 @ U5 Two types of data are obtained from the IR Temperature sensor: object temperature and ambient temperature.
+ * Hardware on TI SensorTag: Texas Instruments TMP006 @ U5
+ *
+ * Two types of data are obtained from the IR Temperature sensor: object temperature and ambient temperature.
  * 
  * --------------------------------------------------------------------------------------
  * | Type                |  UUID  |  Read/Write | Format                                |

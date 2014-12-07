@@ -15,7 +15,9 @@ import android.util.Log;
 /**
  * <pre>
 
- * Epcos T5400-C953. Two types of data are obtained from the Barometric Pressure Sensor: pressure and ambient temperature
+ * Hardware on TI SensorTag: Epcos T5400-C953.
+ *
+ * Two types of data are obtained from the Barometric Pressure Sensor: pressure and ambient temperature
  * 
  * ---------------------------------------------------------------------------------------------|
  * | Type                |  UUID  | Read/Write | Format                                         |

@@ -1,7 +1,7 @@
 package nl.wiegman.weatherstation.service.data.impl.sensortag.gattsensor;
 
 /**
- * Auto generated wrapper class for the data with 3 dimensions.
+ * Auto generated wrapper class for data with 3 dimensions.
  * */
 public class SensorData {
     private double x, y, z;

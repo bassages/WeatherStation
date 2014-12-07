@@ -2,6 +2,9 @@ package nl.wiegman.weatherstation.service.data.impl.sensortag.gattsensor;
 
 import java.util.UUID;
 
+/**
+ * A sensor on the TI SensorTag
+ */
 public interface GattSensor {
 
     SensorData convert(byte[] value);
