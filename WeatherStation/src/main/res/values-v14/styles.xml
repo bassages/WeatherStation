@@ -1,5 +1,4 @@
 <resources>
-
     <!-- Light theme. -->
     <style name="light" parent="android:Theme.Holo.Light"/>
 
@@ -8,5 +7,4 @@
    	    <item name="android:windowBackground">@color/black</item>
     	<item name="android:colorBackground">@color/black</item>
     </style>
-
 </resources>
