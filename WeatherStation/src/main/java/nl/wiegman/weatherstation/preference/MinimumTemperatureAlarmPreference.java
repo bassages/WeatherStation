@@ -4,6 +4,9 @@ import nl.wiegman.weatherstation.R;
 import android.content.Context;
 import android.util.AttributeSet;
 
+/**
+ * Minimum temperature alarm preference
+ */
 public class MinimumTemperatureAlarmPreference extends TemperatureAlarmPreference {
 
     public MinimumTemperatureAlarmPreference(Context context, AttributeSet attrs) {

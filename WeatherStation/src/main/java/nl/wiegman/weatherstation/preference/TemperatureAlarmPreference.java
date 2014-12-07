@@ -15,6 +15,9 @@ import android.view.View.OnClickListener;
 import android.widget.CheckBox;
 import android.widget.TextView;
 
+/**
+ * Abstract preference for setting an alarm preference
+ */
 public abstract class TemperatureAlarmPreference extends DialogPreference implements OnClickListener {
 
     private final String LOG_TAG = this.getClass().getSimpleName();
