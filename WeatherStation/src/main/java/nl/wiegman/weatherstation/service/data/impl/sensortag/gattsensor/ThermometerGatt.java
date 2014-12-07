@@ -23,7 +23,7 @@ import java.util.UUID;
  * When the enable command is issued, the sensor starts to perform measurements each second (average over four measurements) 
  * and the data is stored in the <Data> each second as well. When the disable command is issued, the sensor is put in stand-by mode. 
  * 
- * To obtain data OTA either use notifications or read the data directly. 
+ * To obtain data either use notifications or read the data directly.
  * The period range varies from 300 ms to 2.55 seconds. The unit is 10 ms. i.e. writing 0x32 gives 500 ms, 0x64 1 second etc. The default value is 1 second.
  *
  * For more information please refer to TI TMP006 User's Guide

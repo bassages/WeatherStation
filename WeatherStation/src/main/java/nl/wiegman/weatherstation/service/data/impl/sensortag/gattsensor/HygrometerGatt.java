@@ -20,7 +20,7 @@ import java.util.UUID;
  *
  * The driver for this sensor is using a state machine so when the enable command is issued, the sensor starts to perform one measurements and the data is stored in the <Data>. 
  * 
- * To obtain data OTA either use notifications or read the data directly. The update rate ranges from 100 ms to 2.55 seconds.
+ * To obtain data either use notifications or read the data directly. The update rate ranges from 100 ms to 2.55 seconds.
  * 
  * The humidity and temperature data in the sensor is issued and measured explicitly where the humidity data takes ~64ms to measure. 
  */
