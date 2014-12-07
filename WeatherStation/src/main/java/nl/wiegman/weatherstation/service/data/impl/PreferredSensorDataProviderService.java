@@ -5,6 +5,7 @@ import nl.wiegman.weatherstation.SensorType;
 import nl.wiegman.weatherstation.sensorvaluelistener.SensorValueListener;
 import nl.wiegman.weatherstation.service.data.SensorDataProviderService;
 import nl.wiegman.weatherstation.service.data.impl.device.DeviceSensorService;
+import nl.wiegman.weatherstation.service.data.impl.open_weather_map.OpenWeatherMapService;
 import nl.wiegman.weatherstation.service.data.impl.random.RandomSensorDataValueService;
 import nl.wiegman.weatherstation.service.data.impl.sensortag.SensorTagService;
 import android.content.ComponentName;
@@ -44,7 +45,8 @@ public class PreferredSensorDataProviderService extends AbstractSensorDataProvid
 	
 	@Override
 	public void activate() {
-		startAndBindService(getPreferredSensorSourceClass(), sensorDataProviderServiceConnection);
+        Class<?> preferredSensorSourceClass = getPreferredSensorSourceClass();
+        startAndBindService(preferredSensorSourceClass, sensorDataProviderServiceConnection);
 		registerPreferenceListener();
 	}
 
@@ -92,6 +94,8 @@ public class PreferredSensorDataProviderService extends AbstractSensorDataProvid
     		sensorSourceClass = SensorTagService.class;
     	} else if ("Device".equals(sensorSourcePreference)) {
     		sensorSourceClass = DeviceSensorService.class;
+        } else if ("Open Weather Map".equals(sensorSourcePreference)) {
+            sensorSourceClass = OpenWeatherMapService.class;
     	} else if ("Random".equals(sensorSourcePreference)) {
     		sensorSourceClass = RandomSensorDataValueService.class;
     	} else {

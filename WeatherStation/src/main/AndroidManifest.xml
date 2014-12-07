@@ -35,7 +35,10 @@
             android:enabled="true" />        
         <service
             android:name="nl.wiegman.weatherstation.service.data.impl.random.RandomSensorDataValueService"
-            android:enabled="true" />        
+            android:enabled="true" />
+        <service
+            android:name="nl.wiegman.weatherstation.service.data.impl.open_weather_map.OpenWeatherMapService"
+            android:enabled="true" />
         <service
             android:name="nl.wiegman.weatherstation.service.history.impl.SensorValueHistoryServiceImpl"
             android:enabled="true" />

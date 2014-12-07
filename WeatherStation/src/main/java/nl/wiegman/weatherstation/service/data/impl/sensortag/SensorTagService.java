@@ -35,14 +35,16 @@ import android.util.Log;
  * Provides sensor values from a TI sensortag
  */
 public class SensorTagService extends AbstractSensorDataProviderService {
-	private final String LOG_TAG = this.getClass().getSimpleName();
+    private static final int REQUEST_ENABLE_BT = 1;
+
+    private final String LOG_TAG = this.getClass().getSimpleName();
 	
 	private static final long PUBLISH_RATE_IN_MILLISECONDS = 10000;
 	
 	private BluetoothAdapter bluetoothAdapter;
 	private BluetoothLeService bluetoothLeService;
 	
-	private volatile BluetoothDeviceInfo connectedDeviceInfo;
+	private volatile BluetoothDevice connectedDevice;
 	
 	private BroadcastReceiver sensortagUpdateReceiver;
 	
@@ -77,7 +79,7 @@ public class SensorTagService extends AbstractSensorDataProviderService {
         bluetoothEventFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
         registerReceiver(bluetoothEventReceiver, bluetoothEventFilter);
 		
-		if (connectedDeviceInfo == null && checkBluetoothAvailable()) {
+		if (connectedDevice == null && checkBluetoothAvailable()) {
 			startScanningForSensortag();
 		}
 	}
@@ -98,7 +100,7 @@ public class SensorTagService extends AbstractSensorDataProviderService {
     			if (bluetoothAdapter.isEnabled()) {
     				available = true;
     			} else {
-    				broadCastAvailability(false, R.string.bluetooth_not_enabled);
+                    requestUserToEnableBluetooth();
     			}
     		} else {
     			broadCastAvailability(false, R.string.bluetooth_le_not_supported);
@@ -108,8 +110,14 @@ public class SensorTagService extends AbstractSensorDataProviderService {
         }
         return available;
 	}
-	
-	private void broadCastAvailability(boolean available, Integer messageStringId) {
+
+    private void requestUserToEnableBluetooth() {
+        Intent btIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+        btIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        this.startActivity(btIntent);
+    }
+
+    private void broadCastAvailability(boolean available, Integer messageStringId) {
         final Intent intent = new Intent(SensorDataProviderService.ACTION_AVAILABILITY_UPDATE);
         intent.putExtra(SensorDataProviderService.AVAILABILITY_UPDATE_AVAILABLE, available);
         intent.putExtra(SensorDataProviderService.AVAILABILITY_UPDATE_MESSAGEID, messageStringId);
@@ -139,11 +147,11 @@ public class SensorTagService extends AbstractSensorDataProviderService {
         public void onLeScan(final BluetoothDevice device, final int rssi, byte[] scanRecord) {
             // Just connect to the first found device
         	stopScanningForSensortag();
-            connectToDevice(new BluetoothDeviceInfo(device));
+            connectToDevice(device);
         }
 
-        private void connectToDevice(BluetoothDeviceInfo deviceInfo) {
-            connectedDeviceInfo = deviceInfo;
+        private void connectToDevice(BluetoothDevice deviceInfo) {
+            connectedDevice = deviceInfo;
             startBluetoothLeService();
         }
     };
@@ -157,8 +165,8 @@ public class SensorTagService extends AbstractSensorDataProviderService {
                     broadCastAvailability(false, R.string.failed_to_connect_to_sensortag);
                 } else {
                     Log.i(LOG_TAG, "BluetoothLeService connected");
-                    if (connectedDeviceInfo != null) {
-                    	boolean connectedSuccessfully = bluetoothLeService.connect(connectedDeviceInfo.getBluetoothDevice() .getAddress());
+                    if (connectedDevice != null) {
+                    	boolean connectedSuccessfully = bluetoothLeService.connect(connectedDevice.getAddress());
                     	if (!connectedSuccessfully) {
                     		broadCastAvailability(false, R.string.failed_to_connect_to_sensortag);
                     	}
@@ -207,7 +215,7 @@ public class SensorTagService extends AbstractSensorDataProviderService {
         }
 
 		private void bluetoothLeServiceGattDisconnected() {
-			connectedDeviceInfo = null;
+			connectedDevice = null;
 			Log.i(LOG_TAG, "Reconnect to sensortag");
 			broadCastAvailability(false, R.string.connection_lost_trying_reconnect);
 		    reconnect();
@@ -246,7 +254,6 @@ public class SensorTagService extends AbstractSensorDataProviderService {
 				releaseConnectionAndResources();
 			    break;
 			default:
-			    Log.w(LOG_TAG, "Action STATE CHANGED not processed: " + state);
 			    break;
 			}
 		}
@@ -370,7 +377,7 @@ public class SensorTagService extends AbstractSensorDataProviderService {
             unregisterReceiver(sensortagUpdateReceiver);
             sensortagUpdateReceiver = null;
         }
-        connectedDeviceInfo = null;
+        connectedDevice = null;
     }
     
 	private BluetoothAdapter getBluetoothAdapter() {
