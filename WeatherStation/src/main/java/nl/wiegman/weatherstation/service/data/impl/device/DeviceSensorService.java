@@ -1,12 +1,9 @@
 package nl.wiegman.weatherstation.service.data.impl.device;
 
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
 import nl.wiegman.weatherstation.SensorType;
 import nl.wiegman.weatherstation.service.data.impl.AbstractSensorDataProviderService;
-import nl.wiegman.weatherstation.util.NamedThreadFactory;
+import nl.wiegman.weatherstation.service.data.impl.PeriodicRunnableExecutor;
+
 import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -20,9 +17,7 @@ import android.util.Log;
 public class DeviceSensorService extends AbstractSensorDataProviderService implements SensorEventListener {
 	private final String LOG_TAG = this.getClass().getSimpleName();
 
-	private static final long PUBLISH_RATE_IN_MILLISECONDS = 10000;
-		
-	private ScheduledExecutorService periodicSensorValueUpdateProducerExecutor;
+	private PeriodicRunnableExecutor periodicSensorValueUpdateProducer;
 
 	private SensorManager sensorManager;
 	
@@ -103,24 +98,11 @@ public class DeviceSensorService extends AbstractSensorDataProviderService imple
 	}
 
 	private void startProvidingSensorValuesToListeners() {
-		if (periodicSensorValueUpdateProducerExecutor == null) {
-			periodicSensorValueUpdateProducerExecutor = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("DeviceSensorValueUpdateThread"));
-			int startDelay = 500;
-			SensorValueProducer periodicGattSensorUpdateRequester = new SensorValueProducer();
-			periodicSensorValueUpdateProducerExecutor.scheduleWithFixedDelay(periodicGattSensorUpdateRequester, startDelay, PUBLISH_RATE_IN_MILLISECONDS, TimeUnit.MILLISECONDS);
-		}
+		periodicSensorValueUpdateProducer = new PeriodicRunnableExecutor("DeviceSensorValueUpdateThread", new SensorValueProducer()).start();
 	}
 
 	private void stopSensorDataUpdates() {
-        if (periodicSensorValueUpdateProducerExecutor != null) {
-        	periodicSensorValueUpdateProducerExecutor.shutdown();
-            try {
-            	periodicSensorValueUpdateProducerExecutor.awaitTermination(5, TimeUnit.SECONDS);
-            	periodicSensorValueUpdateProducerExecutor = null;
-    		} catch (InterruptedException e) {
-    			Log.e(LOG_TAG, "Periodic updater was not stopped within the timeout period");
-    		}
-        }
+        periodicSensorValueUpdateProducer.stop();
 	}
 	
 	private class SensorValueProducer implements Runnable {

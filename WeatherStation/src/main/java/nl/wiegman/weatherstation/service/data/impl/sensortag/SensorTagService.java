@@ -2,20 +2,18 @@ package nl.wiegman.weatherstation.service.data.impl.sensortag;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import nl.wiegman.weatherstation.R;
 import nl.wiegman.weatherstation.SensorType;
 import nl.wiegman.weatherstation.service.data.SensorDataProviderService;
 import nl.wiegman.weatherstation.service.data.impl.AbstractSensorDataProviderService;
+import nl.wiegman.weatherstation.service.data.impl.PeriodicRunnableExecutor;
 import nl.wiegman.weatherstation.service.data.impl.sensortag.gattsensor.BarometerGatt;
 import nl.wiegman.weatherstation.service.data.impl.sensortag.gattsensor.GattSensor;
 import nl.wiegman.weatherstation.service.data.impl.sensortag.gattsensor.HygrometerGatt;
 import nl.wiegman.weatherstation.service.data.impl.sensortag.gattsensor.SensorData;
 import nl.wiegman.weatherstation.service.data.impl.sensortag.gattsensor.ThermometerGatt;
-import nl.wiegman.weatherstation.util.NamedThreadFactory;
+
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -54,7 +52,7 @@ public class SensorTagService extends AbstractSensorDataProviderService {
     private static final HygrometerGatt hygrometerGatt = new HygrometerGatt();
     private static final BarometerGatt barometerGatt = new BarometerGatt();
 
-    private ScheduledExecutorService periodicGattSensorUpdateRequestsExecutor;
+    private PeriodicRunnableExecutor periodicRunnableExecutor;
 
     private static final List<GattSensor> gattSensors = new ArrayList<GattSensor>();
     static {
@@ -340,10 +338,8 @@ public class SensorTagService extends AbstractSensorDataProviderService {
             gattSensor.calibrate();
             gattSensor.enable();
         }
-        periodicGattSensorUpdateRequestsExecutor = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("SensorTagUpdateRequestThread"));
-        int startDelay = 500;
-		PeriodicGattSensorUpdateRequester periodicGattSensorUpdateRequester = new PeriodicGattSensorUpdateRequester(gattSensors);
-		periodicGattSensorUpdateRequestsExecutor.scheduleWithFixedDelay(periodicGattSensorUpdateRequester, startDelay, PUBLISH_RATE_IN_MILLISECONDS, TimeUnit.MILLISECONDS);
+        PeriodicGattSensorUpdateRequester runnable = new PeriodicGattSensorUpdateRequester(gattSensors);
+        periodicRunnableExecutor = new PeriodicRunnableExecutor("SensorTagUpdateRequestThread", runnable).start();
     }
 
     private void reconnect() {
@@ -352,16 +348,8 @@ public class SensorTagService extends AbstractSensorDataProviderService {
     }
 
     private void releaseConnectionAndResources() {
-        if (periodicGattSensorUpdateRequestsExecutor != null) {
-            periodicGattSensorUpdateRequestsExecutor.shutdown();
-            try {
-    			periodicGattSensorUpdateRequestsExecutor.awaitTermination(5, TimeUnit.SECONDS);
-    			periodicGattSensorUpdateRequestsExecutor = null;
-    		} catch (InterruptedException e) {
-    			Log.e(LOG_TAG, "Periodic updater was not stopped within the timeout period");
-    		}
-        }
-    	
+        periodicRunnableExecutor.stop();
+
     	stopScanningForSensortag();
 
         if (bluetoothLeService != null) {
