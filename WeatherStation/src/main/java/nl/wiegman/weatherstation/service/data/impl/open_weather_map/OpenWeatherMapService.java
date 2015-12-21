@@ -3,8 +3,11 @@ package nl.wiegman.weatherstation.service.data.impl.open_weather_map;
 import android.content.Context;
 import android.location.Criteria;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Bundle;
 import android.util.Log;
+import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -20,7 +23,7 @@ import nl.wiegman.weatherstation.SensorType;
 import nl.wiegman.weatherstation.service.data.impl.AbstractSensorDataProviderService;
 import nl.wiegman.weatherstation.service.data.impl.PeriodicRunnableExecutor;
 
-public class OpenWeatherMapService extends AbstractSensorDataProviderService {
+public class OpenWeatherMapService extends AbstractSensorDataProviderService implements LocationListener {
     private final String LOG_TAG = this.getClass().getSimpleName();
 
     private static final String OPEN_WEATHER_MAP_API = "http://api.openweathermap.org/data/2.5/weather?lat=%s&lon=%s&units=metric";
@@ -29,34 +32,75 @@ public class OpenWeatherMapService extends AbstractSensorDataProviderService {
     private Double longitude;
 
     private PeriodicRunnableExecutor dataPublisherExecutor;
-    private PeriodicRunnableExecutor dataRetrieverExecutor;
+    private PeriodicRunnableExecutor openWeatherMapDataRetrieverExecutor;
 
     private Double temperature;
     private Double pressure;
     private Double humidity;
 
+    private LocationManager locationManager;
+
     @Override
     public void activate() {
+        if (openWeatherMapDataRetrieverExecutor == null) {
+            openWeatherMapDataRetrieverExecutor = new PeriodicRunnableExecutor("OpenWeatherMapServiceRetriever", new PeriodicDataRetriever())
+                    .setPublishRate(TimeUnit.MINUTES.toMillis(15));
+        }
+
         updatePosition();
 
         if (dataPublisherExecutor == null) {
             dataPublisherExecutor = new PeriodicRunnableExecutor("OpenWeatherMapServicePublisher", new PeriodicDataPublisher()).start();
         }
-        if (dataRetrieverExecutor == null) {
-            dataRetrieverExecutor = new PeriodicRunnableExecutor("OpenWeatherMapServiceRetriever", new PeriodicDataRetriever())
-                                            .setPublishRate(TimeUnit.MINUTES.toMillis(15))
-                                            .start();
-        }
     }
 
     private void updatePosition() {
-        Criteria criteria = new Criteria();
-        LocationManager locationManager = (LocationManager) getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
-        String provider = locationManager.getBestProvider(criteria, true);
-        Location devicelocation = locationManager.getLastKnownLocation(provider);
+        locationManager = (LocationManager) getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
 
-        latitude = devicelocation.getLatitude();
-        longitude = devicelocation.getLongitude();
+        Criteria criteria = new Criteria();
+        criteria.setCostAllowed(false);
+        criteria.setSpeedRequired(false);
+        criteria.setAltitudeRequired(false);
+        criteria.setBearingRequired(false);
+        criteria.setAccuracy(Criteria.ACCURACY_LOW);
+        criteria.setPowerRequirement(Criteria.POWER_LOW);
+        boolean enabledOnly = true;
+        String bestProvider = locationManager.getBestProvider(criteria, enabledOnly);
+
+        Location lastKnownLocation = locationManager.getLastKnownLocation(bestProvider);
+
+        if (lastKnownLocation != null && lastKnownLocation.getTime() > System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(30)) {
+            latitude = lastKnownLocation.getLatitude();
+            longitude = lastKnownLocation.getLongitude();
+
+            openWeatherMapDataRetrieverExecutor.start();
+        } else {
+//            Toast.makeText(getApplicationContext(), R.string.determine_location, Toast.LENGTH_LONG).show();
+            locationManager.requestLocationUpdates(bestProvider, 0, 0, this);
+        }
+    }
+
+    public void onLocationChanged(Location location) {
+        if (location != null) {
+            locationManager.removeUpdates(this);
+
+            latitude = location.getLatitude();
+            longitude = location.getLongitude();
+
+            openWeatherMapDataRetrieverExecutor.start();
+        }
+    }
+
+    @Override
+    public void onStatusChanged(String s, int i, Bundle bundle) {
+    }
+
+    @Override
+    public void onProviderEnabled(String s) {
+    }
+
+    @Override
+    public void onProviderDisabled(String s) {
     }
 
     @Override
@@ -65,12 +109,19 @@ public class OpenWeatherMapService extends AbstractSensorDataProviderService {
             dataPublisherExecutor.stop();
             dataPublisherExecutor = null;
         }
-        if (dataRetrieverExecutor != null) {
-            dataRetrieverExecutor.stop();
-            dataRetrieverExecutor = null;
+        if (openWeatherMapDataRetrieverExecutor != null) {
+            openWeatherMapDataRetrieverExecutor.stop();
+            openWeatherMapDataRetrieverExecutor = null;
         }
+        temperature = null;
+        humidity = null;
+        pressure = null;
+        
+        latitude = null;
+        longitude = null;
     }
 
+    // TODO: check if network is available
     private JSONObject getCurrentWeatherForPosition() {
         try {
             URL url = new URL(String.format(OPEN_WEATHER_MAP_API, latitude, longitude));
@@ -94,9 +145,10 @@ public class OpenWeatherMapService extends AbstractSensorDataProviderService {
             if (data.getInt("cod") != 200) {
                 return null;
             }
-
             return data;
+
         } catch (Exception e) {
+            Log.e(LOG_TAG, "Unable to get weather data from OpenWeatherMap", e);
             return null;
         }
     }
@@ -106,6 +158,8 @@ public class OpenWeatherMapService extends AbstractSensorDataProviderService {
         @Override
         public void run() {
             if (latitude != null && longitude != null) {
+//                Toast.makeText(getApplicationContext(), R.string.getting_openweathermap_data, Toast.LENGTH_LONG).show();
+
                 JSONObject currentWeatherForPosition = getCurrentWeatherForPosition();
                 try {
                     if (currentWeatherForPosition != null) {
@@ -114,7 +168,7 @@ public class OpenWeatherMapService extends AbstractSensorDataProviderService {
                         OpenWeatherMapService.this.humidity = currentWeatherForPosition.getJSONObject("main").getDouble("humidity");
                     }
                 } catch (JSONException e) {
-                    Log.w("Unable to get weather from Open Weather Map API", e);
+                    Log.e(LOG_TAG, "Unable to get weather data from OpenWeatherMap", e);
                 }
             }
         }

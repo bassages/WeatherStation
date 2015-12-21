@@ -110,18 +110,20 @@ public class BarometerGatt extends AbstractGattSensor {
 
     public void processCalibrationResults(byte[] value) {
         Log.i(LOG_TAG, "The barometer was sucessfully calibrated");
-        // Barometer calibration values are read.
-        List<Integer> calibration = new ArrayList<Integer>();
-        for (int offset = 0; offset < 8; offset += 2) {
-            Integer lowerByte = (int) value[offset] & 0xFF;
-            Integer upperByte = (int) value[offset + 1] & 0xFF;
-            calibration.add((upperByte << 8) + lowerByte);
+        if (value != null && value.length >= 16) {
+            // Barometer calibration values are read.
+            List<Integer> calibration = new ArrayList<Integer>();
+            for (int offset = 0; offset < 8; offset += 2) {
+                Integer lowerByte = (int) value[offset] & 0xFF;
+                Integer upperByte = (int) value[offset + 1] & 0xFF;
+                calibration.add((upperByte << 8) + lowerByte);
+            }
+            for (int offset = 8; offset < 16; offset += 2) {
+                Integer lowerByte = (int) value[offset] & 0xFF;
+                Integer upperByte = (int) value[offset + 1];
+                calibration.add((upperByte << 8) + lowerByte);
+            }
+            this.calibrationCoefficients = calibration;
         }
-        for (int offset = 8; offset < 16; offset += 2) {
-            Integer lowerByte = (int) value[offset] & 0xFF;
-            Integer upperByte = (int) value[offset + 1];
-            calibration.add((upperByte << 8) + lowerByte);
-        }
-        this.calibrationCoefficients = calibration;
     }
 }

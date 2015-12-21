@@ -2,6 +2,7 @@ package nl.wiegman.weatherstation.service.history.impl;
 
 import java.util.List;
 
+import nl.wiegman.weatherstation.R;
 import nl.wiegman.weatherstation.SensorType;
 import nl.wiegman.weatherstation.sensorvaluelistener.SensorValueListener;
 import nl.wiegman.weatherstation.service.data.SensorDataProviderService;
@@ -13,30 +14,47 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 public class SensorValueHistoryServiceImpl extends Service implements SensorValueHistoryService, SensorValueListener {
 	private final String LOG_TAG = this.getClass().getSimpleName();
-	
+
+    private SharedPreferences.OnSharedPreferenceChangeListener preferenceListener;
+
+    private String sensorSourcePreferenceKey;
+
 	private SensorDataProviderService sensorDataProviderService;
 
 	@Override
 	public void onCreate() {
 		super.onCreate();
+
+        sensorSourcePreferenceKey = getSensorSourcePreferenceKey();
 		deleteAll(getApplicationContext());
 	}
-	
-	@Override
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        sharedPreferences.unregisterOnSharedPreferenceChangeListener(preferenceListener);
+    }
+
+    @Override
 	public void activate() {
         Intent intent = new Intent(this, PreferredSensorDataProviderService.class);
         boolean serviceSucessfullyBound = bindService(intent, dataProviderServiceConnection, Context.BIND_AUTO_CREATE);
         if (!serviceSucessfullyBound) {
         	Log.e(LOG_TAG, "Unable to bind dataprovider service");
         }
-	}
+        registerPreferenceListener();
+    }
 	
 	@Override
 	public void deactivate() {
@@ -77,7 +95,12 @@ public class SensorValueHistoryServiceImpl extends Service implements SensorValu
 			unregisterAsSensorValueListener();
 		}
 	};
-	
+
+
+    private String getSensorSourcePreferenceKey() {
+        return getString(R.string.preference_sensor_source_key);
+    }
+
 	private void registerUpdatedValue(final Context context, final Double updatedSensorValue, final SensorType sensorType) {
 		if (updatedSensorValue != null) {
 			// Do not block the UI thread, by using an aSyncTask
@@ -114,6 +137,26 @@ public class SensorValueHistoryServiceImpl extends Service implements SensorValu
     public class LocalBinder extends Binder {
         public SensorValueHistoryService getService() {
             return SensorValueHistoryServiceImpl.this;
+        }
+    }
+
+    private void registerPreferenceListener() {
+        // Use instance field for listener
+        // It will not be gc'd as long as this instance is kept referenced
+        preferenceListener = new PreferenceListener();
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        sharedPreferences.registerOnSharedPreferenceChangeListener(preferenceListener);
+    }
+
+    /**
+     * Handles changes in the preferred sensor source
+     */
+    private final class PreferenceListener implements SharedPreferences.OnSharedPreferenceChangeListener {
+        @Override
+        public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+            if (key.equals(sensorSourcePreferenceKey)) {
+                deleteAll(getApplicationContext());
+            }
         }
     }
 }

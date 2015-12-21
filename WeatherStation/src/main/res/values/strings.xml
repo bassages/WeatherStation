@@ -77,5 +77,6 @@
     <string name="failed_to_connect_to_sensortag">Failed to connect to TI sensortag</string>
     <string name="searching_for_sensortag">Connecting to TI sensortag</string>
     <string name="connection_lost_trying_reconnect">Connection with TI sensortag was lost, trying to reconnect</string>
-
+    <string name="determine_location">Determining your location, one moment please...</string>
+    <string name="getting_openweathermap_data">Retrieving the weather for your location, one moment please...</string>
 </resources>

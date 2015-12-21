@@ -24,11 +24,11 @@ public class PreferredSensorDataProviderService extends AbstractSensorDataProvid
     private final String LOG_TAG = this.getClass().getSimpleName();
 
 	private SharedPreferences.OnSharedPreferenceChangeListener preferenceListener;
-		
+
+    private String sensorSourcePreferenceKey;
+
 	private SensorDataProviderService sensorDataProviderService;
-	
-	private String sensorSourcePreferenceKey;
-	
+
 	@Override
 	public void onCreate() {
 		super.onCreate();

@@ -21,9 +21,9 @@ public class DeviceSensorService extends AbstractSensorDataProviderService imple
 
 	private SensorManager sensorManager;
 	
-	private Double ambientTemperature = null;
-	private Double humidity = null;
-	private Double airPressure = null;
+	private Double ambientTemperature;
+	private Double humidity;
+	private Double airPressure;
 	
 	@Override
 	public void onDestroy() {
@@ -52,6 +52,10 @@ public class DeviceSensorService extends AbstractSensorDataProviderService imple
 		sensorManager.unregisterListener(this);
 		stopSensorDataUpdates();
 		sensorManager = null;
+
+        ambientTemperature = null;
+        humidity = null;
+        airPressure = null;
 	}
 	
 	@Override
@@ -117,5 +121,4 @@ public class DeviceSensorService extends AbstractSensorDataProviderService imple
 			}
 		}
 	}
-
 }
