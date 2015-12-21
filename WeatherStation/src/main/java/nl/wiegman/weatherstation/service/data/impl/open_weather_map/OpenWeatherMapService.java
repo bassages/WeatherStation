@@ -1,11 +1,13 @@
 package nl.wiegman.weatherstation.service.data.impl.open_weather_map;
 
 import android.content.Context;
+import android.content.Intent;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -18,6 +20,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
+import nl.wiegman.weatherstation.MainActivity;
 import nl.wiegman.weatherstation.R;
 import nl.wiegman.weatherstation.SensorType;
 import nl.wiegman.weatherstation.service.data.impl.AbstractSensorDataProviderService;
@@ -75,7 +78,7 @@ public class OpenWeatherMapService extends AbstractSensorDataProviderService imp
 
             openWeatherMapDataRetrieverExecutor.start();
         } else {
-//            Toast.makeText(getApplicationContext(), R.string.determine_location, Toast.LENGTH_LONG).show();
+            broadcastShowMessageAction(R.string.determine_location);
             locationManager.requestLocationUpdates(bestProvider, 0, 0, this);
         }
     }
@@ -124,6 +127,8 @@ public class OpenWeatherMapService extends AbstractSensorDataProviderService imp
     // TODO: check if network is available
     private JSONObject getCurrentWeatherForPosition() {
         try {
+            broadcastShowMessageAction(R.string.getting_openweathermap_data);
+
             URL url = new URL(String.format(OPEN_WEATHER_MAP_API, latitude, longitude));
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
@@ -132,7 +137,7 @@ public class OpenWeatherMapService extends AbstractSensorDataProviderService imp
             BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 
             StringBuffer json = new StringBuffer(1024);
-            String tmp = "";
+            String tmp;
             while ((tmp = reader.readLine()) != null) {
                 json.append(tmp).append("\n");
             }
@@ -153,12 +158,18 @@ public class OpenWeatherMapService extends AbstractSensorDataProviderService imp
         }
     }
 
+    private void broadcastShowMessageAction(int messageId) {
+        final Intent intent = new Intent(MainActivity.ACTION_SHOW_MESSAGE);
+        intent.putExtra(MainActivity.MESSAGEID, messageId);
+        intent.putExtra(MainActivity.MESSAGE_SHOW_LENGHTH, Toast.LENGTH_LONG);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
     private class PeriodicDataRetriever implements Runnable {
 
         @Override
         public void run() {
             if (latitude != null && longitude != null) {
-//                Toast.makeText(getApplicationContext(), R.string.getting_openweathermap_data, Toast.LENGTH_LONG).show();
 
                 JSONObject currentWeatherForPosition = getCurrentWeatherForPosition();
                 try {

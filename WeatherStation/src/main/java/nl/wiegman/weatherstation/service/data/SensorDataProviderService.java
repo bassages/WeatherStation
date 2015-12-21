@@ -5,9 +5,9 @@ import nl.wiegman.weatherstation.sensorvaluelistener.SensorValueListener;
 
 public interface SensorDataProviderService {
 
-	public static final String ACTION_AVAILABILITY_UPDATE = "nl.wiegman.weatherstation.service.data.AVAILABILITY";
-	public static final String AVAILABILITY_UPDATE_AVAILABLE = "nl.wiegman.weatherstation.service.data.AVAILABILITY_AVAILABLE";
-	public static final String AVAILABILITY_UPDATE_MESSAGEID = "nl.wiegman.weatherstation.service.data.AVAILABILITY_MESSAGEID";
+	String ACTION_AVAILABILITY_UPDATE = "nl.wiegman.weatherstation.service.data.AVAILABILITY";
+	String AVAILABILITY_UPDATE_AVAILABLE = "nl.wiegman.weatherstation.service.data.AVAILABILITY_AVAILABLE";
+	String AVAILABILITY_UPDATE_MESSAGEID = "nl.wiegman.weatherstation.service.data.AVAILABILITY_MESSAGEID";
 	
 	void addSensorValueListener(SensorValueListener sensorValueListener, SensorType ... sensorType);
 	void removeSensorValueListener(SensorValueListener sensorValueListener, SensorType ... sensorType);
