@@ -108,8 +108,8 @@ public class SensorValueAlarmServiceImpl extends Service implements SensorValueA
 		PendingIntent notifyPIntent = PendingIntent.getActivity(getApplicationContext(), 0, new Intent(), 0);     
 		notificationBuilder.setContentIntent(notifyPIntent);
 		
-		NotificationManager notificationyMgr = (NotificationManager) getApplicationContext().getSystemService(Activity.NOTIFICATION_SERVICE);
-		notificationyMgr.notify(ALARM_NOTIFICATION_TAG, ALARM_NOTIFICATION_ID, notificationBuilder.build());
+		NotificationManager notificationManager = (NotificationManager) getApplicationContext().getSystemService(Activity.NOTIFICATION_SERVICE);
+		notificationManager.notify(ALARM_NOTIFICATION_TAG, ALARM_NOTIFICATION_ID, notificationBuilder.build());
 	}
 
 	private void configureNotificationBuilder(String title, String message) {

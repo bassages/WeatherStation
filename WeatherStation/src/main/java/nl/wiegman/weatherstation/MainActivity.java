@@ -14,11 +14,13 @@ import nl.wiegman.weatherstation.service.history.impl.SensorValueHistoryServiceI
 import nl.wiegman.weatherstation.util.KeepScreenOnUtil;
 import nl.wiegman.weatherstation.util.ThemeUtil;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -40,6 +42,7 @@ import android.widget.Toast;
 public class MainActivity extends Activity {
     private final String LOG_TAG = this.getClass().getSimpleName();
 
+    public static String ACTION_REQUEST_LOCATION_SERVICES = "nl.wiegman.weatherstation.service.data.REQUEST_LOCATION_SERVICES";
     public static String ACTION_SHOW_MESSAGE = "nl.wiegman.weatherstation.service.data.SHOWMESSAGE";
     public static String MESSAGEID = "nl.wiegman.weatherstation.service.data.MESSAGEID";
     public static String MESSAGE_SHOW_LENGHTH = "nl.wiegman.weatherstation.service.data.MESSAGESHOWLENGTH";
@@ -71,6 +74,8 @@ public class MainActivity extends Activity {
                 new IntentFilter(SensorDataProviderService.ACTION_AVAILABILITY_UPDATE));
         LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver,
                 new IntentFilter(ACTION_SHOW_MESSAGE));
+        LocalBroadcastManager.getInstance(this).registerReceiver(locationServiceEnableRequestReciever,
+                new IntentFilter(ACTION_REQUEST_LOCATION_SERVICES));
 
         startAndBindServices();
 
@@ -186,7 +191,29 @@ public class MainActivity extends Activity {
         }
     };
 
-    private ServiceConnection sensorDataProviderServiceConnection = new ServiceConnection() {
+	private BroadcastReceiver locationServiceEnableRequestReciever = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+            final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+            builder.setMessage(R.string.do_you_want_to_enable_location_services)
+                    .setCancelable(false)
+                    .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                        public void onClick(final DialogInterface dialog, final int id) {
+                            Intent intent = new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(intent);
+                        }
+                    })
+                    .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
+                        public void onClick(final DialogInterface dialog, final int id) {
+                            dialog.cancel();
+                        }
+                    });
+            builder.create().show();
+		}
+	};
+
+	private ServiceConnection sensorDataProviderServiceConnection = new ServiceConnection() {
     	@Override
     	public void onServiceConnected(ComponentName componentName, IBinder service) {    	
     		sensorDataProviderService = ((AbstractSensorDataProviderService.LocalBinder) service).getService();

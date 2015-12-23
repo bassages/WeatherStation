@@ -34,6 +34,7 @@ public class OpenWeatherMapService extends AbstractSensorDataProviderService imp
     private Double latitude;
     private Double longitude;
 
+    private PeriodicRunnableExecutor locationServicesStateUpdateExecutor;
     private PeriodicRunnableExecutor dataPublisherExecutor;
     private PeriodicRunnableExecutor openWeatherMapDataRetrieverExecutor;
 
@@ -50,28 +51,30 @@ public class OpenWeatherMapService extends AbstractSensorDataProviderService imp
                     .setPublishRate(TimeUnit.MINUTES.toMillis(15));
         }
 
-        updatePosition();
+        boolean requestUserToEnableLocationServicesWhenDisabled = true;
+        updatePosition(requestUserToEnableLocationServicesWhenDisabled);
 
         if (dataPublisherExecutor == null) {
             dataPublisherExecutor = new PeriodicRunnableExecutor("OpenWeatherMapServicePublisher", new PeriodicDataPublisher()).start();
         }
     }
 
-    private void updatePosition() {
+    private void updatePosition(boolean requestUserToEnableLocationServicesWhenDisabled) {
         locationManager = (LocationManager) getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
+        String bestProvider = getBestLocationProvider();
+        if (bestProvider == null) {
+            if (requestUserToEnableLocationServicesWhenDisabled) {
+                requestUserToEnableLocationServices();
+            }
+        } else {
+            stopLocationServicesStateUpdateExecutor();
+            startWeatherDataUpdates(bestProvider);
+        }
+    }
 
-        Criteria criteria = new Criteria();
-        criteria.setCostAllowed(false);
-        criteria.setSpeedRequired(false);
-        criteria.setAltitudeRequired(false);
-        criteria.setBearingRequired(false);
-        criteria.setAccuracy(Criteria.ACCURACY_LOW);
-        criteria.setPowerRequirement(Criteria.POWER_LOW);
-        boolean enabledOnly = true;
-        String bestProvider = locationManager.getBestProvider(criteria, enabledOnly);
-
+    private void startWeatherDataUpdates(String bestProvider) {
         Location lastKnownLocation = locationManager.getLastKnownLocation(bestProvider);
-
+        broadcastShowMessageAction(R.string.determine_location);
         if (lastKnownLocation != null && lastKnownLocation.getTime() > System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(30)) {
             latitude = lastKnownLocation.getLatitude();
             longitude = lastKnownLocation.getLongitude();
@@ -81,6 +84,18 @@ public class OpenWeatherMapService extends AbstractSensorDataProviderService imp
             broadcastShowMessageAction(R.string.determine_location);
             locationManager.requestLocationUpdates(bestProvider, 0, 0, this);
         }
+    }
+
+    private String getBestLocationProvider() {
+        Criteria criteria = new Criteria();
+        criteria.setCostAllowed(false);
+        criteria.setSpeedRequired(false);
+        criteria.setAltitudeRequired(false);
+        criteria.setBearingRequired(false);
+        criteria.setAccuracy(Criteria.ACCURACY_LOW);
+        criteria.setPowerRequirement(Criteria.POWER_LOW);
+        boolean enabledOnly = true;
+        return locationManager.getBestProvider(criteria, enabledOnly);
     }
 
     public void onLocationChanged(Location location) {
@@ -94,16 +109,27 @@ public class OpenWeatherMapService extends AbstractSensorDataProviderService imp
         }
     }
 
+    private void requestUserToEnableLocationServices() {
+        locationServicesStateUpdateExecutor = new PeriodicRunnableExecutor("PeriodicLocationServicesStateChecker", new PeriodicLocationServicesStateChecker())
+                .setPublishRate(TimeUnit.SECONDS.toMillis(1)).start();
+
+        final Intent intent = new Intent(MainActivity.ACTION_REQUEST_LOCATION_SERVICES);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
     @Override
     public void onStatusChanged(String s, int i, Bundle bundle) {
+        Log.d(LOG_TAG, "onStatusChanged: " + s);
     }
 
     @Override
     public void onProviderEnabled(String s) {
+        Log.d(LOG_TAG, "onProviderEnabled: " + s);
     }
 
     @Override
     public void onProviderDisabled(String s) {
+        Log.d(LOG_TAG, "onProviderDisabled: " + s);
     }
 
     @Override
@@ -116,12 +142,21 @@ public class OpenWeatherMapService extends AbstractSensorDataProviderService imp
             openWeatherMapDataRetrieverExecutor.stop();
             openWeatherMapDataRetrieverExecutor = null;
         }
+        stopLocationServicesStateUpdateExecutor();
+
         temperature = null;
         humidity = null;
         pressure = null;
-        
+
         latitude = null;
         longitude = null;
+    }
+
+    private void stopLocationServicesStateUpdateExecutor() {
+        if (locationServicesStateUpdateExecutor != null) {
+            locationServicesStateUpdateExecutor.stop();
+            locationServicesStateUpdateExecutor = null;
+        }
     }
 
     // TODO: check if network is available
@@ -192,6 +227,15 @@ public class OpenWeatherMapService extends AbstractSensorDataProviderService imp
             publishSensorValueUpdate(SensorType.AmbientTemperature, temperature);
             publishSensorValueUpdate(SensorType.Humidity, humidity);
             publishSensorValueUpdate(SensorType.AirPressure, pressure);
+        }
+    }
+
+    private class PeriodicLocationServicesStateChecker implements Runnable {
+
+        @Override
+        public void run() {
+            boolean requestUserToEnableLocationServicesWhenDisabled = false;
+            updatePosition(requestUserToEnableLocationServicesWhenDisabled);
         }
     }
 }

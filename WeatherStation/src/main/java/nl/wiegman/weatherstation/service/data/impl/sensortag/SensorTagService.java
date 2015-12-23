@@ -61,12 +61,6 @@ public class SensorTagService extends AbstractSensorDataProviderService {
         gattSensors.add(thermometerGatt);
     }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        deactivate();
-    }
-    
 	@Override
 	public void activate() {
 		Log.d(LOG_TAG, "activate");
@@ -90,6 +84,12 @@ public class SensorTagService extends AbstractSensorDataProviderService {
         unregisterReceiver(bluetoothEventReceiver);
 	}
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        deactivate();
+    }
+
 	private boolean checkBluetoothAvailable() {
 		boolean available = false;
         if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
@@ -112,7 +112,7 @@ public class SensorTagService extends AbstractSensorDataProviderService {
     private void requestUserToEnableBluetooth() {
         Intent btIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
         btIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        this.startActivity(btIntent);
+        startActivity(btIntent);
     }
 
     private void broadCastAvailability(boolean available, Integer messageStringId) {
@@ -348,8 +348,9 @@ public class SensorTagService extends AbstractSensorDataProviderService {
     }
 
     private void releaseConnectionAndResources() {
-        periodicRunnableExecutor.stop();
-
+        if (periodicRunnableExecutor != null) {
+            periodicRunnableExecutor.stop();
+        }
     	stopScanningForSensortag();
 
         if (bluetoothLeService != null) {
