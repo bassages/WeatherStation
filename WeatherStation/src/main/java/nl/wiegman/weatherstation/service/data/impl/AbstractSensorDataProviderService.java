@@ -12,6 +12,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
+import android.support.v4.content.LocalBroadcastManager;
 
 public abstract class AbstractSensorDataProviderService extends Service implements SensorDataProviderService {
 
@@ -24,6 +25,11 @@ public abstract class AbstractSensorDataProviderService extends Service implemen
 		for (SensorType sensorType : SensorType.values()) {
 			sensorValueListeners.put(sensorType, new ArrayList<SensorValueListener>());
 		}
+	}
+
+	@Override
+	public void deactivate() {
+		broadcastMessageAction(null);
 	}
 
 	@Override
@@ -54,7 +60,14 @@ public abstract class AbstractSensorDataProviderService extends Service implemen
 			listener.valueUpdate(getApplicationContext(), sensorType, sensorValue);
         }
 	}
-    
+
+	protected void broadcastMessageAction(Integer messageId, Object... parameters) {
+		final Intent intent = new Intent(SensorDataProviderService.ACTION_MESSAGE);
+		intent.putExtra(SensorDataProviderService.MESSAGEID, messageId);
+		intent.putExtra(SensorDataProviderService.MESSAGEPARAMETERS, parameters);
+		LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+	}
+
 	private final IBinder binder = new LocalBinder();
 
 	@Override

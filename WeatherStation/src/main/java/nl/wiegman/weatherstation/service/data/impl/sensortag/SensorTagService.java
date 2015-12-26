@@ -82,6 +82,8 @@ public class SensorTagService extends AbstractSensorDataProviderService {
 		
         releaseConnectionAndResources();
         unregisterReceiver(bluetoothEventReceiver);
+
+        super.deactivate();
 	}
 
     @Override

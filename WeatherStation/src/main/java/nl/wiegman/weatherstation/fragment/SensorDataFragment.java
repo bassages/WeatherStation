@@ -28,6 +28,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 /**
  * Fragment to show the sensor data
@@ -39,6 +40,8 @@ public class SensorDataFragment extends Fragment implements SensorValueListener 
 	private static final String HUMIDITY_SAVED_INSTANCE_STATE_KEY = "humidity";
 
 	private static final String LOG_TAG = SensorDataFragment.class.getSimpleName();
+
+    private TextView messageTextView;
 
     private TextView temperatureValueTextView;
     private TextView temperatureUnitTextView;
@@ -57,8 +60,8 @@ public class SensorDataFragment extends Fragment implements SensorValueListener 
     private String themePreferenceKey;
 
     private SensorDataProviderService dataProviderService;
-    
-    @Override
+
+	@Override
     public void onCreate(Bundle savedInstanceState) {
     	super.onCreate(savedInstanceState);
 
@@ -71,15 +74,19 @@ public class SensorDataFragment extends Fragment implements SensorValueListener 
 		sharedPreferences.registerOnSharedPreferenceChangeListener(preferenceListener);
 		
         LocalBroadcastManager.getInstance(this.getActivity()).registerReceiver(sensorDataProviderAvailabilityReceiver,
-      	      new IntentFilter(SensorDataProviderService.ACTION_AVAILABILITY_UPDATE));
-		
+				new IntentFilter(SensorDataProviderService.ACTION_AVAILABILITY_UPDATE));
+		LocalBroadcastManager.getInstance(this.getActivity()).registerReceiver(messageReceiver,
+				new IntentFilter(SensorDataProviderService.ACTION_MESSAGE));
+
 		bindSensorDataProviderService(PreferredSensorDataProviderService.class);
-    }
+	}
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
     	View rootView = inflater.inflate(R.layout.fragment_sensordata, container, false);
-    	
+
+        messageTextView = (TextView) rootView.findViewById(R.id.message);
+
     	temperatureUnitTextView = (TextView) rootView.findViewById(R.id.temperatureUnitText);
     	temperatureValueTextView = (TextView) rootView.findViewById(R.id.temperatureValue);
     	humidityValueTextView = (TextView) rootView.findViewById(R.id.humidityValue);
@@ -279,11 +286,28 @@ public class SensorDataFragment extends Fragment implements SensorValueListener 
 			boolean available = intent.getBooleanExtra(SensorDataProviderService.AVAILABILITY_UPDATE_AVAILABLE, false);
 			if (!available) {
 				clearAllSensorValues();
+                messageTextView.setText("");
 			}
 		}
 	};
-	
-	private ServiceConnection sensorDataProviderServiceConnection = new ServiceConnection() {
+
+    private BroadcastReceiver messageReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Integer messageId = (Integer) intent.getSerializableExtra(SensorDataProviderService.MESSAGEID);
+            Object[] messageParameters = (Object[]) intent.getSerializableExtra(SensorDataProviderService.MESSAGEPARAMETERS);
+
+            String message;
+            if (messageId == null) {
+                message = "";
+            } else {
+                message = getActivity().getString(messageId, messageParameters);
+            }
+            messageTextView.setText(message);
+        }
+    };
+
+    private ServiceConnection sensorDataProviderServiceConnection = new ServiceConnection() {
 		@Override
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			dataProviderService = ((AbstractSensorDataProviderService.LocalBinder) service).getService();

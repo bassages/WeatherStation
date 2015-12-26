@@ -56,6 +56,8 @@ public class DeviceSensorService extends AbstractSensorDataProviderService imple
         ambientTemperature = null;
         humidity = null;
         airPressure = null;
+
+		super.deactivate();
 	}
 	
 	@Override

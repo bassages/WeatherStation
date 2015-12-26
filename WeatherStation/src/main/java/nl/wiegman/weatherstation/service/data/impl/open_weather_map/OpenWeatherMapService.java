@@ -9,7 +9,6 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -74,14 +73,14 @@ public class OpenWeatherMapService extends AbstractSensorDataProviderService imp
 
     private void startWeatherDataUpdates(String bestProvider) {
         Location lastKnownLocation = locationManager.getLastKnownLocation(bestProvider);
-        broadcastShowMessageAction(R.string.determine_location);
+        broadcastMessageAction(R.string.determine_location);
+
         if (lastKnownLocation != null && lastKnownLocation.getTime() > System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(30)) {
             latitude = lastKnownLocation.getLatitude();
             longitude = lastKnownLocation.getLongitude();
-
             openWeatherMapDataRetrieverExecutor.start();
         } else {
-            broadcastShowMessageAction(R.string.determine_location);
+            broadcastMessageAction(R.string.determine_location);
             locationManager.requestLocationUpdates(bestProvider, 0, 0, this);
         }
     }
@@ -150,6 +149,8 @@ public class OpenWeatherMapService extends AbstractSensorDataProviderService imp
 
         latitude = null;
         longitude = null;
+
+        super.deactivate();
     }
 
     private void stopLocationServicesStateUpdateExecutor() {
@@ -162,7 +163,7 @@ public class OpenWeatherMapService extends AbstractSensorDataProviderService imp
     // TODO: check if network is available
     private JSONObject getCurrentWeatherForPosition() {
         try {
-            broadcastShowMessageAction(R.string.getting_openweathermap_data);
+            broadcastMessageAction(R.string.getting_openweathermap_data);
 
             URL url = new URL(String.format(OPEN_WEATHER_MAP_API, latitude, longitude));
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -180,8 +181,7 @@ public class OpenWeatherMapService extends AbstractSensorDataProviderService imp
 
             JSONObject data = new JSONObject(json.toString());
 
-            // This value will be 404 if the request was not
-            // successful
+            // This value will be 404 if the request was not successful
             if (data.getInt("cod") != 200) {
                 return null;
             }
@@ -193,25 +193,20 @@ public class OpenWeatherMapService extends AbstractSensorDataProviderService imp
         }
     }
 
-    private void broadcastShowMessageAction(int messageId) {
-        final Intent intent = new Intent(MainActivity.ACTION_SHOW_MESSAGE);
-        intent.putExtra(MainActivity.MESSAGEID, messageId);
-        intent.putExtra(MainActivity.MESSAGE_SHOW_LENGHTH, Toast.LENGTH_LONG);
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-    }
-
     private class PeriodicDataRetriever implements Runnable {
 
         @Override
         public void run() {
             if (latitude != null && longitude != null) {
-
                 JSONObject currentWeatherForPosition = getCurrentWeatherForPosition();
                 try {
                     if (currentWeatherForPosition != null) {
                         OpenWeatherMapService.this.temperature = currentWeatherForPosition.getJSONObject("main").getDouble("temp");
                         OpenWeatherMapService.this.pressure = currentWeatherForPosition.getJSONObject("main").getDouble("pressure");
                         OpenWeatherMapService.this.humidity = currentWeatherForPosition.getJSONObject("main").getDouble("humidity");
+
+                        String locationName = currentWeatherForPosition.getString("name");
+                        broadcastMessageAction(R.string.your_location, locationName);
                     }
                 } catch (JSONException e) {
                     Log.e(LOG_TAG, "Unable to get weather data from OpenWeatherMap", e);

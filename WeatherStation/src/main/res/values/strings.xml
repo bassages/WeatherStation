@@ -17,7 +17,10 @@
     <string name="air_pressure_icon_description">Air pressure icon</string>
     <string name="humidity_icon_description">Humidity icon</string>
     <string name="title_activity_settings">Weather Station - Settings</string>
-    
+
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+
     <string name="preference_temperature_unit_title">Unit</string>
     <string name="preference_temperature_unit_summary">Select the unit in which temperatures are displayed</string>
     <string name="preference_temperature_unit_key">temperatureUnit</string>
@@ -35,7 +38,7 @@
         <item>TI SensorTag</item>
         <item>Open Weather Map</item>
         <item>Device</item>
-        <item>Random</item>
+        <!--<item>Random</item>-->
     </array>
     
     <string name="preference_theme_title">Select a theme</string>
@@ -81,7 +84,6 @@
     <string name="getting_openweathermap_data">Retrieving the weather for your location from Open Weather Map, one moment please…</string>
     <string name="error_no_location_provider_available">Failed to determine your location, please enable the location services</string>
     <string name="do_you_want_to_enable_location_services">Your location services seems to be disabled, do you want to enable it?</string>
-
-    <string name="yes">Yes</string>
-    <string name="no">No</string>
+    <string name="your_location">Your location: %1$s</string>
+    <string name="empty"></string>
 </resources>

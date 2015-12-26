@@ -14,131 +14,29 @@
         android:paddingTop="@dimen/activity_vertical_margin"
         tools:context="nl.wiegman.weatherstation.fragment.SensorDataFragment" >
 
+        <TextView
+            android:id="@+id/message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:layout_alignParentBottom="false"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:textStyle="bold"
+            android:layout_alignParentEnd="true"
+            android:layout_marginBottom="15dp"/>
+
         <ImageView
             android:id="@+id/temperatureImage"
+            android:layout_below="@+id/message"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentLeft="true"
-            android:layout_alignParentTop="true"
+            android:layout_alignParentTop="false"
             android:contentDescription="@string/temperature_icon_description"
             android:src="@drawable/temperature_black" 
             android:onClick="showHistory"
-            android:tag="temperature"/>
-
-        <TextView
-            android:id="@+id/airPressureLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignLeft="@+id/airPressureImage"
-            android:layout_alignRight="@+id/airPressureImage"
-            android:layout_below="@+id/airPressureImage"
-            android:gravity="center"
-            android:layout_marginTop="0dp"
-            android:text="@string/air_pressure_label" />
-
-        <ImageView
-            android:id="@+id/airPressureImage"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignLeft="@+id/view1"
-            android:layout_below="@+id/view1"
-            android:layout_marginTop="16dp"
-            android:contentDescription="@string/air_pressure_icon_description"
-            android:src="@drawable/airpressure_black" />
-
-        <View
-            android:id="@+id/view1"
-            android:layout_width="fill_parent"
-            android:layout_height="2dp"
-            android:layout_alignLeft="@+id/temperatureLabel"
-            android:layout_below="@+id/temperatureLabel"
-            android:layout_marginTop="20dp"
-            android:background="@android:color/darker_gray" />
-
-        <View
-            android:id="@+id/View01"
-            android:layout_width="fill_parent"
-            android:layout_height="2dp"
-            android:layout_alignLeft="@+id/airPressureLabel"
-            android:layout_below="@+id/airPressureLabel"
-            android:layout_marginTop="15dp"
-            android:background="@android:color/darker_gray" />
-
-        <ImageView
-            android:id="@+id/humidityImage"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignLeft="@+id/View01"
-            android:layout_below="@+id/View01"
-            android:layout_marginTop="20dp"
-            android:contentDescription="@string/humidity_icon_description"
-            android:src="@drawable/humidity_black" />
-
-        <TextView
-            android:id="@+id/airPressureValue"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_above="@+id/airPressureLabel"
-            android:layout_alignRight="@+id/view1"
-            android:text="@string/initial_air_pressure_value"
-            android:textAppearance="?android:attr/textAppearanceLarge"
-            android:textSize="@dimen/weatherValueSize" />
-
-        <TextView
-            android:id="@+id/humidityValue"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignRight="@+id/View01"
-            android:layout_alignTop="@+id/humidityImage"
-            android:text="@string/initial_humidity_value"
-            android:textAppearance="?android:attr/textAppearanceLarge"
-            android:textSize="@dimen/weatherValueSize" />
-
-        <TextView
-            android:id="@+id/temperatureUnitText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignRight="@+id/temperatureValue"
-            android:layout_alignTop="@+id/temperatureLabel"
-            android:text="@string/temperature_unit_degree_celcius"
-            android:textAppearance="?android:attr/textAppearanceMedium" />
-
-        <TextView
-            android:id="@+id/airPressureUnitText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignRight="@+id/airPressureValue"
-            android:layout_alignTop="@+id/airPressureLabel"
-            android:text="@string/air_pressure_unit_label"
-            android:textAppearance="?android:attr/textAppearanceMedium" />
-
-        <TextView
-            android:id="@+id/humidityUnit"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignRight="@+id/humidityValue"
-            android:layout_below="@+id/humidityImage"
-            android:text="@string/humidity_unit_label"
-            android:textAppearance="?android:attr/textAppearanceMedium" />
-
-        <TextView
-            android:id="@+id/temperatureValue"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_above="@+id/temperatureUnitText"
-            android:layout_alignRight="@+id/view1"
-            android:text="@string/initial_temperature_value"
-            android:textAppearance="?android:attr/textAppearanceLarge"
-            android:textSize="@dimen/weatherValueSize" />
-
-        <View
-            android:id="@+id/View02"
-            android:layout_width="fill_parent"
-            android:layout_height="2dp"
-            android:layout_alignRight="@+id/humidityUnit"
-            android:layout_below="@+id/humidityUnit"
-            android:layout_marginTop="10dp"
-            android:background="@android:color/darker_gray" />
+            android:tag="temperature" />
 
         <TextView
             android:id="@+id/temperatureLabel"
@@ -152,6 +50,43 @@
             android:text="@string/temperature_label" />
 
         <TextView
+            android:id="@+id/temperatureValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/temperatureUnitText"
+            android:layout_alignRight="@+id/separator1"
+            android:text="@string/initial_temperature_value"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textSize="@dimen/weatherValueSize" />
+
+        <TextView
+            android:id="@+id/temperatureUnitText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignRight="@+id/temperatureValue"
+            android:layout_alignTop="@+id/temperatureLabel"
+            android:text="@string/temperature_unit_degree_celcius"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+        <!--=====================================================================================-->
+        <View
+            android:id="@+id/separator1"
+            android:layout_width="fill_parent"
+            android:layout_height="2dp"
+            android:layout_below="@+id/temperatureLabel"
+            android:layout_marginTop="20dp"
+            android:background="@android:color/darker_gray" />
+
+        <ImageView
+            android:id="@+id/humidityImage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/separator1"
+            android:layout_marginTop="20dp"
+            android:contentDescription="@string/humidity_icon_description"
+            android:src="@drawable/humidity_black" />
+
+        <TextView
             android:id="@+id/humidityLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -161,6 +96,84 @@
             android:gravity="center"
             android:text="@string/humidity_label"
             android:layout_marginTop="10dp" />
+
+        <TextView
+            android:id="@+id/humidityValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignRight="@+id/separator1"
+            android:layout_alignTop="@+id/humidityImage"
+            android:text="@string/initial_humidity_value"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textSize="@dimen/weatherValueSize" />
+
+        <TextView
+            android:id="@+id/humidityUnit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignRight="@+id/humidityValue"
+            android:layout_below="@+id/humidityImage"
+            android:text="@string/humidity_unit_label"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+        <!--=====================================================================================-->
+        <View
+            android:id="@+id/separator2"
+            android:layout_width="fill_parent"
+            android:layout_height="2dp"
+            android:layout_alignLeft="@+id/humidityLabel"
+            android:layout_below="@+id/humidityLabel"
+            android:layout_marginTop="15dp"
+            android:background="@android:color/darker_gray" />
+
+        <ImageView
+            android:id="@+id/airPressureImage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/separator2"
+            android:layout_marginTop="16dp"
+            android:contentDescription="@string/air_pressure_icon_description"
+            android:src="@drawable/airpressure_black" />
+
+        <TextView
+            android:id="@+id/airPressureLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@+id/airPressureImage"
+            android:layout_alignRight="@+id/airPressureImage"
+            android:layout_below="@+id/airPressureImage"
+            android:gravity="center"
+            android:layout_marginTop="0dp"
+            android:text="@string/air_pressure_label" />
+
+        <TextView
+            android:id="@+id/airPressureValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/airPressureLabel"
+            android:layout_alignRight="@+id/separator2"
+            android:text="@string/initial_air_pressure_value"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textSize="@dimen/weatherValueSize" />
+
+        <TextView
+            android:id="@+id/airPressureUnitText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignRight="@+id/airPressureValue"
+            android:layout_alignTop="@+id/airPressureLabel"
+            android:text="@string/air_pressure_unit_label"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+        <!--=====================================================================================-->
+        <View
+            android:id="@+id/separator3"
+            android:layout_width="fill_parent"
+            android:layout_height="2dp"
+            android:layout_alignRight="@+id/airPressureUnitText"
+            android:layout_below="@+id/airPressureUnitText"
+            android:layout_marginTop="10dp"
+            android:background="@android:color/darker_gray" />
 
     </RelativeLayout>
 

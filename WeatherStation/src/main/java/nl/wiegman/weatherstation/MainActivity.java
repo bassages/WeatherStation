@@ -43,9 +43,6 @@ public class MainActivity extends Activity {
     private final String LOG_TAG = this.getClass().getSimpleName();
 
     public static String ACTION_REQUEST_LOCATION_SERVICES = "nl.wiegman.weatherstation.service.data.REQUEST_LOCATION_SERVICES";
-    public static String ACTION_SHOW_MESSAGE = "nl.wiegman.weatherstation.service.data.SHOWMESSAGE";
-    public static String MESSAGEID = "nl.wiegman.weatherstation.service.data.MESSAGEID";
-    public static String MESSAGE_SHOW_LENGHTH = "nl.wiegman.weatherstation.service.data.MESSAGESHOWLENGTH";
 
     private SensorDataProviderService sensorDataProviderService;
     private SensorValueHistoryService sensorValueHistoryService;
@@ -72,8 +69,6 @@ public class MainActivity extends Activity {
 		
         LocalBroadcastManager.getInstance(this).registerReceiver(sensorDataProviderAvailabilityReceiver,
                 new IntentFilter(SensorDataProviderService.ACTION_AVAILABILITY_UPDATE));
-        LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver,
-                new IntentFilter(ACTION_SHOW_MESSAGE));
         LocalBroadcastManager.getInstance(this).registerReceiver(locationServiceEnableRequestReciever,
                 new IntentFilter(ACTION_REQUEST_LOCATION_SERVICES));
 
@@ -181,15 +176,6 @@ public class MainActivity extends Activity {
 			Toast.makeText(MainActivity.this, getString(messageId), Toast.LENGTH_SHORT).show();
 		}
 	};
-
-    private BroadcastReceiver messageReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Integer messageId = (Integer) intent.getSerializableExtra(MESSAGEID);
-            Integer lenght = (Integer) intent.getSerializableExtra(MESSAGE_SHOW_LENGHTH);
-            Toast.makeText(MainActivity.this, getString(messageId), lenght == Toast.LENGTH_LONG ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT).show();
-        }
-    };
 
 	private BroadcastReceiver locationServiceEnableRequestReciever = new BroadcastReceiver() {
 		@Override
