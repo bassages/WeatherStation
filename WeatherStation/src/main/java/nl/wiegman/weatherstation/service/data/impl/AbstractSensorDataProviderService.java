@@ -62,7 +62,7 @@ public abstract class AbstractSensorDataProviderService extends Service implemen
 	}
 
 	protected void broadcastMessageAction(Integer messageId, Object... parameters) {
-		final Intent intent = new Intent(SensorDataProviderService.ACTION_MESSAGE);
+		final Intent intent = new Intent(SensorDataProviderService.ACTION_SHOW_MESSAGE);
 		intent.putExtra(SensorDataProviderService.MESSAGEID, messageId);
 		intent.putExtra(SensorDataProviderService.MESSAGEPARAMETERS, parameters);
 		LocalBroadcastManager.getInstance(this).sendBroadcast(intent);

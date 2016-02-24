@@ -64,6 +64,7 @@ public class OpenWeatherMapService extends AbstractSensorDataProviderService imp
         if (bestProvider == null) {
             if (requestUserToEnableLocationServicesWhenDisabled) {
                 requestUserToEnableLocationServices();
+                broadcastMessageAction(R.string.please_enable_location_services);
             }
         } else {
             stopLocationServicesStateUpdateExecutor();

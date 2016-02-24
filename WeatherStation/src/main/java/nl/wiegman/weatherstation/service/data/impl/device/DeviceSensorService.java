@@ -1,5 +1,6 @@
 package nl.wiegman.weatherstation.service.data.impl.device;
 
+import nl.wiegman.weatherstation.R;
 import nl.wiegman.weatherstation.SensorType;
 import nl.wiegman.weatherstation.service.data.impl.AbstractSensorDataProviderService;
 import nl.wiegman.weatherstation.service.data.impl.PeriodicRunnableExecutor;
@@ -19,8 +20,6 @@ public class DeviceSensorService extends AbstractSensorDataProviderService imple
 
 	private PeriodicRunnableExecutor periodicSensorValueUpdateProducer;
 
-	private SensorManager sensorManager;
-	
 	private Double ambientTemperature;
 	private Double humidity;
 	private Double airPressure;
@@ -35,9 +34,6 @@ public class DeviceSensorService extends AbstractSensorDataProviderService imple
 	public void activate() {
 		Log.d(LOG_TAG, "activate");
 		
-		// Get an instance of the sensor service, and use that to get an instance of a particular sensor.
-		sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-
 		registerAsAmbientTemperatureListener();
 		registerAsAirPressureListener();
 		registerAsHumidityListener();
@@ -48,10 +44,10 @@ public class DeviceSensorService extends AbstractSensorDataProviderService imple
 	@Override
 	public void deactivate() {
 		Log.d(LOG_TAG, "deactivate");
-		
+
+        SensorManager sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 		sensorManager.unregisterListener(this);
 		stopSensorDataUpdates();
-		sensorManager = null;
 
         ambientTemperature = null;
         humidity = null;
@@ -67,6 +63,8 @@ public class DeviceSensorService extends AbstractSensorDataProviderService imple
 
 	@Override
 	public void onSensorChanged(SensorEvent event) {
+		broadcastMessageAction(R.string.receiving_data_from_device_sensors);
+
 		if (event.sensor.getType() == Sensor.TYPE_AMBIENT_TEMPERATURE) {
 			ambientTemperature = (double)event.values[0];	
 		} else if (event.sensor.getType() == Sensor.TYPE_PRESSURE) {
@@ -77,6 +75,7 @@ public class DeviceSensorService extends AbstractSensorDataProviderService imple
 	}
 	
 	private void registerAsAmbientTemperatureListener() {
+        SensorManager sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 		Sensor ambientTemperatureSensor = sensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
 		if (ambientTemperatureSensor == null) {
 			Log.w(LOG_TAG, "There is no ambient temperature sensor available on this device");
@@ -86,6 +85,7 @@ public class DeviceSensorService extends AbstractSensorDataProviderService imple
 	}
 	
 	private void registerAsHumidityListener() {
+        SensorManager sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 		Sensor humiditySensor = sensorManager.getDefaultSensor(Sensor.TYPE_RELATIVE_HUMIDITY);
 		if (humiditySensor == null) {
 			Log.w(LOG_TAG, "There is no humidity sensor available on this device");
@@ -95,6 +95,7 @@ public class DeviceSensorService extends AbstractSensorDataProviderService imple
 	}
 
 	private void registerAsAirPressureListener() {
+        SensorManager sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 		Sensor pressureSensor = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
 		if (pressureSensor == null) {
 			Log.w(LOG_TAG, "There is no air pressure sensor available on this device");

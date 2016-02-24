@@ -9,7 +9,7 @@ public interface SensorDataProviderService {
 	String AVAILABILITY_UPDATE_AVAILABLE = "nl.wiegman.weatherstation.service.data.AVAILABILITY_AVAILABLE";
 	String AVAILABILITY_UPDATE_MESSAGEID = "nl.wiegman.weatherstation.service.data.AVAILABILITY_MESSAGEID";
 
-	String ACTION_MESSAGE = "nl.wiegman.weatherstation.service.data.ACTION_MESSAGE";
+	String ACTION_SHOW_MESSAGE = "nl.wiegman.weatherstation.service.data.ACTION_SHOW_MESSAGE";
 	String MESSAGEID = "nl.wiegman.weatherstation.service.data.MESSAGE_ID";
     String MESSAGEPARAMETERS = "nl.wiegman.weatherstation.service.data.MESSAGE_PARAMETERS";
 

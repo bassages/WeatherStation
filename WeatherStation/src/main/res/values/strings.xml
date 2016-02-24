@@ -78,12 +78,14 @@
     <string name="start_le_scan_failed">Failed to connect to TI sensortag</string>
     <string name="sensortag_service_discovery_failed">Failed to connect to TI sensortag</string>
     <string name="failed_to_connect_to_sensortag">Failed to connect to TI sensortag</string>
-    <string name="searching_for_sensortag">Connecting to TI sensortag</string>
+    <string name="searching_for_sensortag">Connecting to TI sensortag…</string>
+    <string name="connected_to_sensortag">Connected to TI sensortag</string>
     <string name="connection_lost_trying_reconnect">Connection with TI sensortag was lost, trying to reconnect</string>
-    <string name="determine_location">Determining your location, one moment please…</string>
-    <string name="getting_openweathermap_data">Retrieving the weather for your location from Open Weather Map, one moment please…</string>
+    <string name="determine_location">Determining your location…</string>
+    <string name="getting_openweathermap_data">Getting the weather for your location…</string>
     <string name="error_no_location_provider_available">Failed to determine your location, please enable the location services</string>
     <string name="do_you_want_to_enable_location_services">Your location services seems to be disabled, do you want to enable it?</string>
-    <string name="your_location">Your location: %1$s</string>
-    <string name="empty"></string>
+    <string name="please_enable_location_services">Please enable location services</string>
+    <string name="your_location">Weather by OpenWeatherMap for %1$s</string>
+    <string name="receiving_data_from_device_sensors">Connected to device sensors</string>
 </resources>

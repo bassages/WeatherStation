@@ -10,6 +10,8 @@ import nl.wiegman.weatherstation.service.data.impl.AbstractSensorDataProviderSer
 import nl.wiegman.weatherstation.service.data.impl.PreferredSensorDataProviderService;
 import nl.wiegman.weatherstation.util.TemperatureUtil;
 import nl.wiegman.weatherstation.util.ThemeUtil;
+
+import android.app.Activity;
 import android.app.Fragment;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -28,7 +30,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 /**
  * Fragment to show the sensor data
@@ -38,14 +39,16 @@ public class SensorDataFragment extends Fragment implements SensorValueListener 
 	private static final String AMBIENT_TEMPERATURE_SAVED_INSTANCE_STATE_KEY = "ambient_temperature";
     private static final String BAROMETRIC_PRESSURE_SAVED_INSTANCE_STATE_KEY = "barometric_pressure";
 	private static final String HUMIDITY_SAVED_INSTANCE_STATE_KEY = "humidity";
+	private static final String MESSAGE_SAVED_INSTANCE_STATE_KEY = "message";
 
 	private static final String LOG_TAG = SensorDataFragment.class.getSimpleName();
 
     private TextView messageTextView;
+	private String message;
 
     private TextView temperatureValueTextView;
     private TextView temperatureUnitTextView;
-    private Double ambientTemperatureInDegreeCelcius = null;
+    private Double ambientTemperatureInDegreeCelcius;
 
     private static final DecimalFormat humidityValueTexviewFormat = new DecimalFormat("0.0;0.0");
     private TextView humidityValueTextView;
@@ -76,7 +79,7 @@ public class SensorDataFragment extends Fragment implements SensorValueListener 
         LocalBroadcastManager.getInstance(this.getActivity()).registerReceiver(sensorDataProviderAvailabilityReceiver,
 				new IntentFilter(SensorDataProviderService.ACTION_AVAILABILITY_UPDATE));
 		LocalBroadcastManager.getInstance(this.getActivity()).registerReceiver(messageReceiver,
-				new IntentFilter(SensorDataProviderService.ACTION_MESSAGE));
+				new IntentFilter(SensorDataProviderService.ACTION_SHOW_MESSAGE));
 
 		bindSensorDataProviderService(PreferredSensorDataProviderService.class);
 	}
@@ -86,7 +89,6 @@ public class SensorDataFragment extends Fragment implements SensorValueListener 
     	View rootView = inflater.inflate(R.layout.fragment_sensordata, container, false);
 
         messageTextView = (TextView) rootView.findViewById(R.id.message);
-
     	temperatureUnitTextView = (TextView) rootView.findViewById(R.id.temperatureUnitText);
     	temperatureValueTextView = (TextView) rootView.findViewById(R.id.temperatureValue);
     	humidityValueTextView = (TextView) rootView.findViewById(R.id.humidityValue);
@@ -109,19 +111,10 @@ public class SensorDataFragment extends Fragment implements SensorValueListener 
     @Override
     public void onSaveInstanceState(Bundle outState) {
     	super.onSaveInstanceState(outState);
-    	
-    	if (ambientTemperatureInDegreeCelcius != null) {
-    		outState.putDouble(AMBIENT_TEMPERATURE_SAVED_INSTANCE_STATE_KEY, ambientTemperatureInDegreeCelcius);
-    	}
-    	if (humidity != null) {
-    		outState.putDouble(HUMIDITY_SAVED_INSTANCE_STATE_KEY, humidity);
-    	}
-    	if (barometricPressure != null) {
-    		outState.putDouble(BAROMETRIC_PRESSURE_SAVED_INSTANCE_STATE_KEY, barometricPressure);
-    	}
+		saveState(outState);
     }
-    
-    @Override
+
+	@Override
     public void onDestroy() {
     	super.onDestroy();
 
@@ -151,8 +144,41 @@ public class SensorDataFragment extends Fragment implements SensorValueListener 
 			Log.w(LOG_TAG, "Unknown sensorType: " + sensortype.name());
 		}
 	}
-    
-    private void bindSensorDataProviderService(Class<?> sensorDataProviderServiceClassToStart) {	
+
+	private void saveState(Bundle outState) {
+		if (ambientTemperatureInDegreeCelcius != null) {
+			outState.putDouble(AMBIENT_TEMPERATURE_SAVED_INSTANCE_STATE_KEY, ambientTemperatureInDegreeCelcius);
+		}
+		if (humidity != null) {
+			outState.putDouble(HUMIDITY_SAVED_INSTANCE_STATE_KEY, humidity);
+		}
+		if (barometricPressure != null) {
+			outState.putDouble(BAROMETRIC_PRESSURE_SAVED_INSTANCE_STATE_KEY, barometricPressure);
+		}
+		if (message != null) {
+			outState.putCharSequence(MESSAGE_SAVED_INSTANCE_STATE_KEY, message);
+		}
+	}
+
+	private void restoreState(Bundle savedInstanceState) {
+		ambientTemperatureInDegreeCelcius = savedInstanceState.getDouble(AMBIENT_TEMPERATURE_SAVED_INSTANCE_STATE_KEY, Double.MIN_VALUE);
+		if (ambientTemperatureInDegreeCelcius == Double.MIN_VALUE) {
+			ambientTemperatureInDegreeCelcius = null;
+		}
+		humidity = savedInstanceState.getDouble(HUMIDITY_SAVED_INSTANCE_STATE_KEY, Double.MIN_VALUE);
+		if (humidity == Double.MIN_VALUE) {
+			humidity = null;
+		}
+		barometricPressure = savedInstanceState.getDouble(BAROMETRIC_PRESSURE_SAVED_INSTANCE_STATE_KEY, Double.MIN_VALUE);
+		if (barometricPressure == Double.MIN_VALUE) {
+			barometricPressure = null;
+		}
+		message = savedInstanceState.getCharSequence(MESSAGE_SAVED_INSTANCE_STATE_KEY, "").toString();
+
+		savedInstanceState.clear();
+	}
+
+	private void bindSensorDataProviderService(Class<?> sensorDataProviderServiceClassToStart) {
     	Intent intent = new Intent(this.getActivity(), sensorDataProviderServiceClassToStart);
     	boolean bindServiceSuccessFull = getActivity().bindService(intent, sensorDataProviderServiceConnection, Context.BIND_AUTO_CREATE);
     	if (!bindServiceSuccessFull) {
@@ -239,28 +265,14 @@ public class SensorDataFragment extends Fragment implements SensorValueListener 
     	}
     }
 
-	private void restoreState(Bundle savedInstanceState) {
-		ambientTemperatureInDegreeCelcius = savedInstanceState.getDouble(AMBIENT_TEMPERATURE_SAVED_INSTANCE_STATE_KEY, Double.MIN_VALUE);
-		if (ambientTemperatureInDegreeCelcius == Double.MIN_VALUE) {
-			ambientTemperatureInDegreeCelcius = null;
-		}
-		humidity = savedInstanceState.getDouble(HUMIDITY_SAVED_INSTANCE_STATE_KEY, Double.MIN_VALUE);
-		if (humidity == Double.MIN_VALUE) {
-			humidity = null;
-		}
-		barometricPressure = savedInstanceState.getDouble(BAROMETRIC_PRESSURE_SAVED_INSTANCE_STATE_KEY, Double.MIN_VALUE);
-		if (barometricPressure == Double.MIN_VALUE) {
-			barometricPressure = null;
-		}
-		savedInstanceState.clear();
-	}
-
     private void applyPreferences() {
         setTemperatureUnitLabelBasedOnPreference();
 
         valueUpdate(getActivity(), SensorType.AmbientTemperature, ambientTemperatureInDegreeCelcius);
         valueUpdate(getActivity(), SensorType.Humidity, humidity);
         valueUpdate(getActivity(), SensorType.AirPressure, barometricPressure);
+
+		messageTextView.setText(message);
     }
 
     private void setTemperatureUnitLabelBasedOnPreference() {
@@ -280,54 +292,64 @@ public class SensorDataFragment extends Fragment implements SensorValueListener 
 		}
 	}
 
+    private BroadcastReceiver messageReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Integer messageId = (Integer) intent.getSerializableExtra(SensorDataProviderService.MESSAGEID);
+            Object[] messageParameters = (Object[]) intent.getSerializableExtra(SensorDataProviderService.MESSAGEPARAMETERS);
+			showMessage(messageId, messageParameters);
+        }
+    };
+
 	private BroadcastReceiver sensorDataProviderAvailabilityReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			boolean available = intent.getBooleanExtra(SensorDataProviderService.AVAILABILITY_UPDATE_AVAILABLE, false);
 			if (!available) {
 				clearAllSensorValues();
-                messageTextView.setText("");
 			}
+			Integer messageId = (Integer) intent.getSerializableExtra(SensorDataProviderService.AVAILABILITY_UPDATE_MESSAGEID);
+			showMessage(messageId);
 		}
 	};
 
-    private BroadcastReceiver messageReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Integer messageId = (Integer) intent.getSerializableExtra(SensorDataProviderService.MESSAGEID);
-            Object[] messageParameters = (Object[]) intent.getSerializableExtra(SensorDataProviderService.MESSAGEPARAMETERS);
-
-            String message;
-            if (messageId == null) {
-                message = "";
-            } else {
-                message = getActivity().getString(messageId, messageParameters);
+	private void showMessage(Integer messageId, Object ... messageParameters) {
+		if (messageId != null) {
+			Activity activity = getActivity();
+			if (activity != null) {
+				message = activity.getString(messageId, messageParameters);
+                activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        messageTextView.setText(message);
+                    }
+                });
             }
-            messageTextView.setText(message);
         }
-    };
+    }
 
     private ServiceConnection sensorDataProviderServiceConnection = new ServiceConnection() {
-		@Override
-		public void onServiceConnected(ComponentName name, IBinder service) {
-			dataProviderService = ((AbstractSensorDataProviderService.LocalBinder) service).getService();
-			registerAsDataListener();
-		}
-		@Override
-		public void onServiceDisconnected(ComponentName name) {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            dataProviderService = ((AbstractSensorDataProviderService.LocalBinder) service).getService();
+            registerAsDataListener();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
 			unregisterAsDataListener();
 		}
 	};
-	
+
 	private void registerAsDataListener() {
 		for (SensorType sensorType : SensorType.values()) {
-			dataProviderService.addSensorValueListener(this, sensorType);			
+			dataProviderService.addSensorValueListener(this, sensorType);
 		}
 	}
-	
+
 	private void unregisterAsDataListener() {
 		for (SensorType sensorType : SensorType.values()) {
-			dataProviderService.removeSensorValueListener(this, sensorType);			
+			dataProviderService.removeSensorValueListener(this, sensorType);
 		}
 	}
 }

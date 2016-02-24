@@ -33,11 +33,7 @@ import android.util.Log;
  * Provides sensor values from a TI sensortag
  */
 public class SensorTagService extends AbstractSensorDataProviderService {
-    private static final int REQUEST_ENABLE_BT = 1;
-
     private final String LOG_TAG = this.getClass().getSimpleName();
-	
-	private static final long PUBLISH_RATE_IN_MILLISECONDS = 10000;
 	
 	private BluetoothAdapter bluetoothAdapter;
 	private BluetoothLeService bluetoothLeService;
@@ -45,6 +41,7 @@ public class SensorTagService extends AbstractSensorDataProviderService {
 	private volatile BluetoothDevice connectedDevice;
 	
 	private BroadcastReceiver sensortagUpdateReceiver;
+    private BroadcastReceiver bluetoothEventReceiver;
 	
 	private Intent serviceBindingIntent;
 	
@@ -64,8 +61,9 @@ public class SensorTagService extends AbstractSensorDataProviderService {
 	@Override
 	public void activate() {
 		Log.d(LOG_TAG, "activate");
-		
+
 		// Register the BroadcastReceiver to handle events from BluetoothAdapter and BluetoothLeService
+        bluetoothEventReceiver = new BluetoothEventReceiver();
         IntentFilter bluetoothEventFilter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
         bluetoothEventFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
         bluetoothEventFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
@@ -81,7 +79,6 @@ public class SensorTagService extends AbstractSensorDataProviderService {
 		Log.d(LOG_TAG, "deactivate");
 		
         releaseConnectionAndResources();
-        unregisterReceiver(bluetoothEventReceiver);
 
         super.deactivate();
 	}
@@ -193,15 +190,15 @@ public class SensorTagService extends AbstractSensorDataProviderService {
             broadCastAvailability(false, R.string.failed_to_connect_to_sensortag);
         }
     }
-    
+
     // Listens for broadcasted events from BlueTooth adapter and BluetoothLeService
-    private final BroadcastReceiver bluetoothEventReceiver = new BroadcastReceiver() {
+    private class BluetoothEventReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
 
             if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)) {
-            	int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1);
+                int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1);
                 bluetoothAdapterActionStateChanged(state);
             } else {
                 if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
@@ -214,59 +211,59 @@ public class SensorTagService extends AbstractSensorDataProviderService {
             }
         }
 
-		private void bluetoothLeServiceGattDisconnected() {
-			connectedDevice = null;
-			Log.i(LOG_TAG, "Reconnect to sensortag");
-			broadCastAvailability(false, R.string.connection_lost_trying_reconnect);
-		    reconnect();
-		}
+        private void bluetoothLeServiceGattDisconnected() {
+            connectedDevice = null;
+            Log.i(LOG_TAG, "Reconnect to sensortag");
+            broadCastAvailability(false, R.string.connection_lost_trying_reconnect);
+            reconnect();
+        }
 
-		private void bluetoothLeServiceGattConnected(Intent intent) {
-			int status = intent.getIntExtra(BluetoothLeService.EXTRA_STATUS, BluetoothGatt.GATT_FAILURE);
-			if (status == BluetoothGatt.GATT_SUCCESS) {
-				sensortagUpdateReceiver = new SensortagUpdateReceiver();
-			    registerReceiver(sensortagUpdateReceiver, createSensorTagUpdateIntentFilter());
-			    discoverServices();
+        private void bluetoothLeServiceGattConnected(Intent intent) {
+            int status = intent.getIntExtra(BluetoothLeService.EXTRA_STATUS, BluetoothGatt.GATT_FAILURE);
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                sensortagUpdateReceiver = new SensortagUpdateReceiver();
+                registerReceiver(sensortagUpdateReceiver, createSensorTagUpdateIntentFilter());
+                discoverServices();
 
-			    Log.i(LOG_TAG, "Sucessfully connected to sensortag");
-			} else {
-			    Log.e(LOG_TAG, "Connecting to the sensortag failed. Status: " + status);
-			    broadCastAvailability(false, R.string.failed_to_connect_to_sensortag);
-			}
-		}
-		
-	    private void discoverServices() {
-	        if (BluetoothLeService.getBluetoothGatt().discoverServices()) {
-	            Log.i(LOG_TAG, "Start service discovery");
-	        } else {
-	            Log.e(LOG_TAG, "Service discovery start failed");
-	            broadCastAvailability(false, R.string.failed_to_connect_to_sensortag);
-	        }
-	    }
+                Log.i(LOG_TAG, "Sucessfully connected to sensortag");
+            } else {
+                Log.e(LOG_TAG, "Connecting to the sensortag failed. Status: " + status);
+                broadCastAvailability(false, R.string.failed_to_connect_to_sensortag);
+            }
+        }
 
-		private void bluetoothAdapterActionStateChanged(int state) {
-			switch (state) {
-			case BluetoothAdapter.STATE_ON:
-			    activate();
-			    break;
-			case BluetoothAdapter.STATE_OFF:
-				Log.i(LOG_TAG, "The bluetooth adapter was turned OFF");
-				releaseConnectionAndResources();
-			    break;
-			default:
-			    break;
-			}
-		}
+        private void discoverServices() {
+            if (BluetoothLeService.getBluetoothGatt().discoverServices()) {
+                Log.i(LOG_TAG, "Start service discovery");
+            } else {
+                Log.e(LOG_TAG, "Service discovery start failed");
+                broadCastAvailability(false, R.string.failed_to_connect_to_sensortag);
+            }
+        }
 
-	    private IntentFilter createSensorTagUpdateIntentFilter() {
-	        IntentFilter intentFilter = new IntentFilter();
-	        intentFilter.addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
-	        intentFilter.addAction(BluetoothLeService.ACTION_DATA_NOTIFY);
-	        intentFilter.addAction(BluetoothLeService.ACTION_DATA_WRITE);
-	        intentFilter.addAction(BluetoothLeService.ACTION_DATA_READ);
-	        return intentFilter;
-	    }
-    };
+        private void bluetoothAdapterActionStateChanged(int state) {
+            switch (state) {
+                case BluetoothAdapter.STATE_ON:
+                    activate();
+                    break;
+                case BluetoothAdapter.STATE_OFF:
+                    Log.i(LOG_TAG, "The bluetooth adapter was turned OFF");
+                    releaseConnectionAndResources();
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        private IntentFilter createSensorTagUpdateIntentFilter() {
+            IntentFilter intentFilter = new IntentFilter();
+            intentFilter.addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
+            intentFilter.addAction(BluetoothLeService.ACTION_DATA_NOTIFY);
+            intentFilter.addAction(BluetoothLeService.ACTION_DATA_WRITE);
+            intentFilter.addAction(BluetoothLeService.ACTION_DATA_READ);
+            return intentFilter;
+        }
+    }
 
     private final class SensortagUpdateReceiver extends BroadcastReceiver {
 		@Override
@@ -277,6 +274,7 @@ public class SensorTagService extends AbstractSensorDataProviderService {
             if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 if (status == BluetoothGatt.GATT_SUCCESS) {
                     Log.i(LOG_TAG, "Services discovered");
+                    broadcastMessageAction(R.string.connected_to_sensortag);
                     startGattSensorDataUpdates();
                 } else {
                     broadCastAvailability(false, R.string.sensortag_service_discovery_failed);
@@ -368,6 +366,11 @@ public class SensorTagService extends AbstractSensorDataProviderService {
             unregisterReceiver(sensortagUpdateReceiver);
             sensortagUpdateReceiver = null;
         }
+        if (bluetoothEventReceiver != null) {
+            unregisterReceiver(bluetoothEventReceiver);
+            bluetoothEventReceiver = null;
+        }
+
         connectedDevice = null;
     }
     

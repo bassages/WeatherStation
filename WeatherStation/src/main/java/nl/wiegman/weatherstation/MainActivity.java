@@ -48,6 +48,8 @@ public class MainActivity extends Activity {
     private SensorValueHistoryService sensorValueHistoryService;
     private SensorValueAlarmService sensorValueAlarmService;
 
+	private BroadcastReceiver locationServiceEnableRequestReciever;
+
     private SharedPreferences.OnSharedPreferenceChangeListener preferenceListener;
     private String preferenceThemeKey;
 
@@ -66,9 +68,8 @@ public class MainActivity extends Activity {
         KeepScreenOnUtil.setKeepScreenOnFlagBasedOnPreference(this);
         
         setContentView(R.layout.activity_main);
-		
-        LocalBroadcastManager.getInstance(this).registerReceiver(sensorDataProviderAvailabilityReceiver,
-                new IntentFilter(SensorDataProviderService.ACTION_AVAILABILITY_UPDATE));
+
+		locationServiceEnableRequestReciever = new LocationServiceEnableRequestReciever();
         LocalBroadcastManager.getInstance(this).registerReceiver(locationServiceEnableRequestReciever,
                 new IntentFilter(ACTION_REQUEST_LOCATION_SERVICES));
 
@@ -107,8 +108,6 @@ public class MainActivity extends Activity {
         super.onDestroy();
         Log.d(LOG_TAG, "onDestroy()");
 
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(sensorDataProviderAvailabilityReceiver);
-        
     	SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		sharedPreferences.unregisterOnSharedPreferenceChangeListener(preferenceListener);
         
@@ -167,17 +166,13 @@ public class MainActivity extends Activity {
         	unbindService(sensorValueAlarmServiceConnection);
         	sensorValueAlarmService = null;        	
         }
+		if (locationServiceEnableRequestReciever != null) {
+			LocalBroadcastManager.getInstance(this).unregisterReceiver(locationServiceEnableRequestReciever);
+			locationServiceEnableRequestReciever = null;
+		}
     }
 
-	private BroadcastReceiver sensorDataProviderAvailabilityReceiver = new BroadcastReceiver() {
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			Integer messageId = (Integer) intent.getSerializableExtra(SensorDataProviderService.AVAILABILITY_UPDATE_MESSAGEID);
-			Toast.makeText(MainActivity.this, getString(messageId), Toast.LENGTH_SHORT).show();
-		}
-	};
-
-	private BroadcastReceiver locationServiceEnableRequestReciever = new BroadcastReceiver() {
+	private class LocationServiceEnableRequestReciever extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context context, Intent intent) {
             final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
