@@ -1,8 +1,8 @@
 package nl.wiegman.weatherstation.service.data.impl.sensortag.gattsensor;
 
-import static java.util.UUID.fromString;
-
 import java.util.UUID;
+
+import static java.util.UUID.fromString;
 
 /**
  * Hardware on TI SensorTag: Sensirion SHT21 @ U6
@@ -35,27 +35,38 @@ public class HygrometerGatt extends AbstractGattSensor {
     }
 
     @Override
-    public SensorData convert(final byte[] value) {
-        float humidity = getHumidity(value);
-        float temperature = getAmbientTemperature(value);
-        
+    public SensorData convert(byte[] byteValue) {
+        int rawHumidity = shortUnsignedAtOffset(byteValue, 2);
+        int temperatureRaw = shortUnsignedAtOffset(byteValue, 0);
+        return convert(rawHumidity, temperatureRaw);
+    }
+
+    @Override
+    public SensorData convert(String hexValue) {
+        String[] hexValues = hexValue.split(" ");
+        int rawTemperature = Integer.parseInt(hexValues[1] + hexValues[0], 16);
+        int rawHumidity = Integer.parseInt(hexValues[3] + hexValues[2], 16);
+        return convert(rawHumidity, rawTemperature);
+    }
+
+    private SensorData convert(Integer rawHumidity, Integer temperatureRaw) {
+        float humidity = getHumidity(rawHumidity);
+        float temperature = getAmbientTemperature(temperatureRaw);
+
 //        Log.i(this.getClass().getSimpleName(), "Ambient temperature from hygrometer sensor: " + temperature);
-        
+
         return new SensorData(humidity, temperature, 0);
     }
 
-    private float getAmbientTemperature(final byte[] value) {
-        int temperatureRaw = shortUnsignedAtOffset(value, 0);
+    private float getAmbientTemperature(int temperatureRaw) {
         return -46.85f + 175.72f/65536f *(float)temperatureRaw;
     }
 
-    private float getHumidity(final byte[] value) {
-        int a = shortUnsignedAtOffset(value, 2);
-        // bits [1..0] are status bits and need to be cleared according
-        // to the user guide, but the iOS code doesn't bother. It should
-        // have minimal impact.
-        a = a - (a % 4);
-        return (-6f) + 125f * (a / 65535f);
+    private float getHumidity(int rawHumidity) {
+        // bits [1..0] are status bits and need to be cleared according to the user guide,
+        // but the iOS code doesn't bother. It should have minimal impact.
+        rawHumidity = rawHumidity - (rawHumidity % 4);
+        return (-6f) + 125f * (rawHumidity / 65535f);
     }
 
     @Override

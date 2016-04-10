@@ -45,10 +45,10 @@ public class BarometerGatt extends AbstractGattSensor {
 	
     private static final UUID UUID_SERVICE = fromString("f000aa40-0451-4000-b000-000000000000");
     private static final UUID UUID_DATA = fromString("f000aa41-0451-4000-b000-000000000000");
-    public static final UUID UUID_CONFIGURATION = fromString("f000aa42-0451-4000-b000-000000000000"); // 0: disable, 1: enable
+    private static final UUID UUID_CONFIGURATION = fromString("f000aa42-0451-4000-b000-000000000000"); // 0: disable, 1: enable
     public static final UUID UUID_CALIBRATION = fromString("f000aa43-0451-4000-b000-000000000000"); // Calibration characteristic
     
-    public static final byte CALIBRATE_SENSOR_CODE = 2;
+    private static final byte CALIBRATE_SENSOR_CODE = 2;
     
     private List<Integer> calibrationCoefficients = null;
     
@@ -57,7 +57,7 @@ public class BarometerGatt extends AbstractGattSensor {
     }
 
     @Override
-    public SensorData convert(final byte[] value) {
+    public SensorData convert(final byte[] byteValue) {
         SensorData sensorData;
         
         if (calibrationCoefficients == null) {
@@ -77,8 +77,8 @@ public class BarometerGatt extends AbstractGattSensor {
                 c[i] = calibrationCoefficients.get(i);
             }
             
-            t_r = shortSignedAtOffset(value, 0);
-            p_r = shortUnsignedAtOffset(value, 2);
+            t_r = shortSignedAtOffset(byteValue, 0);
+            p_r = shortUnsignedAtOffset(byteValue, 2);
             
             t_a = ((100 * (c[0] * t_r / pow(2,8) + c[1] * pow(2,6))) / pow(2,16)) / 100;
             S = c[2] + c[3] * t_r / pow(2,17) + ((c[4] * t_r / pow(2,15)) * t_r) / pow(2,19);
@@ -91,7 +91,12 @@ public class BarometerGatt extends AbstractGattSensor {
         }
         return sensorData;
     }
-    
+
+    @Override
+    public SensorData convert(String hexValue) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
     /* Calibrating the barometer includes
      * 
      * 1. Write calibration code to configuration characteristic. 
@@ -112,7 +117,7 @@ public class BarometerGatt extends AbstractGattSensor {
         Log.i(LOG_TAG, "The barometer was sucessfully calibrated");
         if (value != null && value.length >= 16) {
             // Barometer calibration values are read.
-            List<Integer> calibration = new ArrayList<Integer>();
+            List<Integer> calibration = new ArrayList<>();
             for (int offset = 0; offset < 8; offset += 2) {
                 Integer lowerByte = (int) value[offset] & 0xFF;
                 Integer upperByte = (int) value[offset + 1] & 0xFF;

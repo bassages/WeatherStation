@@ -7,7 +7,9 @@ import java.util.UUID;
  */
 public interface GattSensor {
 
-    SensorData convert(byte[] value);
+    SensorData convert(byte[] byteValue);
+
+    SensorData convert(String hexValue);
 
     /**
      * @return the code which, when written to the configuration characteristic,

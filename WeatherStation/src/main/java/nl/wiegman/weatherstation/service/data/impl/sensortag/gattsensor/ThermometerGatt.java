@@ -1,8 +1,8 @@
 package nl.wiegman.weatherstation.service.data.impl.sensortag.gattsensor;
 
-import static java.util.UUID.fromString;
-
 import java.util.UUID;
+
+import static java.util.UUID.fromString;
 
 /**
  * <pre>
@@ -29,7 +29,11 @@ import java.util.UUID;
  * For more information please refer to TI TMP006 User's Guide
  *
  * The raw data value read from this sensor are two unsigned 16 bit values, one for die temperature and one for object temperature.
- * 
+ *
+ * The IR Temperature sensor produces two measurements; Object (AKA target or IR) Temperature, and Ambient (AKA die) temperature.
+ * Both need some conversion, and Object temperature is dependent on Ambient temperature.
+ * They are stored as [ObjLSB, ObjMSB, AmbLSB, AmbMSB] (4 bytes)
+ *
  * </pre>
  */
 public class ThermometerGatt extends AbstractGattSensor {
@@ -40,32 +44,35 @@ public class ThermometerGatt extends AbstractGattSensor {
     public ThermometerGatt() {
         super(UUID_SERVICE, UUID_DATA, UUID_CONFIGURATION);
     }
-    
+
     @Override
-    public SensorData convert(final byte[] value) {
-        /*
-         * The IR Temperature sensor produces two measurements; Object (AKA target or IR) Temperature, and Ambient (AKA die) temperature.
-         * 
-         * Both need some conversion, and Object temperature is dependent on Ambient temperature.
-         * 
-         * They are stored as [ObjLSB, ObjMSB, AmbLSB, AmbMSB] (4 bytes)
-         * Which means we need to shift the bytes around to get the correct values.
-         */
-        double ambient = extractAmbientTemperature(value);
-        double target = extractTargetTemperature(value, ambient);
-        
+    public SensorData convert(byte[] byteValue) {
+        int rawAmbient = shortUnsignedAtOffset(byteValue, 2);
+        int rawTarget = shortUnsignedAtOffset(byteValue, 0);
+        return convert(rawAmbient, rawTarget);
+    }
+
+    @Override
+    public SensorData convert(String hexValue) {
+        String[] hexValues = hexValue.split(" ");
+        int rawAmbient = Integer.parseInt(hexValues[3] + hexValues[2], 16);
+        int rawTarget = Integer.parseInt(hexValues[1] + hexValues[0], 16);
+        return convert(rawAmbient, rawTarget);
+    }
+
+    private SensorData convert(int rawAmbient, int rawTarget) {
+        double ambient = extractAmbientTemperature(rawAmbient);
+        double target = extractTargetTemperature(rawTarget, ambient);
+
         return new SensorData(ambient, target, 0);
     }
 
-    private double extractAmbientTemperature(byte[] value) {
-        int offset = 2;
-        return shortUnsignedAtOffset(value, offset) / 128.0;
+    private double extractAmbientTemperature(int rawAmbient) {
+        return rawAmbient / 128.0;
     }
     
-    private double extractTargetTemperature(byte[] value, double ambient) {
-        Integer twoByteValue = shortSignedAtOffset(value, 0);
-
-        double Vobj2 = twoByteValue.doubleValue();
+    private double extractTargetTemperature(int rawTarget, double ambient) {
+        double Vobj2 = (double) rawTarget;
         Vobj2 *= 0.00000015625;
 
         double Tdie = ambient + 273.15;
@@ -78,10 +85,10 @@ public class ThermometerGatt extends AbstractGattSensor {
         double b2 = 4.63E-9;
         double c2 = 13.4;
         double Tref = 298.15;
-        double S = S0*(1+a1*(Tdie - Tref)+a2*Math.pow((Tdie - Tref),2));
-        double Vos = b0 + b1*(Tdie - Tref) + b2*Math.pow((Tdie - Tref),2);
-        double fObj = (Vobj2 - Vos) + c2*Math.pow((Vobj2 - Vos),2);
-        double tObj = Math.pow(Math.pow(Tdie,4) + (fObj/S),.25);
+        double S = S0*(1+a1*(Tdie - Tref)+a2*Math.pow((Tdie - Tref), 2));
+        double Vos = b0 + b1*(Tdie - Tref) + b2*Math.pow((Tdie - Tref), 2);
+        double fObj = (Vobj2 - Vos) + c2*Math.pow((Vobj2 - Vos), 2);
+        double tObj = Math.pow(Math.pow(Tdie, 4) + (fObj/S), .25);
 
         return tObj - 273.15;
     }
@@ -89,5 +96,10 @@ public class ThermometerGatt extends AbstractGattSensor {
     @Override
     public void calibrate() {
         // Not needed for this sensor
+    }
+
+    public static void main(String[] args) {
+        ThermometerGatt thermometerGatt = new ThermometerGatt();
+        System.out.println(thermometerGatt.convert("9c fe bc 08").getX());
     }
 }

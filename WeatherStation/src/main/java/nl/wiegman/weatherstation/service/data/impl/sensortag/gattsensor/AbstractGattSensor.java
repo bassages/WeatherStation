@@ -10,15 +10,18 @@ public abstract class AbstractGattSensor implements GattSensor {
 
     private final UUID serviceUuid, dataUuid, configUuid;
 
-    public static final byte ENABLE_SENSOR_CODE = 1;
-    public static final byte DISABLE_SENSOR_CODE = 0;
+    private static final byte ENABLE_SENSOR_CODE = 1;
+    private static final byte DISABLE_SENSOR_CODE = 0;
 
     protected String LOG_TAG = this.getClass().getSimpleName();
     
     @Override
-    public abstract SensorData convert(byte[] value);
-    
-    protected AbstractGattSensor(UUID serviceUuid, UUID dataUuid, UUID configUuid) {
+    public abstract SensorData convert(byte[] byteValue);
+
+    @Override
+    public abstract SensorData convert(String hexValue);
+
+    AbstractGattSensor(UUID serviceUuid, UUID dataUuid, UUID configUuid) {
         this.serviceUuid = serviceUuid;
         this.dataUuid = dataUuid;
         this.configUuid = configUuid;
@@ -32,13 +35,13 @@ public abstract class AbstractGattSensor implements GattSensor {
      * 
      * This function extracts these 16 bit two's complement values.
      * */
-    protected Integer shortSignedAtOffset(byte[] c, int offset) {
+    Integer shortSignedAtOffset(byte[] c, int offset) {
         Integer lowerByte = (int) c[offset] & 0xFF;
         Integer upperByte = (int) c[offset + 1]; // // Interpret MSB as signed
         return (upperByte << 8) + lowerByte;
     }
 
-    protected Integer shortUnsignedAtOffset(byte[] c, int offset) {
+    Integer shortUnsignedAtOffset(byte[] c, int offset) {
         Integer lowerByte = (int) c[offset] & 0xFF;
         Integer upperByte = (int) c[offset + 1] & 0xFF; // Interpret MSB as signed
         return (upperByte << 8) + lowerByte;
