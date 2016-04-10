@@ -97,9 +97,4 @@ public class ThermometerGatt extends AbstractGattSensor {
     public void calibrate() {
         // Not needed for this sensor
     }
-
-    public static void main(String[] args) {
-        ThermometerGatt thermometerGatt = new ThermometerGatt();
-        System.out.println(thermometerGatt.convert("9c fe bc 08").getX());
-    }
 }
