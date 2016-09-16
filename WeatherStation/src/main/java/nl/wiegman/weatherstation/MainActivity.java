@@ -1,18 +1,5 @@
 package nl.wiegman.weatherstation;
 
-import nl.wiegman.weatherstation.fragment.SensorDataFragment;
-import nl.wiegman.weatherstation.fragment.TemperatureHistoryFragment;
-import nl.wiegman.weatherstation.service.alarm.SensorValueAlarmService;
-import nl.wiegman.weatherstation.service.alarm.impl.MaximumTemperatureAlarm;
-import nl.wiegman.weatherstation.service.alarm.impl.MinimumTemperatureAlarm;
-import nl.wiegman.weatherstation.service.alarm.impl.SensorValueAlarmServiceImpl;
-import nl.wiegman.weatherstation.service.data.SensorDataProviderService;
-import nl.wiegman.weatherstation.service.data.impl.AbstractSensorDataProviderService;
-import nl.wiegman.weatherstation.service.data.impl.PreferredSensorDataProviderService;
-import nl.wiegman.weatherstation.service.history.SensorValueHistoryService;
-import nl.wiegman.weatherstation.service.history.impl.SensorValueHistoryServiceImpl;
-import nl.wiegman.weatherstation.util.KeepScreenOnUtil;
-import nl.wiegman.weatherstation.util.ThemeUtil;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
@@ -34,7 +21,20 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Toast;
+
+import nl.wiegman.weatherstation.fragment.SensorDataFragment;
+import nl.wiegman.weatherstation.fragment.TemperatureHistoryFragment;
+import nl.wiegman.weatherstation.service.alarm.SensorValueAlarmService;
+import nl.wiegman.weatherstation.service.alarm.impl.MaximumTemperatureAlarm;
+import nl.wiegman.weatherstation.service.alarm.impl.MinimumTemperatureAlarm;
+import nl.wiegman.weatherstation.service.alarm.impl.SensorValueAlarmServiceImpl;
+import nl.wiegman.weatherstation.service.data.SensorDataProviderService;
+import nl.wiegman.weatherstation.service.data.impl.AbstractSensorDataProviderService;
+import nl.wiegman.weatherstation.service.data.impl.PreferredSensorDataProviderService;
+import nl.wiegman.weatherstation.service.history.SensorValueHistoryService;
+import nl.wiegman.weatherstation.service.history.impl.SensorValueHistoryServiceImpl;
+import nl.wiegman.weatherstation.util.KeepScreenOnUtil;
+import nl.wiegman.weatherstation.util.ThemeUtil;
 
 /**
  * Main activity of the application
@@ -57,7 +57,8 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (DevelopmentMode.getDevelopmentMode()) {
+		//noinspection ConstantConditions
+		if (DevelopmentMode.getDevelopmentMode()) {
         	StrictMode.enableDefaults();
         }
         
@@ -192,7 +193,7 @@ public class MainActivity extends Activity {
                     });
             builder.create().show();
 		}
-	};
+	}
 
 	private ServiceConnection sensorDataProviderServiceConnection = new ServiceConnection() {
     	@Override

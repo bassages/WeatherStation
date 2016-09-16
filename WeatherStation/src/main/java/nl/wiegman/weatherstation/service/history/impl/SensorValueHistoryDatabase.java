@@ -77,12 +77,12 @@ public class SensorValueHistoryDatabase extends SQLiteOpenHelper {
 	}
 		
 	public List<SensorValueHistoryItem> getAllHistory(String sensorName) {
-	    List<SensorValueHistoryItem> allHistory = new ArrayList<SensorValueHistoryItem>();
+	    List<SensorValueHistoryItem> allHistory = new ArrayList<>();
 
 	    String selectQuery = "SELECT * FROM " + TABLE_SENSOR_HISTORY + " WHERE " + KEY_SENSOR_TYPE + " = ?";
 	 
 	    SQLiteDatabase db = this.getWritableDatabase();
-	    
+
 	    Cursor cursor = db.rawQuery(selectQuery, new String[] {sensorName});
 	    try {
 	    	// looping through all rows and adding to list
@@ -95,9 +95,9 @@ public class SensorValueHistoryDatabase extends SQLiteOpenHelper {
 	    			historyItem.setSensorValue(cursor.getDouble(3));
 	    			allHistory.add(historyItem);
 	    		} while (cursor.moveToNext());
-	    	}	    	
+	    	}
 	    } finally {
-	    	cursor.close();	    	
+	    	cursor.close();
 	    }
 
 	    return allHistory;

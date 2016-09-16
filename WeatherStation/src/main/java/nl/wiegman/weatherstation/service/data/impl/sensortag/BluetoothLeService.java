@@ -39,7 +39,7 @@ public class BluetoothLeService extends Service {
     public final static String EXTRA_DATA = "ti.android.ble.common.EXTRA_DATA";
     public final static String EXTRA_UUID = "ti.android.ble.common.EXTRA_UUID";
     public final static String EXTRA_STATUS = "ti.android.ble.common.EXTRA_STATUS";
-    public final static String EXTRA_ADDRESS = "ti.android.ble.common.EXTRA_ADDRESS";
+    private final static String EXTRA_ADDRESS = "ti.android.ble.common.EXTRA_ADDRESS";
 
     // BLE
     private BluetoothManager bluetoothManager = null;
@@ -231,7 +231,7 @@ public class BluetoothLeService extends Service {
         }
     }
 
-    public boolean initiateWriteCharacteristic(BluetoothGattCharacteristic characteristic, byte b) {
+    public void initiateWriteCharacteristic(BluetoothGattCharacteristic characteristic, byte b) {
         byte[] value = new byte[1];
         value[0] = b;
         characteristic.setValue(value);
@@ -242,7 +242,6 @@ public class BluetoothLeService extends Service {
         } else {
             Log.e(TAG, "writeCharacteristic initiation failed");
         }
-        return true;
     }
     
     /**

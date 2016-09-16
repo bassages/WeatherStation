@@ -10,21 +10,21 @@
 	    
 	    <CheckBox
 	        android:id="@+id/preference_alarm_enabled_checkbox"
-	        android:layout_marginRight="15dp"
+	        android:layout_marginEnd="15dp"
 	        android:text="@string/temperature_label"
 	        android:textSize="18sp" />
 	
 	    <EditText
 	        android:id="@+id/preference_alarm_temperature_value_textview"
 	        android:layout_width="60dp"
-	        android:layout_marginRight="15dp"
-	        android:gravity="right"
+	        android:layout_marginEnd="15dp"
+	        android:gravity="end"
 	        android:inputType="numberDecimal|numberSigned|numberSigned"
 	        android:maxLength="5" />
 	    
 	    <TextView
 	        android:id="@+id/preference_alarm_temperature_unit_label"
-	        android:layout_marginRight="15dp"
+	        android:layout_marginEnd="15dp"
 	        android:text="@string/temperature_unit_degree_celcius"
 	        android:textSize="18sp" />
 

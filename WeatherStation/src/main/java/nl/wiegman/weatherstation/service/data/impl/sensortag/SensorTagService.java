@@ -18,6 +18,8 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothManager;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanResult;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -51,7 +53,7 @@ public class SensorTagService extends AbstractSensorDataProviderService {
 
     private PeriodicRunnableExecutor periodicRunnableExecutor;
 
-    private static final List<GattSensor> gattSensors = new ArrayList<GattSensor>();
+    private static final List<GattSensor> gattSensors = new ArrayList<>();
     static {
         gattSensors.add(barometerGatt);
         gattSensors.add(hygrometerGatt);
@@ -123,31 +125,35 @@ public class SensorTagService extends AbstractSensorDataProviderService {
 
     private void startScanningForSensortag() {
     	bluetoothAdapter = getBluetoothAdapter();
-    	
-        boolean scanningForBlueToothLeDevices = bluetoothAdapter.startLeScan(bluetoothLeScanCallback);
-        if (!scanningForBlueToothLeDevices) {
-            broadCastAvailability(false, R.string.start_le_scan_failed);
-        } else {
-        	broadCastAvailability(false, R.string.searching_for_sensortag);
-        }
+        bluetoothAdapter.getBluetoothLeScanner();
+        bluetoothAdapter.getBluetoothLeScanner().startScan(bluetoothLeScanCallback);
     }
 	
     private void stopScanningForSensortag() {
     	if (bluetoothAdapter != null) {
-    		bluetoothAdapter.stopLeScan(bluetoothLeScanCallback);
+    		bluetoothAdapter.getBluetoothLeScanner().stopScan(bluetoothLeScanCallback);
     	}
     }
     
     // Device scan callback.
     // NB! Nexus 4 and Nexus 7 (2012) only provide one scan result per scan
-    private BluetoothAdapter.LeScanCallback bluetoothLeScanCallback = new BluetoothAdapter.LeScanCallback() {
-        public void onLeScan(final BluetoothDevice device, final int rssi, byte[] scanRecord) {
+    private ScanCallback bluetoothLeScanCallback = new ScanCallback() {
+
+        @Override
+        public void onScanResult(int callbackType, ScanResult result) {
             // Just connect to the first found device
-        	stopScanningForSensortag();
-            connectToDevice(device);
+            stopScanningForSensortag();
+            connectToDevice(result.getDevice());
+        }
+
+        @Override
+        public void onScanFailed(int errorCode) {
+            super.onScanFailed(errorCode);
+            broadCastAvailability(false, R.string.start_le_scan_failed);
         }
 
         private void connectToDevice(BluetoothDevice deviceInfo) {
+            broadCastAvailability(false, R.string.searching_for_sensortag);
             connectedDevice = deviceInfo;
             startBluetoothLeService();
         }
@@ -310,7 +316,7 @@ public class SensorTagService extends AbstractSensorDataProviderService {
     	}
     }
 
-    public void onCharacteristicChanged(String uuidStr, byte[] value) {
+    private void onCharacteristicChanged(String uuidStr, byte[] value) {
     	if (value != null) {
     		processChangedGattCharacteristic(uuidStr, value);
     	} else {

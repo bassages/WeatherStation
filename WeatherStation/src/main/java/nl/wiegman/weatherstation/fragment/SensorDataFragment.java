@@ -259,7 +259,7 @@ public class SensorDataFragment extends Fragment implements SensorValueListener 
 		}
 	}
 
-    public void clearAllSensorValues() {
+    private void clearAllSensorValues() {
     	for (SensorType sensorType : SensorType.values()) {
     		valueUpdate(getActivity(), sensorType, null);
     	}

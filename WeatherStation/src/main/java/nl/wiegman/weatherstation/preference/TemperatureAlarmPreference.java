@@ -18,7 +18,7 @@ import android.widget.TextView;
 /**
  * Abstract preference for setting an alarm preference
  */
-public abstract class TemperatureAlarmPreference extends DialogPreference implements OnClickListener {
+abstract class TemperatureAlarmPreference extends DialogPreference implements OnClickListener {
 
     private final String LOG_TAG = this.getClass().getSimpleName();
     
@@ -26,7 +26,7 @@ public abstract class TemperatureAlarmPreference extends DialogPreference implem
     private TextView alarmValueTextView;
     private TextView alarmValueUnitLabelTextView;
 
-    public TemperatureAlarmPreference(Context context, AttributeSet attrs) {
+    TemperatureAlarmPreference(Context context, AttributeSet attrs) {
         super(context, attrs);
         setDialogLayoutResource(R.layout.preference_alarm);
     }

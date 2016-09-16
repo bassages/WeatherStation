@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "nl.wiegman.weatherstation"
-        minSdkVersion 18
+        minSdkVersion 21
         targetSdkVersion 21
     }
 
@@ -19,6 +19,7 @@ android {
 }
 
 dependencies {
+    //noinspection GradleDependency
     compile 'com.android.support:support-v4:21.0.0'
     compile 'org.apache.commons:commons-lang3:3.3.2'
     compile 'com.androidplot:androidplot-core:0.6.1'

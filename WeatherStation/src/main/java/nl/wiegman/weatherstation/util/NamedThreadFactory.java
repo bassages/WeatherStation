@@ -1,5 +1,7 @@
 package nl.wiegman.weatherstation.util;
 
+import android.support.annotation.NonNull;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
@@ -15,7 +17,7 @@ public class NamedThreadFactory implements ThreadFactory {
 	}
 	
 	@Override
-	public Thread newThread(Runnable runnable) {
+	public Thread newThread(@NonNull Runnable runnable) {
 		ThreadFactory defaultThreadFactory = Executors.defaultThreadFactory();
 		Thread newThread = defaultThreadFactory.newThread(runnable);
 		newThread.setName(threadName);

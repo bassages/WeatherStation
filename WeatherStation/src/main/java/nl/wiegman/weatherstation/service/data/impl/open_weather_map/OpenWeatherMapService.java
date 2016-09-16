@@ -51,6 +51,7 @@ public class OpenWeatherMapService extends AbstractSensorDataProviderService imp
         }
 
         boolean requestUserToEnableLocationServicesWhenDisabled = true;
+        //noinspection ConstantConditions
         updatePosition(requestUserToEnableLocationServicesWhenDisabled);
 
         if (dataPublisherExecutor == null) {
@@ -95,6 +96,7 @@ public class OpenWeatherMapService extends AbstractSensorDataProviderService imp
         criteria.setAccuracy(Criteria.ACCURACY_LOW);
         criteria.setPowerRequirement(Criteria.POWER_LOW);
         boolean enabledOnly = true;
+        //noinspection ConstantConditions
         return locationManager.getBestProvider(criteria, enabledOnly);
     }
 
@@ -173,7 +175,7 @@ public class OpenWeatherMapService extends AbstractSensorDataProviderService imp
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 
-            StringBuffer json = new StringBuffer(1024);
+            StringBuilder json = new StringBuilder(1024);
             String tmp;
             while ((tmp = reader.readLine()) != null) {
                 json.append(tmp).append("\n");
@@ -231,6 +233,7 @@ public class OpenWeatherMapService extends AbstractSensorDataProviderService imp
         @Override
         public void run() {
             boolean requestUserToEnableLocationServicesWhenDisabled = false;
+            //noinspection ConstantConditions
             updatePosition(requestUserToEnableLocationServicesWhenDisabled);
         }
     }

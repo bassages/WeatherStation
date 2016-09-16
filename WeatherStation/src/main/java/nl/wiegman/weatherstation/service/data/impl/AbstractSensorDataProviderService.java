@@ -16,7 +16,7 @@ import android.support.v4.content.LocalBroadcastManager;
 
 public abstract class AbstractSensorDataProviderService extends Service implements SensorDataProviderService {
 
-    private final Map<SensorType, List<SensorValueListener>> sensorValueListeners = new HashMap<SensorType, List<SensorValueListener>>();
+    private final Map<SensorType, List<SensorValueListener>> sensorValueListeners = new HashMap<>();
 
 	@Override
 	public void onCreate() {

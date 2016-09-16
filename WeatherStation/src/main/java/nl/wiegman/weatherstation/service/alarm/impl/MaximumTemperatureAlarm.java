@@ -11,7 +11,7 @@ import android.content.Context;
 /**
  * Issues a notification when the temperature exceeds the user defined value
  */
-public class MaximumTemperatureAlarm extends SensorValueAlarmServiceImpl implements AlarmStrategy{
+public class MaximumTemperatureAlarm extends SensorValueAlarmServiceImpl implements AlarmStrategy {
 
 	@Override
 	public SensorType getSensorType() {

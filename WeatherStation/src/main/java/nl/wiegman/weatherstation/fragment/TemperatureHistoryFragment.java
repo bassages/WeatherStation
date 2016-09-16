@@ -33,6 +33,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -239,7 +240,7 @@ public class TemperatureHistoryFragment extends Fragment implements SensorValueL
 	}
 	
 	private void setBoundaries() {
-		if (minAddedValue == maxAddedValue) {
+		if (minAddedValue.equals(maxAddedValue)) {
 			plot.setRangeBoundaries(minAddedValue - 0.1, maxAddedValue + 0.1, BoundaryMode.FIXED);
 		} else {
 			plot.setRangeBoundaries(minAddedValue, maxAddedValue, BoundaryMode.AUTO);
@@ -281,14 +282,14 @@ public class TemperatureHistoryFragment extends Fragment implements SensorValueL
 		private final DateFormat dateFormat = SimpleDateFormat.getTimeInstance();
         
         @Override
-        public StringBuffer format(Object obj, StringBuffer toAppendTo, FieldPosition pos) {
+        public StringBuffer format(Object obj, @NonNull StringBuffer toAppendTo, @NonNull FieldPosition pos) {
             long timestamp = ((Number) obj).longValue();
             Date date = new Date(timestamp);
             return dateFormat.format(date, toAppendTo, pos);
         }
 
         @Override
-        public Object parseObject(String source, ParsePosition pos) {
+        public Object parseObject(String source, @NonNull ParsePosition pos) {
             return null;
         }
 	}
